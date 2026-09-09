@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>X에서 Y로의 함수 · 확률</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Noto+Sans+KR:wght@500;700;900&family=Poppins:wght@500;600&display=swap" rel="stylesheet">
+<style>
+/* ===================== 공통 토큰 / 스테이지 골격 ===================== */
+:root{
+  --bg-deep:#0a1420; --bg:#0e1b2b; --panel:#16283e; --panel-2:#1d3350;
+  --line:rgba(214,229,245,.18); --line-strong:rgba(214,229,245,.38);
+  --chalk:#eaf1f8; --chalk-soft:#b9cadd; --chalk-faint:#7d94ad;
+  --amber:#f5b642; --coral:#ff7d6a; --teal:#49d1c0; --violet:#9d8cf5;
+  --amber-dim:rgba(245,182,66,.16); --teal-dim:rgba(73,209,192,.16); --violet-dim:rgba(157,140,245,.16);
+  --f-kr:'Noto Sans KR'; --f-en:'Space Grotesk';
+  --t-title:44px; --t-h2:36px; --t-body:30px; --t-small:26px; --t-tag:22px;
+  --r-m:18px; --r-l:26px; --stage-pad:26px;
+}
+*{box-sizing:border-box;}
+html,body{height:100%;margin:0;padding:0;overflow:hidden;background:var(--bg-deep);
+  overscroll-behavior:none;touch-action:manipulation;-webkit-text-size-adjust:100%;}
+body{color:var(--chalk);font-family:var(--f-kr),var(--f-en),system-ui,sans-serif;font-weight:700;
+  font-size:var(--t-body);line-height:1.45;-webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:transparent;}
+.viewport{position:fixed;inset:0;overflow:hidden;background:var(--bg-deep);}
+.stage{position:absolute;top:0;left:0;width:1600px;height:900px;transform-origin:0 0;
+  will-change:transform;overflow:hidden;
+  background:radial-gradient(120% 90% at 18% 8%,#16273b 0%,rgba(22,39,59,0) 60%),
+             radial-gradient(100% 80% at 92% 96%,#142335 0%,rgba(20,35,53,0) 62%),var(--bg);}
+.stage::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(115deg,rgba(255,255,255,.014) 0 2px,rgba(255,255,255,0) 2px 7px),
+             radial-gradient(130% 110% at 50% 45%,rgba(0,0,0,0) 55%,rgba(0,0,0,.34) 100%);}
+.sheet{position:relative;z-index:1;width:100%;height:100%;padding:var(--stage-pad);
+  display:flex;flex-direction:column;gap:16px;}
+
+/* ===================== 머리말 ===================== */
+.app-head{display:flex;align-items:flex-end;gap:26px;padding-bottom:10px;
+  border-bottom:2px solid var(--line);flex:0 0 auto;}
+.app-title{margin:0;font-size:var(--t-title);font-weight:900;letter-spacing:-.02em;line-height:1.05;}
+.app-sub{margin:6px 0 0;font-size:var(--t-small);font-weight:500;color:var(--chalk-soft);}
+.setbox{padding:6px 20px;border-left:6px solid var(--amber);background:rgba(245,182,66,.07);
+  border-radius:0 12px 12px 0;font-size:28px;line-height:1.35;white-space:nowrap;}
+.stepcap{margin-left:auto;padding:10px 24px;border:2px solid var(--amber);border-radius:14px;
+  background:var(--amber-dim);color:var(--amber);font-size:28px;font-weight:900;white-space:nowrap;}
+
+/* ===================== 공통 부품 ===================== */
+.panel{position:relative;padding:20px 24px;border:2px solid var(--line);border-radius:var(--r-l);background:var(--panel);}
+.panel--tight{padding:14px 18px;border-radius:var(--r-m);}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:11px 26px;
+  border:2px solid var(--line-strong);border-radius:999px;background:transparent;color:var(--chalk);
+  font-family:inherit;font-size:var(--t-small);font-weight:700;cursor:pointer;white-space:nowrap;
+  transition:background .18s ease,border-color .18s ease,color .18s ease;}
+.btn:hover{background:rgba(255,255,255,.07);}
+.btn:active{transform:translateY(1px);}
+.btn--amber{border-color:var(--amber);color:var(--amber);}
+.btn--amber:hover{background:var(--amber-dim);}
+.btn[disabled]{opacity:.3;cursor:default;}
+.btn[disabled]:hover{background:transparent;}
+:where(button,[tabindex]):focus-visible{outline:3px solid var(--amber);outline-offset:4px;}
+.dots{display:flex;gap:10px;align-items:center;}
+.dots i{width:12px;height:12px;border-radius:50%;background:var(--line-strong);transition:background .2s ease,transform .2s ease;}
+.dots i.on{background:var(--amber);transform:scale(1.25);}
+.hint{font-size:var(--t-small);color:var(--chalk-faint);font-weight:500;white-space:nowrap;}
+.hint.done{color:var(--teal);}
+.key{display:inline-block;padding:1px 10px;border:2px solid var(--line-strong);border-radius:8px;font-size:.9em;}
+.step{opacity:0;transform:translateY(14px);transition:opacity .34s ease,transform .34s ease;pointer-events:none;}
+.step.on{opacity:1;transform:none;pointer-events:auto;}
+@keyframes pop{0%{transform:scale(1);}45%{transform:scale(1.12);}100%{transform:scale(1);}}
+.pop{animation:pop .42s ease;}
+.row{display:flex;align-items:center;} .between{justify-content:space-between;}
+.grow{flex:1 1 auto;min-height:0;min-width:0;}
+.g12{gap:12px;} .g24{gap:24px;} .nowrap{white-space:nowrap;}
+
+/* ===================== 수식 조판 ===================== */
+.m{font-family:var(--f-en),var(--f-kr),sans-serif;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.v{font-family:var(--f-en),sans-serif;font-weight:700;}            /* 변수 (기존 앱 글씨체) */
+.va{font-family:'Poppins',var(--f-en),sans-serif;font-style:normal;font-weight:600;font-size:1.04em;} /* 소문자 a : 단층(필기) 모양, 기울임 없음 */
+.op{margin:0 .18em;}
+.frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;
+  margin:0 .18em;transform:translateY(-.08em);line-height:1.05;}
+.frac>.num{padding:0 .3em .06em;}
+.frac>.den{padding:.08em .3em 0;border-top:.07em solid currentColor;}
+.sup{display:inline-block;font-size:.62em;transform:translateY(-.5em);}
+.hl-amber{color:var(--amber);} .hl-teal{color:var(--teal);} .hl-violet{color:var(--violet);}
+
+/* ===================== 본문 배치 ===================== */
+.body{display:flex;gap:24px;}
+.left{flex:0 0 520px;display:flex;flex-direction:column;gap:14px;}
+.right{flex:1 1 auto;display:flex;flex-direction:column;gap:14px;min-width:0;}
+
+#fpanel{flex:1 1 auto;display:flex;align-items:center;justify-content:center;padding:8px 10px;min-height:0;}
+#fsvg{display:block;width:100%;height:100%;}
+.setring{fill:none;stroke:var(--line-strong);stroke-width:3;stroke-dasharray:9 9;}
+.setname{font-family:var(--f-en),sans-serif;font-weight:700;font-size:34px;fill:var(--chalk-soft);}
+.nodeX{fill:var(--panel-2);stroke:var(--violet);stroke-width:3;cursor:grab;}
+.nodeX.armed{fill:#33285e;stroke:var(--amber);stroke-width:5;}
+.nodeY{fill:#122438;stroke:var(--line-strong);stroke-width:3;}
+.nodeY.hit{stroke:var(--amber);stroke-width:5;fill:#2a2a1c;}
+.nlab{fill:var(--chalk);pointer-events:none;font-family:var(--f-en),sans-serif;font-weight:700;}
+.nlab.g{font-family:'Poppins',sans-serif;font-weight:600;}
+.arw{stroke:var(--violet);stroke-width:5;fill:none;marker-end:url(#ah);}
+.arw.tmp{stroke:var(--amber);stroke-dasharray:10 9;marker-end:none;}
+
+.nsbox{flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:18px;
+  border:2px solid var(--line);border-radius:var(--r-m);background:var(--panel);padding:12px 14px;min-height:92px;}
+.chips{display:flex;gap:8px;}
+.chips i{font-style:normal;border:2px solid var(--line-strong);border-radius:10px;background:#0f2740;
+  padding:4px 10px;font-size:23px;}
+.nseq{font-size:34px;} .nseq b{color:var(--amber);font-size:42px;}
+
+.conds{display:flex;gap:14px;flex:0 0 auto;}
+.cond{flex:1;border:2px solid var(--line);background:rgba(255,255,255,.03);border-radius:14px;
+  padding:8px 18px;font-size:29px;display:flex;align-items:center;gap:10px;opacity:.34;transition:.3s;}
+.cond.on{opacity:1;border-color:var(--amber);background:var(--amber-dim);}
+.cond em{font-style:normal;color:var(--amber);}
+
+.strips{flex:1 1 auto;display:flex;flex-direction:column;justify-content:center;gap:6px;}
+.strip{display:flex;align-items:center;gap:8px;}
+.slab{width:150px;text-align:right;padding-right:14px;font-size:36px;color:var(--chalk-soft);}
+.strip.act .slab{color:var(--chalk);}
+.cells{display:flex;gap:12px;}
+.cell{width:104px;height:76px;border-radius:14px;background:#0e2540;border:3px solid #2b4d76;
+  display:flex;align-items:center;justify-content:center;font-size:38px;
+  font-family:var(--f-en);font-weight:700;color:var(--chalk);transition:.22s;}
+.cell.dim{opacity:.24;}
+.cell.mult{border-color:var(--amber);color:var(--amber);cursor:pointer;}
+.cell.mult:hover{background:var(--amber-dim);}
+.cell.pick{background:var(--amber);color:#20180a;border-color:#ffdd8a;transform:scale(1.06);cursor:pointer;}
+.cell.ok-a{background:var(--teal-dim);border-color:var(--teal);color:#bff5ef;}
+.cell.ok-c{background:var(--violet-dim);border-color:var(--violet);color:#ded6ff;}
+.cnt{width:128px;font-size:26px;color:var(--chalk-faint);opacity:0;transition:.3s;padding-left:6px;}
+.cnt.on{opacity:1;} .cnt.a{color:var(--teal);} .cnt.c{color:var(--violet);}
+.ineq{width:150px;text-align:center;font-size:30px;color:var(--teal);opacity:0;transition:.3s;line-height:1;}
+.ineq.on{opacity:1;}
+
+.cases{display:flex;gap:14px;flex:0 0 auto;}
+.case{flex:1;border:3px solid var(--line);background:var(--panel);border-radius:var(--r-m);
+  padding:10px 8px;text-align:center;opacity:0;transform:translateY(10px);transition:.34s;}
+.case.on{opacity:1;transform:none;border-color:var(--amber);}
+.case.cur{background:var(--amber-dim);}
+.case .ch{font-size:27px;color:var(--amber);margin-bottom:2px;}
+.case .cm{font-size:34px;font-family:var(--f-en);}
+.case .cm b{color:var(--amber);font-size:40px;}
+
+.finish{flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:40px;
+  border-top:2px dashed var(--line);padding-top:10px;min-height:112px;}
+.sumline{font-size:32px;} .sumline b{color:var(--amber);font-size:40px;}
+.probline{display:flex;align-items:center;gap:14px;font-size:36px;}
+.probline .big{font-size:44px;}
+
+@media (prefers-reduced-motion:reduce){
+  .step,.btn,.cell,.case,.cond,.cnt,.ineq,.dots i{transition-duration:.01ms !important;}
+  .pop{animation:none !important;}
+}
+</style>
+</head>
+<body>
+<div class="viewport">
+<div class="stage" id="stage">
+<div class="sheet">
+
+  <header class="app-head">
+    <div>
+      <h1 class="app-title">두 집합 <span class="hl-amber v">X</span> → <span class="hl-amber v">Y</span> 함수의 확률</h1>
+      <p class="app-sub">임의로 택한 함수 <span class="v">f</span> 가 두 조건을 만족시킬 확률</p>
+    </div>
+    <div class="setbox m">
+      <div><span class="v">X</span> = {<span class="va">a</span>, <span class="v">b</span>, <span class="v">c</span>}</div>
+      <div><span class="v">Y</span> = {1, 2, 3, 4, 6, 12}</div>
+    </div>
+    <div class="stepcap" id="stepcap"></div>
+  </header>
+
+  <div class="body grow">
+
+    <!-- ============ 왼쪽 : 함수 1개 만들기 → 전체 경우의 수 ============ -->
+    <section class="left">
+      <div class="panel panel--tight" id="fpanel">
+        <svg id="fsvg" viewBox="0 0 500 470" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="#9d8cf5"/>
+            </marker>
+          </defs>
+          <rect class="setring" x="108" y="52" width="314" height="86" rx="43"/>
+          <rect class="setring" x="18" y="352" width="468" height="86" rx="43"/>
+          <text class="setname" x="265" y="36" text-anchor="middle">X</text>
+          <text class="setname" x="252" y="466" text-anchor="middle">Y</text>
+          <g id="glines"></g>
+          <g id="gnodes"></g>
+        </svg>
+      </div>
+
+      <div class="nsbox step" id="nsbox">
+        <div class="chips m">
+          <i><span class="va">a</span> → 6</i><i><span class="v">b</span> → 6</i><i><span class="v">c</span> → 6</i>
+        </div>
+        <div class="nseq m"><span class="v">n</span>(<span class="v">S</span>) = 6<span class="sup">3</span> = <b>216</b></div>
+      </div>
+    </section>
+
+    <!-- ============ 오른쪽 : 조건으로 세기 ============ -->
+    <section class="right">
+      <div class="conds">
+        <div class="cond" id="cd1"><em>(가)</em> <span class="m"><span class="v">f</span>(<span class="v">b</span>)</span> 는 3의 배수</div>
+        <div class="cond" id="cd2"><em>(나)</em> <span class="m"><span class="v">f</span>(<span class="va">a</span>) ≤ <span class="v">f</span>(<span class="v">b</span>) ≤ <span class="v">f</span>(<span class="v">c</span>)</span></div>
+      </div>
+
+      <div class="strips" id="strips"></div>
+
+      <div class="cases" id="cases"></div>
+
+      <div class="finish">
+        <div class="sumline m step" id="sumline">
+          <span class="v">n</span>(<span class="v">A</span>) = <span class="hl-amber">12</span> + <span class="hl-amber">10</span> + <span class="hl-amber">6</span> = <b>28</b>
+        </div>
+        <div class="probline m step" id="probline">
+          <span><span class="v">P</span>(<span class="v">A</span>) =</span>
+          <span class="frac"><span class="num">28</span><span class="den">216</span></span>
+          <span>=</span>
+          <span class="frac big hl-amber"><span class="num">7</span><span class="den">54</span></span>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <footer class="row between">
+    <div class="row g12">
+      <button class="btn" id="prev">◀ 이전</button>
+      <button class="btn btn--amber" id="next">다음 ▶</button>
+      <button class="btn" id="reset">처음부터</button>
+      <button class="btn" id="fs">⛶ 전체화면</button>
+    </div>
+    <p class="hint" id="hint"></p>
+    <div class="row g24">
+      <p class="hint nowrap"><span class="key">Space</span> 다음 · <span class="key">←</span> 이전</p>
+      <div class="dots" id="dots"></div>
+    </div>
+  </footer>
+
+</div></div></div>
+
+<script>
+/* --------------------------------------------------------------------------
+   1) 16:9 스케일링 — TV/미러링에서 여백 없이 꽉 채우기
+-------------------------------------------------------------------------- */
+const STAGE_W=1600, STAGE_H=900;
+const stage=document.getElementById('stage');
+let scale=1;
+function fitStage(){
+  const vv=window.visualViewport;
+  const w=vv?vv.width:window.innerWidth, h=vv?vv.height:window.innerHeight;
+  scale=Math.min(w/STAGE_W,h/STAGE_H);
+  const x=Math.round((w-STAGE_W*scale)/2), y=Math.round((h-STAGE_H*scale)/2);
+  stage.style.transform=`translate(${x}px, ${y}px) scale(${scale})`;
+}
+function fitSoon(){[0,60,300,700].forEach(t=>setTimeout(fitStage,t));}
+fitSoon();
+window.addEventListener('load',fitSoon);
+window.addEventListener('resize',fitStage);
+window.addEventListener('orientationchange',fitSoon);
+if(window.visualViewport){visualViewport.addEventListener('resize',fitStage);visualViewport.addEventListener('scroll',fitStage);}
+document.addEventListener('fullscreenchange',fitSoon);
+document.fonts&&document.fonts.ready.then(fitStage);
+
+/* --------------------------------------------------------------------------
+   2) 데이터
+-------------------------------------------------------------------------- */
+const Y=[1,2,3,4,6,12];
+const MUL=Y.filter(v=>v%3===0);                                  // 3, 6, 12
+const CASES=MUL.map(k=>({k,a:Y.filter(v=>v<=k).length,c:Y.filter(v=>v>=k).length,
+                         n:Y.filter(v=>v<=k).length*Y.filter(v=>v>=k).length}));
+
+/* --------------------------------------------------------------------------
+   3) 왼쪽 : X → Y 화살표 연결 (끌어서 놓기 / 두 번 터치)
+-------------------------------------------------------------------------- */
+const XN=[{k:'a',x:160,y:95},{k:'b',x:265,y:95},{k:'c',x:370,y:95}];
+const YN=Y.map((v,i)=>({v,x:62+76*i,y:395}));
+const fsvg=document.getElementById('fsvg'), glines=document.getElementById('glines'), gnodes=document.getElementById('gnodes');
+let arrows={a:null,b:null,c:null}, armed=null, dragging=null, tmpLine=null;
+
+function mk(t,a){const n=document.createElementNS('http://www.w3.org/2000/svg',t);for(const k in a)n.setAttribute(k,a[k]);return n;}
+function svgPt(e){const p=fsvg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;return p.matrixTransform(fsvg.getScreenCTM().inverse());}
+function nearY(p){return YN.find(n=>Math.hypot(n.x-p.x,n.y-p.y)<38);}
+function nearX(p){return XN.find(n=>Math.hypot(n.x-p.x,n.y-p.y)<44);}
+
+function drawNodes(hitV){
+  gnodes.innerHTML='';
+  YN.forEach(n=>{
+    gnodes.appendChild(mk('circle',{cx:n.x,cy:n.y,r:33,class:'nodeY'+(hitV===n.v?' hit':'')}));
+    const t=mk('text',{x:n.x,y:n.y+12,class:'nlab','text-anchor':'middle','font-size':34});
+    t.textContent=n.v; gnodes.appendChild(t);
+  });
+  XN.forEach(n=>{
+    gnodes.appendChild(mk('circle',{cx:n.x,cy:n.y,r:36,class:'nodeX'+(armed===n.k?' armed':'')}));
+    const g=(n.k==='a');
+    const t=mk('text',{x:n.x,y:n.y+(g?15:14),class:'nlab'+(g?' g':''),'text-anchor':'middle','font-size':g?46:42});
+    t.textContent=n.k; gnodes.appendChild(t);
+  });
+}
+function drawArrows(){
+  glines.innerHTML='';
+  XN.forEach(n=>{
+    const v=arrows[n.k]; if(v==null) return;
+    const t=YN.find(q=>q.v===v), dx=t.x-n.x, dy=t.y-n.y, L=Math.hypot(dx,dy);
+    glines.appendChild(mk('line',{x1:n.x+dx/L*40,y1:n.y+dy/L*40,x2:t.x-dx/L*44,y2:t.y-dy/L*44,class:'arw'}));
+  });
+}
+const connCount=()=>XN.filter(n=>arrows[n.k]!=null).length;
+
+function afterConnect(){
+  drawArrows(); drawNodes();
+  if(connCount()===3){
+    const box=document.getElementById('nsbox');
+    if(!box.classList.contains('on')){
+      box.classList.add('on','pop');
+      setTimeout(()=>box.classList.remove('pop'),520);
+    }
+  }
+  render();
+}
+fsvg.addEventListener('pointerdown',e=>{
+  const p=svgPt(e), xn=nearX(p), yn=nearY(p);
+  if(xn){ dragging=xn.k; armed=xn.k; drawNodes();
+    tmpLine=mk('line',{x1:xn.x,y1:xn.y,x2:p.x,y2:p.y,class:'arw tmp'}); glines.appendChild(tmpLine);
+    fsvg.setPointerCapture(e.pointerId);
+  } else if(yn&&armed){ arrows[armed]=yn.v; armed=null; afterConnect(); }
+});
+fsvg.addEventListener('pointermove',e=>{
+  if(!dragging||!tmpLine) return;
+  const p=svgPt(e); tmpLine.setAttribute('x2',p.x); tmpLine.setAttribute('y2',p.y);
+  const hit=nearY(p); drawNodes(hit?hit.v:null);
+});
+fsvg.addEventListener('pointerup',e=>{
+  if(!dragging) return;
+  const p=svgPt(e), hit=nearY(p);
+  if(hit){arrows[dragging]=hit.v; armed=null;}
+  dragging=null; tmpLine=null; afterConnect();
+});
+function autoConnect(){ XN.forEach(n=>{ if(arrows[n.k]==null) arrows[n.k]=Y[Math.floor(Math.random()*6)]; }); afterConnect(); }
+
+/* --------------------------------------------------------------------------
+   4) 오른쪽 : 세 줄 표
+-------------------------------------------------------------------------- */
+const strips=document.getElementById('strips');
+const LET={a:'<span class="va">a</span>',b:'<span class="v">b</span>',c:'<span class="v">c</span>'};
+['a','b','c'].forEach((r,i)=>{
+  const s=document.createElement('div');
+  s.className='strip'; s.dataset.row=r;
+  s.innerHTML='<div class="slab m"><span class="v">f</span>('+LET[r]+')</div>'
+    +'<div class="cells">'+Y.map(v=>'<div class="cell" data-v="'+v+'">'+v+'</div>').join('')+'</div>'
+    +'<div class="cnt"></div>';
+  strips.appendChild(s);
+  if(i<2){const q=document.createElement('div'); q.className='ineq'; q.textContent='≤'; strips.appendChild(q);}
+});
+const casesEl=document.getElementById('cases');
+casesEl.innerHTML=CASES.map(c=>`<div class="case" data-k="${c.k}">
+  <div class="ch m"><span class="v">f</span>(<span class="v">b</span>) = ${c.k}</div>
+  <div class="cm"><span class="hl-teal">${c.a}</span> × <span class="hl-violet">${c.c}</span> = <b>${c.n}</b></div></div>`).join('');
+
+const cellsOf=r=>strips.querySelector('.strip[data-row="'+r+'"]').querySelectorAll('.cell');
+const cntOf=r=>strips.querySelector('.strip[data-row="'+r+'"] .cnt');
+const ineqs=[...strips.querySelectorAll('.ineq')];
+
+strips.addEventListener('click',e=>{
+  const cell=e.target.closest('.cell'); if(!cell) return;
+  if(cell.closest('.strip').dataset.row!=='b') return;
+  const i=MUL.indexOf(+cell.dataset.v); if(i<0) return;
+  step=3+i; seen.add(MUL[i]); render();
+});
+
+/* --------------------------------------------------------------------------
+   5) 단계 진행
+-------------------------------------------------------------------------- */
+const CAPS=['① 함수 <span class="v">f</span> 를 1개 만들어 보자',
+            '② 조건 (가)',
+            '③ 조건 (나)',
+            '④ <span class="v">f</span>(<span class="v">b</span>) = 3 인 경우',
+            '⑤ <span class="v">f</span>(<span class="v">b</span>) = 6 인 경우',
+            '⑥ <span class="v">f</span>(<span class="v">b</span>) = 12 인 경우',
+            '⑦ 세 경우를 더한다',
+            '⑧ 확률'];
+let step=0; const MAX=7;
+let seen=new Set();
+
+function render(){
+  document.getElementById('cd1').classList.toggle('on',step>=1);
+  document.getElementById('cd2').classList.toggle('on',step>=2);
+  ineqs.forEach(q=>q.classList.toggle('on',step>=2));
+  ['a','b','c'].forEach(r=>{
+    strips.querySelector('.strip[data-row="'+r+'"]').classList.toggle('act',step>=2||(step===1&&r==='b'));
+  });
+
+  ['a','b','c'].forEach(r=>{
+    cellsOf(r).forEach(c=>c.className='cell');
+    const n=cntOf(r); n.className='cnt'; n.textContent='';
+  });
+
+  if(step===1||step===2){
+    cellsOf('b').forEach(c=>c.classList.add(MUL.includes(+c.dataset.v)?'mult':'dim'));
+    if(step===1){cellsOf('a').forEach(c=>c.classList.add('dim')); cellsOf('c').forEach(c=>c.classList.add('dim'));}
+  }
+  if(step>=3&&step<=5){
+    const cs=CASES[step-3], k=cs.k;
+    cellsOf('b').forEach(c=>{const v=+c.dataset.v;
+      if(v===k)c.classList.add('pick'); else if(MUL.includes(v))c.classList.add('mult','dim'); else c.classList.add('dim');});
+    cellsOf('a').forEach(c=>c.classList.add(+c.dataset.v<=k?'ok-a':'dim'));
+    cellsOf('c').forEach(c=>c.classList.add(+c.dataset.v>=k?'ok-c':'dim'));
+    const na=cntOf('a'); na.className='cnt on a'; na.textContent=cs.a+'가지';
+    const nc=cntOf('c'); nc.className='cnt on c'; nc.textContent=cs.c+'가지';
+  }
+  if(step>=6) cellsOf('b').forEach(c=>c.classList.add(MUL.includes(+c.dataset.v)?'mult':'dim'));
+
+  if(step>=3&&step<=5) seen.add(CASES[step-3].k);
+  if(step>=6) CASES.forEach(c=>seen.add(c.k));
+  casesEl.querySelectorAll('.case').forEach(el=>{
+    const k=+el.dataset.k;
+    el.classList.toggle('on',seen.has(k));
+    el.classList.toggle('cur',step>=3&&step<=5&&CASES[step-3].k===k);
+  });
+
+  document.getElementById('sumline').classList.toggle('on',step>=6);
+  document.getElementById('probline').classList.toggle('on',step>=7);
+  document.getElementById('stepcap').innerHTML=CAPS[step];
+
+  const dots=document.getElementById('dots');
+  if(dots.children.length!==MAX+1) dots.innerHTML=Array.from({length:MAX+1},()=>'<i></i>').join('');
+  [...dots.children].forEach((d,i)=>d.classList.toggle('on',i<=step));
+  document.getElementById('prev').disabled=(step===0);
+  document.getElementById('next').disabled=(step===MAX);
+
+  const h=document.getElementById('hint');
+  let msg='', ok=false;
+  if(step===0){
+    if(connCount()<3) msg='위 칸에서 끌어 아래 칸에 연결 ('+connCount()+'/3)';
+    else {msg='전체 경우의 수 확인 완료 — [다음]'; ok=true;}
+  } else if(step===1||step===2){ msg='3의 배수 칸(3, 6, 12)을 눌러 보세요'; }
+  else if(step>=3&&step<=5){ msg='다른 3의 배수 칸도 눌러 보세요'; }
+  h.textContent=msg; h.classList.toggle('done',ok);
+}
+
+function go(d){
+  if(d>0&&step===0&&connCount()<3){ autoConnect(); return; }
+  step=Math.max(0,Math.min(MAX,step+d)); render();
+}
+document.getElementById('next').onclick=()=>go(1);
+document.getElementById('prev').onclick=()=>go(-1);
+document.getElementById('reset').onclick=()=>{
+  step=0; seen=new Set(); arrows={a:null,b:null,c:null}; armed=null;
+  document.getElementById('nsbox').classList.remove('on');
+  drawArrows(); drawNodes(); render();
+};
+/* 전체화면 (Google Sites 코드 삽입 상자 안에서도 화면 전체로 펼치기) */
+const fsBtn=document.getElementById('fs');
+function fsOn(){return !!(document.fullscreenElement||document.webkitFullscreenElement);}
+function toggleFS(){
+  const h=document.getElementById('hint');
+  if(fsOn()){ (document.exitFullscreen||document.webkitExitFullscreen).call(document); return; }
+  const el=document.documentElement;
+  const req=el.requestFullscreen||el.webkitRequestFullscreen;
+  if(!req){ h.textContent='이 화면에서는 전체화면을 쓸 수 없습니다 — 키보드 F11'; h.classList.remove('done'); return; }
+  const r=req.call(el);
+  if(r&&r.catch) r.catch(()=>{ h.textContent='전체화면이 차단되었습니다 — 키보드 F11'; h.classList.remove('done'); });
+}
+fsBtn.addEventListener('click',toggleFS);
+document.addEventListener('fullscreenchange',()=>{ fsBtn.textContent=fsOn()?'⛶ 창으로':'⛶ 전체화면'; });
+window.addEventListener('keydown',e=>{
+  if(e.key==='f'||e.key==='F'){toggleFS();}
+  if(e.code==='Space'||e.code==='ArrowRight'||e.code==='PageDown'){e.preventDefault();go(1);}
+  if(e.code==='ArrowLeft'||e.code==='PageUp'){e.preventDefault();go(-1);}
+  if(e.key==='r'||e.key==='R'){document.getElementById('reset').click();}
+  if(e.key>='1'&&e.key<='3'){const i=+e.key-1; step=3+i; seen.add(MUL[i]); render();}
+});
+
+drawNodes(); drawArrows(); render();
+</script>
+</body>
+</html>
