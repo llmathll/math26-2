@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>10-11 · 일의 자리의 수가 모두 다를 확률</title>
+<style>
+@charset "UTF-8";
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap');
+
+/* ================= chalk-stage.css (인라인) ================= */
+:root{
+  --bg-deep:#0a1420; --bg:#0e1b2b; --panel:#16283e; --panel-2:#1d3350;
+  --line:rgba(214,229,245,.18); --line-strong:rgba(214,229,245,.38);
+  --chalk:#eaf1f8; --chalk-soft:#b9cadd; --chalk-faint:#7d94ad;
+  --amber:#f5b642; --coral:#ff7d6a; --teal:#49d1c0; --violet:#9d8cf5;
+  --amber-dim:rgba(245,182,66,.16); --coral-dim:rgba(255,125,106,.16);
+  --teal-dim:rgba(73,209,192,.16); --violet-dim:rgba(157,140,245,.16);
+  --f-en:'Space Grotesk'; --f-kr:'Noto Sans KR';
+  --t-hero:76px; --t-title:54px; --t-h2:40px; --t-body:32px; --t-small:26px; --t-tag:22px;
+  --r-s:10px; --r-m:18px; --r-l:28px; --stage-pad:44px;
+}
+*{box-sizing:border-box;}
+html,body{height:100%;margin:0;padding:0;overflow:hidden;background:var(--bg-deep);
+  overscroll-behavior:none;touch-action:manipulation;-webkit-text-size-adjust:100%;}
+body{color:var(--chalk);font-family:var(--f-en),var(--f-kr),system-ui,sans-serif;
+  font-size:var(--t-body);line-height:1.45;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;}
+.viewport{position:fixed;inset:0;overflow:hidden;background:var(--bg-deep);}
+.stage{position:absolute;top:0;left:0;width:1600px;height:900px;transform-origin:0 0;
+  will-change:transform;overflow:hidden;
+  background:radial-gradient(120% 90% at 18% 8%,#16273b 0%,rgba(22,39,59,0) 60%),
+             radial-gradient(100% 80% at 92% 96%,#142335 0%,rgba(20,35,53,0) 62%),var(--bg);}
+.stage::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(115deg,rgba(255,255,255,.014) 0 2px,rgba(255,255,255,0) 2px 7px),
+             radial-gradient(130% 110% at 50% 45%,rgba(0,0,0,0) 55%,rgba(0,0,0,.34) 100%);}
+.sheet{position:relative;z-index:1;width:100%;height:100%;padding:var(--stage-pad);
+  display:flex;flex-direction:column;gap:22px;}
+.app-head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;
+  padding-bottom:14px;border-bottom:2px solid var(--line);}
+.app-title{margin:0;font-size:var(--t-title);font-weight:700;letter-spacing:-.02em;line-height:1.1;}
+.app-sub{margin:5px 0 0;font-size:var(--t-small);font-weight:400;color:var(--chalk-soft);}
+.num-mark{font-family:var(--f-kr),sans-serif;color:var(--amber);font-weight:700;
+  margin-right:.2em;letter-spacing:-.01em;}
+.panel{position:relative;padding:28px 32px;border:2px solid var(--line);border-radius:var(--r-l);background:var(--panel);}
+.tag{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border:2px solid var(--line-strong);
+  border-radius:999px;font-size:var(--t-tag);font-weight:500;color:var(--chalk-soft);}
+.tag.is-amber{border-color:var(--amber);color:var(--amber);background:var(--amber-dim);}
+.tag.is-coral{border-color:var(--coral);color:var(--coral);background:var(--coral-dim);}
+.tag.is-teal{border-color:var(--teal);color:var(--teal);background:var(--teal-dim);}
+.node{display:inline-flex;align-items:center;justify-content:center;width:84px;height:84px;
+  border:3px solid var(--line-strong);border-radius:50%;background:var(--panel-2);
+  font-size:var(--t-h2);font-weight:600;user-select:none;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:12px 28px;
+  border:2px solid var(--line-strong);border-radius:999px;background:transparent;color:var(--chalk);
+  font-family:inherit;font-size:var(--t-small);font-weight:600;cursor:pointer;
+  transition:background .18s ease,border-color .18s ease,color .18s ease;}
+.btn:hover{background:rgba(255,255,255,.07);}
+.btn:active{transform:translateY(1px);}
+.btn--amber{border-color:var(--amber);color:var(--amber);}
+.btn--amber:hover{background:var(--amber-dim);}
+.btn[disabled]{opacity:.35;cursor:default;}
+.btn[disabled]:hover{background:transparent;}
+:where(button,[tabindex]):focus-visible{outline:3px solid var(--amber);outline-offset:4px;}
+.dots{display:flex;gap:12px;align-items:center;}
+.dots i{width:14px;height:14px;border-radius:50%;background:var(--line-strong);
+  transition:background .2s ease,transform .2s ease;}
+.dots i.on{background:var(--amber);transform:scale(1.25);}
+.hint{font-size:var(--t-tag);color:var(--chalk-faint);}
+.key{display:inline-block;padding:2px 10px;border:2px solid var(--line-strong);border-radius:8px;font-size:.9em;}
+@keyframes pop{0%{transform:scale(1);}45%{transform:scale(1.14);}100%{transform:scale(1);}}
+.pop{animation:pop .42s ease;}
+.arrow-layer{position:absolute;inset:0;pointer-events:none;z-index:5;overflow:visible;}
+.arrow{fill:none;stroke:var(--chalk-soft);stroke-width:4;stroke-linecap:round;}
+.arrow.is-amber{stroke:var(--amber);} .arrow.is-coral{stroke:var(--coral);} .arrow.is-teal{stroke:var(--teal);}
+.arrow.is-ghost{stroke:var(--line-strong);stroke-dasharray:10 12;}
+@keyframes draw{to{stroke-dashoffset:0;}}
+.arrow.is-draw{stroke-dasharray:1000;stroke-dashoffset:1000;animation:draw .55s ease forwards;}
+.arrow-head--amber{fill:var(--amber);} .arrow-head--coral{fill:var(--coral);}
+/* 수식 */
+.m{font-family:var(--f-en),var(--f-kr),serif;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.var{font-style:italic;}
+.op{margin:0 .22em;}
+.frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;
+  margin:0 .18em;transform:translateY(-.08em);line-height:1.02;}
+.frac>.num{padding:0 .3em .06em;}
+.frac>.den{padding:.08em .3em 0;border-top:.07em solid currentColor;}
+.comb{display:inline-flex;align-items:center;}
+.comb>.pre{font-size:.60em;font-style:italic;transform:translateY(.40em);}
+.comb>.sym{font-size:1em;font-weight:500;margin:0 .04em;}
+.comb>.post{font-size:.60em;font-style:italic;transform:translateY(.40em);}
+.comb.is-num>.pre,.comb.is-num>.post{font-style:normal;}
+.hl-amber{color:var(--amber);} .hl-coral{color:var(--coral);} .hl-teal{color:var(--teal);}
+.hl-dim{color:var(--chalk-faint);}
+.row{display:flex;align-items:center;} .col{display:flex;flex-direction:column;}
+.between{justify-content:space-between;} .center{justify-content:center;align-items:center;}
+.grow{flex:1 1 auto;min-height:0;min-width:0;}
+.g8{gap:8px;} .g16{gap:16px;} .g24{gap:24px;}
+.t-small{font-size:var(--t-small);color:var(--chalk-soft);}
+@media (prefers-reduced-motion:reduce){
+  .btn,.dots i{transition-duration:.01ms !important;}
+  .pop,.arrow.is-draw{animation:none !important;}
+  .arrow.is-draw{stroke-dashoffset:0;}
+}
+
+/* ================= 이 앱 전용 ================= */
+.tabbar{display:flex;gap:10px;}
+.tabbar .btn{padding:10px 26px;}
+.tabbar .btn.on{background:var(--amber);border-color:var(--amber);color:#2a1a02;}
+.tabbar .btn.on:hover{background:var(--amber);}
+.btn svg{display:block;flex:none;}
+.btn--dim{border-color:var(--line-strong);color:var(--chalk-faint);}
+.btn--dim:hover{color:var(--chalk-soft);}
+.btn--teal{border-color:var(--teal);color:var(--teal);}
+.btn--teal:hover{background:var(--teal-dim);}
+
+.body{display:flex;gap:30px;}
+.viz{width:900px;flex:none;display:flex;flex-direction:column;gap:14px;}
+
+.grid{position:relative;width:900px;height:430px;flex:none;}
+.ball{position:absolute;width:76px;height:76px;font-size:32px;cursor:default;
+  transition:transform .18s ease,opacity .2s ease,background .2s ease,border-color .2s ease,color .2s ease,box-shadow .2s ease;}
+.ball.hot{cursor:pointer;}
+.ball.hot:hover{border-color:var(--chalk-soft);}
+.ball.off{opacity:.28;}
+.ball.col-on{border-color:var(--teal);color:var(--teal);background:var(--teal-dim);}
+.ball.pick{border-color:var(--amber);background:var(--amber);color:#2a1a02;transform:scale(1.06);z-index:4;}
+.ball.pair{border-color:var(--coral);background:var(--coral);color:#2a1008;z-index:4;}
+.ball.avail{border-color:var(--line-strong);}
+.ball.lit{border-color:var(--amber);color:var(--amber);background:var(--amber-dim);z-index:4;}
+.ball.third{border-color:var(--amber);background:var(--amber);color:#2a1a02;transform:scale(1.08);z-index:5;}
+
+.dtag{position:absolute;width:52px;height:52px;font-size:26px;border-width:2px;
+  color:var(--chalk-faint);background:transparent;
+  transition:border-color .18s ease,color .18s ease,background .18s ease;}
+.dtag.hot{cursor:pointer;}
+.dtag.hot:hover{border-color:var(--chalk-soft);color:var(--chalk-soft);}
+.dtag.on{border-color:var(--teal);color:var(--teal);background:var(--teal-dim);}
+.dtag.pairon{border-color:var(--coral);color:var(--coral);background:var(--coral-dim);}
+
+.pill{position:absolute;transform:translate(-50%,-50%);padding:3px 12px;border-radius:999px;
+  border:2px solid var(--amber);background:var(--bg);color:var(--amber);
+  font-size:20px;font-weight:600;white-space:nowrap;z-index:6;
+  opacity:0;transition:opacity .25s ease;pointer-events:none;}
+.pill.on{opacity:1;}
+.pill.is-coral{border-color:var(--coral);color:var(--coral);}
+
+.chips{height:66px;display:flex;align-items:center;gap:14px;}
+.chip{display:inline-flex;align-items:center;gap:10px;padding:8px 18px;border:2px solid var(--line);
+  border-radius:var(--r-m);background:var(--panel);font-size:26px;white-space:nowrap;}
+.chip .who{font-size:20px;color:var(--chalk-faint);}
+.chip .num{font-size:28px;font-weight:600;color:var(--chalk-faint);}
+.chip .num.on{color:var(--amber);}
+.chip .num.coral{color:var(--coral);}
+.chip .or{font-size:20px;color:var(--chalk-faint);}
+.chips .x{font-size:26px;color:var(--chalk-faint);}
+.chips .eq{font-size:30px;font-weight:700;color:var(--amber);}
+
+.deriv{width:582px;flex:none;padding:20px 22px;display:flex;flex-direction:column;gap:8px;
+  justify-content:center;overflow:hidden;}
+.dv{border:2px solid var(--line);border-radius:var(--r-m);background:var(--panel-2);
+  padding:8px 18px;display:flex;align-items:center;justify-content:space-between;gap:16px;}
+.dv .lab{font-size:19px;color:var(--chalk-faint);
+  flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.dv .val{font-size:24px;font-weight:600;flex:0 0 auto;}
+.dv.cur{flex-direction:column;align-items:flex-start;gap:4px;padding:14px 22px;
+  border-color:var(--line-strong);}
+.dv.cur .lab{font-size:22px;color:var(--chalk-soft);overflow:visible;}
+.dv.cur .val{font-size:38px;}
+.dv.cur.small .val{font-size:30px;white-space:normal;line-height:1.35;}
+.dv.cur.ans{border-color:var(--amber);border-width:3px;background:var(--amber-dim);}
+.dv.cur.ans .val{font-size:38px;color:var(--amber);}
+
+footer .hint{white-space:nowrap;}
+</style>
+</head>
+<body>
+
+<div class="viewport">
+  <div class="stage" id="stage">
+    <div class="sheet">
+
+      <header class="app-head">
+        <div>
+          <h1 class="app-title"><span class="num-mark">10-11</span> 일의 자리의 수가 모두 다를 확률</h1>
+          <p class="app-sub">1부터 20까지 적힌 공 20개에서 동시에 3개를 꺼낼 때</p>
+        </div>
+        <div class="tabbar">
+          <button class="btn on" id="tab1" onclick="setTab(1)">직접 세기</button>
+          <button class="btn" id="tab2" onclick="setTab(2)">여집합</button>
+        </div>
+      </header>
+
+      <div class="body grow">
+
+        <section class="viz">
+          <div><span class="tag" id="vizTag">자리 번호를 눌러 3개를 고르세요</span></div>
+
+          <div class="grid" id="grid">
+            <svg class="arrow-layer" viewBox="0 0 900 430" id="gsvg">
+              <defs>
+                <marker id="ahC" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+                  <path d="M0,0 L9,4.5 L0,9 z" class="arrow-head--coral"/>
+                </marker>
+              </defs>
+              <g id="glayer"></g>
+            </svg>
+          </div>
+
+          <div class="chips" id="chips"></div>
+        </section>
+
+        <aside class="deriv panel" id="deriv"></aside>
+
+      </div>
+
+      <footer class="row between">
+        <div class="dots" id="dots"></div>
+        <p class="hint"><span class="key">Space</span> 다음 · <span class="key">←</span> 이전 · <span class="key">R</span> 처음 · <span class="key">F</span> 전체화면</p>
+        <div class="row g16">
+          <button class="btn btn--dim" id="prev" onclick="go(-1)">
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+              <path fill="none" stroke="currentColor" stroke-width="2.6"
+                    stroke-linecap="round" stroke-linejoin="round" d="M15 5l-7 7 7 7"/>
+            </svg>
+            이전
+          </button>
+          <button class="btn btn--amber" id="next" onclick="go(1)">
+            다음
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+              <path fill="none" stroke="currentColor" stroke-width="2.6"
+                    stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+            </svg>
+          </button>
+          <button class="btn btn--teal" id="fs" onclick="toggleFS()" title="전체화면 (F)">
+            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+              <path id="fsIcon" fill="none" stroke="currentColor" stroke-width="2.4"
+                    stroke-linecap="round" stroke-linejoin="round"
+                    d="M4 9V4h5 M20 9V4h-5 M4 15v5h5 M20 15v5h-5"/>
+            </svg>
+            <span id="fsLabel">전체화면</span>
+          </button>
+        </div>
+      </footer>
+
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- 1) 16:9 스케일링 ---------- */
+const STAGE_W = 1600, STAGE_H = 900;
+const stage = document.getElementById('stage');
+let scale = 1;
+function fitStage(){
+  const vv = window.visualViewport;
+  const w = vv ? vv.width : window.innerWidth;
+  const h = vv ? vv.height : window.innerHeight;
+  scale = Math.min(w/STAGE_W, h/STAGE_H);
+  const x = Math.round((w - STAGE_W*scale)/2);
+  const y = Math.round((h - STAGE_H*scale)/2);
+  stage.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
+}
+function fitSoon(){ [0,60,300,700].forEach(t=>setTimeout(fitStage,t)); }
+fitSoon();
+window.addEventListener('load', fitSoon);
+window.addEventListener('resize', fitStage);
+window.addEventListener('orientationchange', fitSoon);
+if(window.visualViewport){
+  visualViewport.addEventListener('resize', fitStage);
+  visualViewport.addEventListener('scroll', fitStage);
+}
+document.addEventListener('fullscreenchange', fitSoon);
+
+/* ---------- 2) 기하 상수 ---------- */
+const COLS=10, COLW=90, R=38;
+const DY=30, R1=132, R2=330;         // 자리표 / 윗줄 / 아랫줄 중심 y
+const BR_T=176, BR_B=286, BR_M=231;  // 두 줄 사이 (괄호·화살표 구간)
+const cx = i => COLW*i + COLW/2;
+
+/* ---------- 3) 수식 조판 헬퍼 ---------- */
+const frac=(a,b)=>`<span class="frac"><span class="num">${a}</span><span class="den">${b}</span></span>`;
+const comb=(n,r)=>`<span class="comb is-num"><span class="pre">${n}</span><span class="sym">C</span><span class="post">${r}</span></span>`;
+const eq=' <span class="op">=</span> ', tim=' <span class="op">×</span> ';
+
+const STEPS = {
+  1:[
+    {lab:'전체 경우의 수', val: comb(20,3)+eq+'1140'},
+    {lab:'일의 자리 3개 고르기', val: comb(10,3)+eq+'<span class="hl-teal">120</span>'},
+    {lab:'고른 자리마다 공 1개씩', val:'2'+tim+'2'+tim+'2'+eq+'<span class="hl-amber">8</span>'},
+    {lab:'곱의 법칙', val:'120'+tim+'8'+eq+'<span class="hl-amber">960</span>'},
+    {lab:'구하는 확률', val: frac(960,1140)+eq+frac(16,19), ans:true}
+  ],
+  2:[
+    {lab:'전체 경우의 수', val: comb(20,3)+eq+'1140'},
+    {lab:'여사건 — 자리마다 공은 2개뿐', val:'<span class="hl-coral">같은 자리 2개</span> + 다른 1개', small:true},
+    {lab:'같은 자리 하나 고르기', val:'<span class="hl-coral">10</span>가지'},
+    {lab:'남은 18개에서 1개', val:'<span class="hl-coral">18</span>가지'},
+    {lab:'여사건의 경우의 수', val:'10'+tim+'18'+eq+'<span class="hl-coral">180</span>'},
+    {lab:'여사건의 확률', val: frac(180,1140)+eq+frac(3,19)},
+    {lab:'구하는 확률', val:'1 <span class="op">−</span> '+frac(3,19)+eq+frac(16,19), ans:true}
+  ]
+};
+
+/* ---------- 4) 상태 ---------- */
+let tab=1, s1=0, s2=0, busy=false;
+let selCols=[];                 // 탭1: 고른 자리(열)
+let selBall=new Map();          // 탭1: 열 -> 줄
+let pairCol=null, third=null;   // 탭2
+
+const step = ()=> tab===1 ? s1 : s2;
+const last = ()=> STEPS[tab].length-1;
+
+/* ---------- 5) 격자 만들기 ---------- */
+const grid=document.getElementById('grid');
+const glayer=document.getElementById('glayer');
+const balls={}, dtags={}, pills={};
+
+for(let c=0;c<COLS;c++){
+  const t=document.createElement('div');
+  t.className='node dtag';
+  t.style.left=(cx(c)-26)+'px'; t.style.top=(DY-26)+'px';
+  t.style.position='absolute';
+  t.textContent=(c+1)%10;
+  t.onclick=()=>onDigit(c);
+  grid.appendChild(t); dtags[c]=t;
+
+  [0,1].forEach(r=>{
+    const b=document.createElement('div');
+    b.className='node ball';
+    b.style.left=(cx(c)-R)+'px'; b.style.top=((r?R2:R1)-R)+'px';
+    b.textContent = r ? c+11 : c+1;
+    b.onclick=()=>onBall(c,r);
+    grid.appendChild(b); balls[c+'-'+r]=b;
+  });
+
+  const p=document.createElement('div');
+  p.className='pill';
+  p.style.left=cx(c)+'px'; p.style.top=BR_M+'px';
+  p.textContent='2가지';
+  grid.appendChild(p); pills[c]=p;
+}
+
+/* ---------- 6) 조작 ---------- */
+function onDigit(c){
+  if(busy) return;
+  if(tab===1){
+    const i=selCols.indexOf(c);
+    if(i>=0){ selCols.splice(i,1); selBall.delete(c); }
+    else if(selCols.length<3){ selCols.push(c); selCols.sort((a,b)=>a-b); }
+    else return bump(dtags[c]);
+    if(selCols.length===3){ if(s1<1) s1=1; }
+    else if(s1>0) s1=0;
+    if(selBall.size<3 && s1>1) s1=1;
+    draw();
+  } else {
+    setPair(c);
+  }
+}
+function onBall(c,r){
+  if(busy) return;
+  if(tab===1){
+    if(!selCols.includes(c)) return bump(balls[c+'-'+r]);
+    selBall.set(c,r);
+    if(selBall.size===3 && s1<2) s1=2;
+    draw();
+  } else {
+    if(pairCol===null) return bump(balls[c+'-'+r]);
+    if(c===pairCol) return;                 // 그 자리는 이미 '같은 두 개'
+    chase(c,r);
+  }
+}
+function setPair(c){
+  pairCol=c; third=null;
+  if(s2<2) s2=2; else if(s2>2) s2=2;
+  draw();
+}
+function bump(el){ el.classList.add('pop'); setTimeout(()=>el.classList.remove('pop'),430); }
+
+/* 남은 18개에 순서대로 불이 들어오다가 하나에서 멈춘다 */
+function chase(col,row){
+  const seq=[];
+  for(let c=0;c<COLS;c++){ if(c===pairCol) continue; seq.push(balls[c+'-0'],balls[c+'-1']); }
+  const idx=seq.indexOf(balls[col+'-'+row]);
+  if(idx<0) return;
+  busy=true; third=null; draw();
+  let i=0;
+  const t=setInterval(()=>{
+    if(i>0) seq[i-1].classList.remove('lit');
+    seq[i].classList.add('lit');
+    if(i===idx){
+      clearInterval(t);
+      seq[idx].classList.remove('lit');
+      third={c:col,r:row};
+      if(s2<3) s2=3;
+      busy=false; draw();
+    }
+    i++;
+  },55);
+}
+
+/* ---------- 7) 그리기 ---------- */
+function draw(){ drawGrid(); drawChips(); drawDeriv(); drawFoot(); }
+
+function drawGrid(){
+  glayer.innerHTML='';
+  Object.values(balls).forEach(b=>b.className='node ball');
+  Object.values(dtags).forEach(t=>t.className='node dtag');
+  Object.values(pills).forEach(p=>{p.classList.remove('on','is-coral');});
+
+  if(tab===1){
+    document.getElementById('vizTag').textContent =
+      selCols.length<3 ? '자리 번호를 눌러 3개를 고르세요'
+                       : '고른 자리마다 공을 하나씩 고르세요';
+    for(let c=0;c<COLS;c++){
+      dtags[c].classList.add('hot');
+      const on=selCols.includes(c);
+      if(on) dtags[c].classList.add('on');
+      [0,1].forEach(r=>{
+        const b=balls[c+'-'+r];
+        if(!on){ b.classList.add('off'); return; }
+        b.classList.add('hot','col-on');
+        if(selBall.has(c)) b.classList.toggle('pick', selBall.get(c)===r);
+        if(selBall.has(c) && selBall.get(c)!==r) b.classList.add('off');
+      });
+      if(on){
+        pills[c].classList.add('on');
+        pills[c].textContent = selBall.has(c) ? '2가지 중 1' : '2가지';
+        brace(cx(c));
+      }
+    }
+  } else {
+    document.getElementById('vizTag').textContent =
+      pairCol===null ? '일의 자리가 같아질 자리를 하나 고르세요'
+                     : '남은 18개 중에서 공 하나를 고르세요';
+    for(let c=0;c<COLS;c++){
+      dtags[c].classList.add('hot');
+      [0,1].forEach(r=>balls[c+'-'+r].classList.add('avail'));
+    }
+    if(pairCol!==null){
+      dtags[pairCol].classList.add('pairon');
+      balls[pairCol+'-0'].classList.add('pair');
+      balls[pairCol+'-1'].classList.add('pair');
+      pills[pairCol].classList.add('on','is-coral');
+      pills[pairCol].textContent='같다';
+      arc(cx(pairCol));
+      for(let c=0;c<COLS;c++) if(c!==pairCol)
+        [0,1].forEach(r=>balls[c+'-'+r].classList.add('hot'));
+    }
+    if(third) balls[third.c+'-'+third.r].classList.add('third');
+  }
+}
+function brace(x){
+  add(`M${x-14} ${BR_T} L${x} ${BR_T+12} L${x+14} ${BR_T}`,'arrow is-amber');
+  add(`M${x} ${BR_T+12} L${x} ${BR_B-12}`,'arrow is-ghost');
+  add(`M${x-14} ${BR_B} L${x} ${BR_B-12} L${x+14} ${BR_B}`,'arrow is-amber');
+}
+function arc(x){
+  const p=add(`M${x+4} ${BR_T} Q${x+50} ${BR_M} ${x+4} ${BR_B}`,'arrow is-coral is-draw');
+  p.setAttribute('marker-end','url(#ahC)');
+}
+function add(d,cls){
+  const p=document.createElementNS('http://www.w3.org/2000/svg','path');
+  p.setAttribute('d',d); p.setAttribute('class',cls);
+  glayer.appendChild(p); return p;
+}
+
+function drawChips(){
+  const el=document.getElementById('chips'); el.innerHTML='';
+  if(tab===1){
+    if(s1<1) return;
+    selCols.forEach((c,i)=>{
+      if(i) el.insertAdjacentHTML('beforeend','<span class="x">×</span>');
+      const pick=selBall.get(c);
+      const a=`<span class="num ${pick===0?'on':''}">${c+1}</span>`;
+      const b=`<span class="num ${pick===1?'on':''}">${c+11}</span>`;
+      el.insertAdjacentHTML('beforeend',
+        `<span class="chip">${a}<span class="or">또는</span>${b}</span>`);
+    });
+    if(s1>=2) el.insertAdjacentHTML('beforeend','<span class="eq">= 2³ = 8</span>');
+  } else {
+    if(pairCol===null) return;
+    el.insertAdjacentHTML('beforeend',
+      `<span class="chip"><span class="who">같은 자리</span>`+
+      `<span class="num coral">${pairCol+1}</span><span class="or">,</span>`+
+      `<span class="num coral">${pairCol+11}</span></span>`);
+    if(third) el.insertAdjacentHTML('beforeend',
+      `<span class="x">×</span><span class="chip"><span class="who">남은 18개 중</span>`+
+      `<span class="num on">${third.r?third.c+11:third.c+1}</span></span>`);
+    if(s2>=4) el.insertAdjacentHTML('beforeend','<span class="eq">= 10 × 18 = 180</span>');
+  }
+}
+
+function drawDeriv(){
+  const el=document.getElementById('deriv'); el.innerHTML='';
+  const arr=STEPS[tab], cur=step();
+  arr.slice(0,cur+1).forEach((s,i)=>{
+    const on = i===cur;
+    const cls = 'dv'+(on?' cur':'')+(on&&s.small?' small':'')+(on&&s.ans?' ans':'');
+    el.insertAdjacentHTML('beforeend',
+      `<div class="${cls}"><span class="lab">${s.lab}</span><span class="val m">${s.val}</span></div>`);
+  });
+}
+
+function drawFoot(){
+  const d=document.getElementById('dots'); d.innerHTML='';
+  STEPS[tab].forEach((s,i)=>
+    d.insertAdjacentHTML('beforeend',`<i class="${i<=step()?'on':''}"></i>`));
+  document.getElementById('prev').disabled = step()===0;
+  document.getElementById('next').disabled = step()===last();
+}
+
+/* ---------- 8) 단계 이동 (조작이 덜 됐으면 대신 해 준다) ---------- */
+function go(d){
+  if(busy) return;
+  if(d<0){ if(tab===1) s1=Math.max(0,s1-1); else s2=Math.max(0,s2-1); return draw(); }
+
+  if(tab===1){
+    if(s1===0 && selCols.length<3){ selCols=[0,3,7]; selBall.clear(); s1=1; return draw(); }
+    if(s1===1 && selBall.size<3){ selCols.forEach(c=>selBall.set(c,0)); s1=2; return draw(); }
+    s1=Math.min(last(),s1+1);
+  } else {
+    if(s2===1 && pairCol===null){ return setPair(2); }
+    if(s2===2 && !third){ return chase((pairCol+4)%10, 0); }
+    s2=Math.min(last(),s2+1);
+  }
+  draw();
+}
+
+function setTab(n){
+  if(busy) return;
+  tab=n;
+  document.getElementById('tab1').classList.toggle('on',n===1);
+  document.getElementById('tab2').classList.toggle('on',n===2);
+  draw();
+}
+function reset(){
+  if(busy) return;
+  if(tab===1){ s1=0; selCols=[]; selBall.clear(); }
+  else { s2=0; pairCol=null; third=null; }
+  draw();
+}
+
+/* ---------- 9) 전체화면 ---------- */
+const FS_OUT = 'M4 9V4h5 M20 9V4h-5 M4 15v5h5 M20 15v5h-5';   // 펼치기
+const FS_IN  = 'M9 4v5H4 M15 4v5h5 M9 20v-5H4 M15 20v-5h5';   // 창으로
+
+function isFS(){
+  return !!(document.fullscreenElement || document.webkitFullscreenElement);
+}
+function toggleFS(){
+  const el = document.documentElement;
+  if(isFS()){
+    (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+  } else {
+    const req = el.requestFullscreen || el.webkitRequestFullscreen;
+    if(req) req.call(el).catch(()=>{});
+  }
+}
+function syncFS(){
+  const on = isFS();
+  document.getElementById('fsIcon').setAttribute('d', on ? FS_IN : FS_OUT);
+  document.getElementById('fsLabel').textContent = on ? '창으로' : '전체화면';
+  const b = document.getElementById('fs');
+  b.title = on ? '창으로 돌아가기 (F)' : '전체화면 (F)';
+  fitSoon();
+}
+document.addEventListener('fullscreenchange', syncFS);
+document.addEventListener('webkitfullscreenchange', syncFS);
+
+window.addEventListener('keydown',e=>{
+  if(e.code==='Space'||e.code==='ArrowRight'||e.code==='PageDown'){e.preventDefault();go(1);}
+  if(e.code==='ArrowLeft'||e.code==='PageUp'){e.preventDefault();go(-1);}
+  if(e.key==='r'||e.key==='R') reset();
+  if(e.key==='f'||e.key==='F') toggleFS();
+  if(e.key==='1') setTab(1);
+  if(e.key==='2') setTab(2);
+});
+
+syncFS();
+draw();
+</script>
+</body>
+</html>
