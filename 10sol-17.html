@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>카드 합의 확률 · 확률과통계</title>
+<style>
+/* ============================================================================
+   chalk-stage 공통 스타일 (단일 파일 배포 원칙에 따라 인라인 포함)
+============================================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap');
+
+:root {
+  --bg-deep:      #0a1420;
+  --bg:           #0e1b2b;
+  --panel:        #16283e;
+  --panel-2:      #1d3350;
+  --line:         rgba(214, 229, 245, .18);
+  --line-strong:  rgba(214, 229, 245, .38);
+
+  --chalk:        #eaf1f8;
+  --chalk-soft:   #b9cadd;
+  --chalk-faint:  #7d94ad;
+
+  --amber:        #f5b642;
+  --coral:        #ff7d6a;
+  --teal:         #49d1c0;
+  --violet:       #9d8cf5;
+
+  --amber-dim:    rgba(245, 182,  66, .16);
+  --coral-dim:    rgba(255, 125, 106, .16);
+  --teal-dim:     rgba( 73, 209, 192, .16);
+  --violet-dim:   rgba(157, 140, 245, .16);
+
+  --f-en: 'Space Grotesk';
+  --f-kr: 'Noto Sans KR';
+  --t-hero:   76px;
+  --t-title:  54px;
+  --t-h2:     40px;
+  --t-body:   32px;
+  --t-small:  26px;
+  --t-tag:    22px;
+
+  --r-s: 10px;
+  --r-m: 18px;
+  --r-l: 28px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  height: 100%; margin: 0; padding: 0;
+  overflow: hidden;
+  background: var(--bg-deep);
+  overscroll-behavior: none;
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  color: var(--chalk);
+  font-family: var(--f-en), var(--f-kr), system-ui, sans-serif;
+  font-size: var(--t-body);
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.viewport { position: fixed; inset: 0; overflow: hidden; background: var(--bg-deep); }
+
+.stage {
+  position: absolute; top: 0; left: 0;
+  width: 1600px; height: 900px;
+  transform-origin: 0 0;
+  will-change: transform;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 90% at 18% 8%, #16273b 0%, rgba(22,39,59,0) 60%),
+    radial-gradient(100% 80% at 92% 96%, #142335 0%, rgba(20,35,53,0) 62%),
+    var(--bg);
+}
+.stage::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background:
+    repeating-linear-gradient(115deg, rgba(255,255,255,.014) 0 2px, rgba(255,255,255,0) 2px 7px),
+    radial-gradient(130% 110% at 50% 45%, rgba(0,0,0,0) 55%, rgba(0,0,0,.34) 100%);
+}
+
+/* 세로 3분할: 머리말(고정) / 본문(가변) / 발판(고정) */
+.sheet {
+  position: relative; z-index: 1;
+  width: 100%; height: 100%;
+  padding: 30px 40px 26px;
+  display: flex; flex-direction: column; gap: 18px;
+}
+
+.app-head {
+  flex: 0 0 auto;
+  display: flex; align-items: flex-end; justify-content: space-between; gap: 24px;
+  padding-bottom: 14px; border-bottom: 2px solid var(--line);
+}
+.app-title { margin: 0; font-size: var(--t-title); font-weight: 700; letter-spacing: -.02em; line-height: 1.1; }
+.app-sub   { margin: 6px 0 0; font-size: var(--t-small); font-weight: 400; color: var(--chalk-soft); }
+
+/* 문항 식별자 — 조작 대상이 아니므로 버튼처럼 보이지 않게 처리 */
+.stamp {
+  display: inline-block; margin-right: 14px;
+  padding: 2px 0 2px 0;
+  color: var(--amber); font-size: var(--t-title); font-weight: 700;
+  letter-spacing: -.02em; vertical-align: baseline;
+}
+
+.panel { position: relative; padding: 26px 30px; border: 2px solid var(--line); border-radius: var(--r-l); background: var(--panel); }
+.panel--raise { background: var(--panel-2); border-color: var(--line-strong); }
+.panel--tight { padding: 18px 20px; border-radius: var(--r-m); }
+
+.result {
+  padding: 18px 30px; border: 3px solid var(--amber); border-radius: var(--r-l);
+  background: var(--amber-dim); font-weight: 600; text-align: center;
+}
+.result.is-teal  { border-color: var(--teal);  background: var(--teal-dim); }
+.result.is-coral { border-color: var(--coral); background: var(--coral-dim); }
+
+.tag {
+  display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px;
+  border: 2px solid var(--line-strong); border-radius: 999px;
+  font-size: var(--t-tag); font-weight: 500; color: var(--chalk-soft);
+  white-space: nowrap;
+}
+.tag.is-amber  { border-color: var(--amber);  color: var(--amber);  background: var(--amber-dim); }
+.tag.is-coral  { border-color: var(--coral);  color: var(--coral);  background: var(--coral-dim); }
+.tag.is-teal   { border-color: var(--teal);   color: var(--teal);   background: var(--teal-dim); }
+.tag.is-violet { border-color: var(--violet); color: var(--violet); background: var(--violet-dim); }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 13px 28px; border: 2px solid var(--line-strong); border-radius: 999px;
+  background: transparent; color: var(--chalk); font-family: inherit;
+  font-size: var(--t-small); font-weight: 600; cursor: pointer;
+  transition: background .18s ease, border-color .18s ease, color .18s ease, opacity .18s ease;
+}
+.btn:hover  { background: rgba(255, 255, 255, .07); }
+.btn:active { transform: translateY(1px); }
+.btn--amber { border-color: var(--amber); color: var(--amber); }
+.btn--amber:hover { background: var(--amber-dim); }
+.btn--teal  { border-color: var(--teal); color: var(--teal); }
+.btn--teal:hover { background: var(--teal-dim); }
+.btn--violet { border-color: var(--violet); color: var(--violet); }
+.btn--violet:hover { background: var(--violet-dim); }
+.btn[disabled] { opacity: .3; cursor: default; }
+.btn[disabled]:hover { background: transparent; }
+.btn svg { width: 22px; height: 22px; flex: none; }
+
+:where(button, [tabindex]):focus-visible { outline: 3px solid var(--amber); outline-offset: 4px; }
+
+.dots { display: flex; gap: 12px; align-items: center; }
+.dots i { width: 14px; height: 14px; border-radius: 50%; background: var(--line-strong); transition: background .2s ease, transform .2s ease; }
+.dots i.on { background: var(--amber); transform: scale(1.25); }
+
+.step { opacity: 0; transform: translateY(12px); transition: opacity .3s ease, transform .3s ease; pointer-events: none; }
+.step.on { opacity: 1; transform: none; pointer-events: auto; }
+
+@keyframes pop { 0%{transform:scale(1);} 45%{transform:scale(1.14);} 100%{transform:scale(1);} }
+.pop { animation: pop .42s ease; }
+
+/* 수식 조판 */
+.m { font-family: var(--f-en), var(--f-kr), serif; font-variant-numeric: tabular-nums; white-space: nowrap; line-height: 1.15; }
+.var { font-style: italic; }
+.op  { margin: 0 .22em; }
+.frac { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; margin: 0 .2em; transform: translateY(-.06em); line-height: 1.02; }
+.frac > .num { padding: 0 .32em .05em; }
+.frac > .den { padding: .07em .32em 0; border-top: .07em solid currentColor; }
+
+.hl-amber  { color: var(--amber);  }
+.hl-coral  { color: var(--coral);  }
+.hl-teal   { color: var(--teal);   }
+.hl-violet { color: var(--violet); }
+.hl-dim    { color: var(--chalk-faint); }
+
+/* 배치 유틸 */
+.row  { display: flex; align-items: center; }
+.col  { display: flex; flex-direction: column; }
+.between { justify-content: space-between; }
+.center  { justify-content: center; align-items: center; }
+.grow  { flex: 1 1 auto; min-height: 0; min-width: 0; }
+.g8  { gap: 8px;  }
+.g12 { gap: 12px; }
+.g16 { gap: 16px; }
+.g24 { gap: 24px; }
+
+.cols-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; min-height: 0; }
+.cols-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; min-height: 0; }
+
+.t-title { font-size: var(--t-title); font-weight: 700; }
+.t-h2    { font-size: var(--t-h2);    font-weight: 600; }
+.t-body  { font-size: var(--t-body);  }
+.t-small { font-size: var(--t-small); color: var(--chalk-soft); }
+.t-tag   { font-size: var(--t-tag);   color: var(--chalk-faint); }
+
+@media (prefers-reduced-motion: reduce) {
+  .step, .btn, .dots i { transition-duration: .01ms !important; }
+  .pop { animation: none !important; }
+}
+
+/* ============================================================================
+   이 앱 전용 스타일
+============================================================================ */
+
+/* 상단 탭 */
+.tabnav .btn { padding: 11px 24px; font-size: var(--t-tag); }
+.tabnav .btn.is-active { background: var(--amber-dim); border-color: var(--amber); color: var(--amber); }
+
+/* 본문 패널 (탭 전환 대상) */
+.panelWrap { display: flex; flex-direction: column; gap: 18px; flex: 1 1 auto; min-height: 0; }
+.panelWrap[hidden] { display: none; }
+
+/* ① 실물 카드 */
+.pcardsRow { display: flex; gap: 16px; }
+.pcard {
+  width: 108px; height: 150px; border-radius: var(--r-m);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--f-en); font-weight: 700; font-size: 56px; line-height: 1;
+  border: 3px solid var(--line-strong); background: var(--panel);
+  cursor: pointer; user-select: none; transition: box-shadow .15s;
+}
+.pcard:hover { box-shadow: 0 0 0 4px rgba(255,255,255,.14); }
+.pcard.suit-violet { border-color: var(--violet); color: var(--violet); background: var(--violet-dim); }
+.pcard.suit-amber  { border-color: var(--amber);  color: var(--amber);  background: var(--amber-dim); }
+.pcard.flip { animation: pcardFlip .46s ease; }
+@keyframes pcardFlip { 0%{transform:rotateY(0);} 50%{transform:rotateY(90deg);} 100%{transform:rotateY(0);} }
+
+/* ② 미니 카드 */
+.pcardsRow--sm { gap: 8px; }
+.pcard-sm {
+  width: 54px; height: 76px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--f-en); font-weight: 700; font-size: 28px; line-height: 1;
+  border: 2px solid var(--line-strong);
+}
+.pcard-sm.suit-violet { border-color: var(--violet); color: var(--violet); background: var(--violet-dim); }
+.pcard-sm.suit-amber  { border-color: var(--amber);  color: var(--amber);  background: var(--amber-dim); }
+.pcard-sm.hi { box-shadow: 0 0 0 4px var(--coral); }
+
+/* 경우의 수 막대 */
+.posbars { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; height: 24px; align-items: center; }
+.posbar { display: flex; gap: 3px; opacity: 0; transform: scale(.6); transition: opacity .22s ease, transform .22s ease; }
+.posbar.show { opacity: 1; transform: scale(1); }
+.possq { width: 11px; height: 20px; border-radius: 3px; background: rgba(255,255,255,.16); }
+.possq.hi { background: var(--coral); }
+
+/* 여사건 유형 카드 */
+.caseCol { display: flex; flex-direction: column; align-items: center; gap: 12px; min-height: 0; }
+.caseCard {
+  width: 100%; flex: 1 1 auto; min-height: 0; overflow: hidden;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+  cursor: pointer; transition: border-color .15s, box-shadow .15s;
+}
+.caseCard:hover { border-color: var(--amber); }
+.caseCard.is-live { border-color: var(--amber); box-shadow: 0 0 0 5px var(--amber-dim); }
+.caseCard.is-revealed { border-color: var(--coral); }
+
+.caseFoot {
+  width: 100%; margin-top: auto; padding-top: 14px;
+  border-top: 1px dashed var(--line);
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.caseCountVal { font-family: var(--f-en); font-weight: 700; font-size: 46px; line-height: 1.1; color: var(--chalk-faint); }
+.caseCard.is-revealed .caseCountVal { color: var(--coral); }
+.caseFormula { font-size: var(--t-tag); color: var(--chalk-soft); text-align: center; margin: 0; height: 30px; }
+
+/* 발판 (하단 조작 버튼) */
+.app-foot {
+  flex: 0 0 auto;
+  display: flex; align-items: center; justify-content: space-between; gap: 20px;
+  padding-top: 14px; border-top: 2px solid var(--line);
+}
+</style>
+</head>
+<body>
+
+<div class="viewport">
+  <div class="stage" id="stage">
+    <div class="sheet">
+
+      <!-- ===================== 머리말 ===================== -->
+      <header class="app-head">
+        <div>
+          <h1 class="app-title"><span class="stamp">10-17</span>카드 합의 확률</h1>
+          <p class="app-sub">파란 카드 4번 · 노란 카드 3번 — 윗면의 합이 14보다 클 확률</p>
+        </div>
+        <nav class="tabnav row g12">
+          <button class="btn is-active" data-tab="A">① 카드 던지기</button>
+          <button class="btn" data-tab="B">② 여사건 3가지</button>
+        </nav>
+      </header>
+
+      <!-- ===================== ① 카드 던지기 ===================== -->
+      <div class="panelWrap" id="panelA">
+        <div class="cols-2 grow">
+          <div class="panel panel--raise col center g16">
+            <span class="tag is-violet">파란 카드 &nbsp;1 / 2 &nbsp;·&nbsp; 4번</span>
+            <div class="pcardsRow" id="blueCards"></div>
+            <p class="m t-body hl-dim" style="margin:0;">
+              기본 <span class="hl-violet">1×4 = 4</span> <span class="op">+</span> <span class="var hl-violet">k</span> &nbsp;(2가 나온 횟수)
+            </p>
+            <p class="m t-h2" style="margin:0;">
+              파랑 합 = 4 + <span class="var">k</span> = <span class="hl-violet" id="blueSumVal">4</span>
+            </p>
+          </div>
+
+          <div class="panel panel--raise col center g16">
+            <span class="tag is-amber">노란 카드 &nbsp;3 / 4 &nbsp;·&nbsp; 3번</span>
+            <div class="pcardsRow" id="yellowCards"></div>
+            <p class="m t-body hl-dim" style="margin:0;">
+              기본 <span class="hl-amber">3×3 = 9</span> <span class="op">+</span> <span class="var hl-amber">m</span> &nbsp;(4가 나온 횟수)
+            </p>
+            <p class="m t-h2" style="margin:0;">
+              노랑 합 = 9 + <span class="var">m</span> = <span class="hl-amber" id="yellowSumVal">9</span>
+            </p>
+          </div>
+        </div>
+
+        <div class="result row between" id="totalResult">
+          <p class="m t-title" style="margin:0;">
+            총합 = 13 + <span class="var hl-violet" id="kVal">0</span> + <span class="var hl-amber" id="mVal">0</span> = <span id="totalVal">13</span>
+          </p>
+          <span class="tag" id="verdict" style="font-size:var(--t-small); padding:10px 22px;">합 &gt; 14 ?</span>
+        </div>
+      </div>
+
+      <!-- ===================== ② 여사건 3가지 ===================== -->
+      <div class="panelWrap" id="panelB" hidden>
+        <div class="cols-3 grow">
+
+          <div class="caseCol">
+            <span class="tag is-coral">유형 1 &nbsp;·&nbsp; 합 = 13</span>
+            <div class="panel panel--tight caseCard" data-case="1">
+              <div class="pcardsRow pcardsRow--sm" id="case1Blue"></div>
+              <div class="pcardsRow pcardsRow--sm" id="case1Yellow" style="margin-top:8px;"></div>
+              <div class="caseFoot">
+                <span class="t-tag">경우의 수</span>
+                <span class="caseCountVal" id="case1Count">?</span>
+                <p class="caseFormula step" id="case1Formula">전부 기본값 → 1가지</p>
+                <div class="posbars" id="case1Bars"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="caseCol">
+            <span class="tag is-coral">유형 2 &nbsp;·&nbsp; 합 = 14</span>
+            <div class="panel panel--tight caseCard" data-case="2">
+              <div class="pcardsRow pcardsRow--sm" id="case2Blue"></div>
+              <div class="pcardsRow pcardsRow--sm" id="case2Yellow" style="margin-top:8px;"></div>
+              <div class="caseFoot">
+                <span class="t-tag">경우의 수</span>
+                <span class="caseCountVal" id="case2Count">?</span>
+                <p class="caseFormula step" id="case2Formula">2가 나올 자리 선택 → 4가지</p>
+                <div class="posbars" id="case2Bars"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="caseCol">
+            <span class="tag is-coral">유형 3 &nbsp;·&nbsp; 합 = 14</span>
+            <div class="panel panel--tight caseCard" data-case="3">
+              <div class="pcardsRow pcardsRow--sm" id="case3Blue"></div>
+              <div class="pcardsRow pcardsRow--sm" id="case3Yellow" style="margin-top:8px;"></div>
+              <div class="caseFoot">
+                <span class="t-tag">경우의 수</span>
+                <span class="caseCountVal" id="case3Count">?</span>
+                <p class="caseFormula step" id="case3Formula">4가 나올 자리 선택 → 3가지</p>
+                <div class="posbars" id="case3Bars"></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="result row between" id="calcResult">
+          <p class="m t-h2" style="margin:0;">
+            여사건 <span class="hl-coral" id="sumTerms">?</span>
+            <span class="op">→</span>
+            P = <span class="frac hl-coral" id="pFail"><span class="num">0</span><span class="den">128</span></span>
+          </p>
+          <p class="m t-h2" style="margin:0;">
+            1 <span class="op">−</span>
+            <span class="frac hl-coral" id="pFail2"><span class="num">0</span><span class="den">128</span></span>
+            <span class="op">=</span>
+            <span class="frac hl-teal" id="finalFrac"><span class="num">?</span><span class="den">?</span></span>
+          </p>
+        </div>
+      </div>
+
+      <!-- ===================== 발판 : 조작 버튼 ===================== -->
+      <footer class="app-foot">
+        <div class="dots" id="dots"></div>
+
+        <div class="row g12">
+          <button class="btn" id="prevBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            이전
+          </button>
+          <button class="btn btn--amber" id="nextBtn">
+            다음
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+          <button class="btn btn--violet" id="tossBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 4v6h6"/><path d="M20 20v-6h-6"/><path d="M5.5 15a8 8 0 0013.9 3.3M18.5 9A8 8 0 004.6 5.7"/></svg>
+            카드 던지기
+          </button>
+          <button class="btn btn--teal" id="fsBtn">
+            <svg id="fsIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+            <span id="fsLabel">전체화면</span>
+          </button>
+        </div>
+      </footer>
+
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+/* ---------------------------------------------------------------------------
+   1) 16:9 스케일링 — TV/미러링 환경에서 여백 없이 꽉 채우기
+--------------------------------------------------------------------------- */
+const STAGE_W = 1600, STAGE_H = 900;
+const stage = document.getElementById('stage');
+let scale = 1;
+
+function fitStage() {
+  const vv = window.visualViewport;
+  const w = vv ? vv.width  : window.innerWidth;
+  const h = vv ? vv.height : window.innerHeight;
+  scale = Math.min(w / STAGE_W, h / STAGE_H);
+  const x = Math.round((w - STAGE_W * scale) / 2);
+  const y = Math.round((h - STAGE_H * scale) / 2);
+  stage.style.transform = 'translate(' + x + 'px, ' + y + 'px) scale(' + scale + ')';
+}
+function fitSoon() { [0, 60, 300, 700].forEach(function (t) { setTimeout(fitStage, t); }); }
+
+fitSoon();
+window.addEventListener('load', fitSoon);
+window.addEventListener('resize', fitStage);
+window.addEventListener('orientationchange', fitSoon);
+if (window.visualViewport) {
+  visualViewport.addEventListener('resize', fitStage);
+  visualViewport.addEventListener('scroll', fitStage);
+}
+document.addEventListener('fullscreenchange', fitSoon);
+
+/* ---------------------------------------------------------------------------
+   2) 전체화면
+--------------------------------------------------------------------------- */
+const fsBtn = document.getElementById('fsBtn');
+const fsLabel = document.getElementById('fsLabel');
+const fsIcon = document.getElementById('fsIcon');
+
+const ICON_ENTER = '<path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>';
+const ICON_EXIT  = '<path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M16 3v3a2 2 0 0 0 2 2h3"/><path d="M8 21v-3a2 2 0 0 0-2-2H3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/>';
+
+function isFullscreen() {
+  return !!(document.fullscreenElement || document.webkitFullscreenElement);
+}
+
+function syncFsButton() {
+  const on = isFullscreen();
+  fsLabel.textContent = on ? '창으로' : '전체화면';
+  fsIcon.innerHTML = on ? ICON_EXIT : ICON_ENTER;
+  fsBtn.title = on ? '전체화면 해제' : '전체화면으로 보기';
+}
+
+function toggleFullscreen() {
+  if (!isFullscreen()) {
+    const el = document.documentElement;
+    const req = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (req) { Promise.resolve(req.call(el)).catch(function () {}); }
+  } else {
+    const exit = document.exitFullscreen || document.webkitExitFullscreen;
+    if (exit) { Promise.resolve(exit.call(document)).catch(function () {}); }
+  }
+  // 이벤트가 오지 않는 브라우저 대비
+  setTimeout(syncFsButton, 120);
+}
+
+fsBtn.addEventListener('click', toggleFullscreen);
+document.addEventListener('fullscreenchange', syncFsButton);
+document.addEventListener('webkitfullscreenchange', syncFsButton);
+syncFsButton();
+
+/* ---------------------------------------------------------------------------
+   3) 상태 & 단계
+   step 0 : ① 카드 던지기
+   step 1 : ② 여사건 화면 (아직 공개 없음)
+   step 2 : 유형 1 공개
+   step 3 : 유형 2 공개
+   step 4 : 유형 3 공개 → 최종 확률
+--------------------------------------------------------------------------- */
+const LAST_STEP = 4;
+let idx = 0;
+
+const panelA = document.getElementById('panelA');
+const panelB = document.getElementById('panelB');
+const tabBtns = document.querySelectorAll('.tabnav .btn');
+const dotsEl = document.getElementById('dots');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+
+for (let i = 0; i <= LAST_STEP; i++) dotsEl.appendChild(document.createElement('i'));
+const dots = Array.prototype.slice.call(dotsEl.children);
+
+function showTab(tab) {
+  panelA.hidden = (tab !== 'A');
+  panelB.hidden = (tab !== 'B');
+  tabBtns.forEach(function (b) { b.classList.toggle('is-active', b.dataset.tab === tab); });
+  if (tab === 'B') highlightLiveCase();
+}
+
+function renderStep() {
+  showTab(idx === 0 ? 'A' : 'B');
+  dots.forEach(function (d, i) { d.classList.toggle('on', i <= idx); });
+  prevBtn.disabled = (idx === 0);
+  nextBtn.disabled = (idx === LAST_STEP);
+}
+
+function goStep(delta) {
+  const target = Math.max(0, Math.min(LAST_STEP, idx + delta));
+  if (target === idx) return;
+
+  if (target > idx) {
+    // 앞으로: 해당 단계까지의 유형을 차례로 공개
+    idx = target;
+    renderStep();
+    for (let id = 1; id <= 3; id++) if (idx >= id + 1) revealCase(id);
+  } else {
+    // 뒤로: 단계보다 뒤에 있는 유형은 다시 감춘다
+    idx = target;
+    renderStep();
+    for (let id = 3; id >= 1; id--) if (idx < id + 1) hideCase(id);
+  }
+}
+
+prevBtn.addEventListener('click', function () { goStep(-1); });
+nextBtn.addEventListener('click', function () { goStep(1); });
+
+tabBtns.forEach(function (b) {
+  b.addEventListener('click', function () {
+    if (b.dataset.tab === 'A') { idx = 0; }
+    else if (idx === 0) { idx = 1; }
+    renderStep();
+  });
+});
+
+/* ---------------------------------------------------------------------------
+   4) ① 카드 던지기
+--------------------------------------------------------------------------- */
+const blueFaces = [1, 1, 1, 1];
+const yellowFaces = [3, 3, 3];
+const blueCardsEl = document.getElementById('blueCards');
+const yellowCardsEl = document.getElementById('yellowCards');
+
+function renderCards() {
+  blueCardsEl.innerHTML = '';
+  blueFaces.forEach(function (f, i) {
+    const d = document.createElement('div');
+    d.className = 'pcard suit-violet';
+    d.textContent = f;
+    d.addEventListener('click', function () { flipOne('blue', i, false); });
+    blueCardsEl.appendChild(d);
+  });
+  yellowCardsEl.innerHTML = '';
+  yellowFaces.forEach(function (f, i) {
+    const d = document.createElement('div');
+    d.className = 'pcard suit-amber';
+    d.textContent = f;
+    d.addEventListener('click', function () { flipOne('yellow', i, false); });
+    yellowCardsEl.appendChild(d);
+  });
+}
+
+function flipOne(color, i, silent) {
+  const arr = (color === 'blue') ? blueFaces : yellowFaces;
+  const el = (color === 'blue' ? blueCardsEl : yellowCardsEl).children[i];
+  const opts = (color === 'blue') ? [1, 2] : [3, 4];
+  const newVal = opts[Math.floor(Math.random() * 2)];
+  el.classList.remove('flip');
+  void el.offsetWidth;
+  el.classList.add('flip');
+  setTimeout(function () { arr[i] = newVal; el.textContent = newVal; }, 230);
+  if (!silent) setTimeout(update, 460);
+}
+
+function tossAll() {
+  if (idx !== 0) { idx = 0; renderStep(); }
+  blueFaces.forEach(function (_, i) { flipOne('blue', i, true); });
+  yellowFaces.forEach(function (_, i) { flipOne('yellow', i, true); });
+  setTimeout(update, 480);
+}
+document.getElementById('tossBtn').addEventListener('click', tossAll);
+
+function update() {
+  const k = blueFaces.filter(function (f) { return f === 2; }).length;
+  const m = yellowFaces.filter(function (f) { return f === 4; }).length;
+  const total = 13 + k + m;
+
+  document.getElementById('blueSumVal').textContent = 4 + k;
+  document.getElementById('yellowSumVal').textContent = 9 + m;
+  document.getElementById('kVal').textContent = k;
+  document.getElementById('mVal').textContent = m;
+  document.getElementById('totalVal').textContent = total;
+
+  const totalResult = document.getElementById('totalResult');
+  const verdict = document.getElementById('verdict');
+  if (total > 14) {
+    totalResult.className = 'result row between is-teal';
+    verdict.className = 'tag is-teal';
+    verdict.textContent = '예, ' + total + ' > 14';
+  } else {
+    totalResult.className = 'result row between is-coral';
+    verdict.className = 'tag is-coral';
+    verdict.textContent = '아니오, ' + total + ' ≤ 14';
+  }
+
+  liveK = k;
+  liveM = m;
+  highlightLiveCase();
+}
+
+/* ---------------------------------------------------------------------------
+   5) ② 여사건 3가지
+--------------------------------------------------------------------------- */
+let liveK = 0, liveM = 0;
+
+const CASES = {
+  1: { blue: [1, 1, 1, 1], yellow: [3, 3, 3], hiSide: null,     hiIdx: -1, count: 1, k: 0, m: 0 },
+  2: { blue: [1, 1, 1, 2], yellow: [3, 3, 3], hiSide: 'blue',   hiIdx: 3,  count: 4, k: 1, m: 0 },
+  3: { blue: [1, 1, 1, 1], yellow: [3, 3, 4], hiSide: 'yellow', hiIdx: 2,  count: 3, k: 0, m: 1 }
+};
+const revealed = { 1: false, 2: false, 3: false };
+const timers = { 1: [], 2: [], 3: [] };
+
+function renderCaseCards() {
+  [1, 2, 3].forEach(function (id) {
+    const c = CASES[id];
+    const blueEl = document.getElementById('case' + id + 'Blue');
+    const yellowEl = document.getElementById('case' + id + 'Yellow');
+    blueEl.innerHTML = '';
+    yellowEl.innerHTML = '';
+    c.blue.forEach(function (v, i) {
+      const d = document.createElement('div');
+      d.className = 'pcard-sm suit-violet' + ((c.hiSide === 'blue' && i === c.hiIdx) ? ' hi' : '');
+      d.textContent = v;
+      blueEl.appendChild(d);
+    });
+    c.yellow.forEach(function (v, i) {
+      const d = document.createElement('div');
+      d.className = 'pcard-sm suit-amber' + ((c.hiSide === 'yellow' && i === c.hiIdx) ? ' hi' : '');
+      d.textContent = v;
+      yellowEl.appendChild(d);
+    });
+  });
+}
+
+function makePosBars(total, wrap) {
+  wrap.innerHTML = '';
+  const bars = [];
+  for (let hi = 0; hi < total; hi++) {
+    const bar = document.createElement('div');
+    bar.className = 'posbar';
+    for (let i = 0; i < total; i++) {
+      const sq = document.createElement('div');
+      sq.className = 'possq' + (i === hi ? ' hi' : '');
+      bar.appendChild(sq);
+    }
+    wrap.appendChild(bar);
+    bars.push(bar);
+  }
+  return bars;
+}
+
+function clearTimers(id) {
+  timers[id].forEach(clearTimeout);
+  timers[id] = [];
+}
+function later(id, fn, ms) { timers[id].push(setTimeout(fn, ms)); }
+
+function revealCase(id) {
+  if (revealed[id]) return;
+  revealed[id] = true;
+  clearTimers(id);
+
+  const c = CASES[id];
+  const cardEl = document.querySelector('.caseCard[data-case="' + id + '"]');
+  const countEl = document.getElementById('case' + id + 'Count');
+  const formulaEl = document.getElementById('case' + id + 'Formula');
+  const barsEl = document.getElementById('case' + id + 'Bars');
+
+  cardEl.classList.add('is-revealed');
+
+  const bars = makePosBars(c.count, barsEl);
+  bars.forEach(function (bar, i) { later(id, function () { bar.classList.add('show'); }, i * 160); });
+
+  countEl.textContent = '0';
+  for (let n = 1; n <= c.count; n++) {
+    (function (val) {
+      later(id, function () {
+        countEl.textContent = val;
+        if (val === c.count) {
+          countEl.classList.add('pop');
+          later(id, function () { countEl.classList.remove('pop'); }, 450);
+        }
+      }, 120 + (n - 1) * 160);
+    })(n);
+  }
+
+  later(id, function () { formulaEl.classList.add('on'); }, c.count * 160 + 150);
+  later(id, updateSummary, c.count * 160 + 200);
+
+  // 카드를 직접 눌러 공개한 경우에도 단계 표시가 따라오게 한다
+  const revealedCount = [1, 2, 3].filter(function (i) { return revealed[i]; }).length;
+  if (idx < revealedCount + 1) { idx = revealedCount + 1; renderStep(); }
+}
+
+function hideCase(id) {
+  if (!revealed[id]) return;
+  revealed[id] = false;
+  clearTimers(id);
+
+  document.querySelector('.caseCard[data-case="' + id + '"]').classList.remove('is-revealed');
+  document.getElementById('case' + id + 'Count').textContent = '?';
+  document.getElementById('case' + id + 'Bars').innerHTML = '';
+  document.getElementById('case' + id + 'Formula').classList.remove('on');
+  updateSummary();
+}
+
+function gcd(a, b) { return b === 0 ? a : gcd(b, a % b); }
+
+function updateSummary() {
+  let sum = 0;
+  const terms = [];
+  [1, 2, 3].forEach(function (id) {
+    if (revealed[id]) { sum += CASES[id].count; terms.push(CASES[id].count); }
+  });
+
+  document.getElementById('sumTerms').textContent =
+    terms.length ? terms.join(' + ') + ' = ' + sum : '?';
+
+  const frac = '<span class="num">' + sum + '</span><span class="den">128</span>';
+  document.getElementById('pFail').innerHTML = frac;
+  document.getElementById('pFail2').innerHTML = frac;
+
+  const finalFrac = document.getElementById('finalFrac');
+  const calcResult = document.getElementById('calcResult');
+  if (sum > 0) {
+    const success = 128 - sum;
+    const g = gcd(success, 128);
+    finalFrac.innerHTML = '<span class="num">' + (success / g) + '</span><span class="den">' + (128 / g) + '</span>';
+  } else {
+    finalFrac.innerHTML = '<span class="num">?</span><span class="den">?</span>';
+  }
+  calcResult.className = (sum === 8) ? 'result row between is-teal' : 'result row between';
+}
+
+function highlightLiveCase() {
+  document.querySelectorAll('.caseCard').forEach(function (cardEl) {
+    const c = CASES[+cardEl.dataset.case];
+    cardEl.classList.toggle('is-live', c.k === liveK && c.m === liveM);
+  });
+}
+
+document.querySelectorAll('.caseCard').forEach(function (cardEl) {
+  cardEl.addEventListener('click', function () { revealCase(+cardEl.dataset.case); });
+});
+
+/* ---------------------------------------------------------------------------
+   init
+--------------------------------------------------------------------------- */
+renderCards();
+renderCaseCards();
+update();
+updateSummary();
+renderStep();
+</script>
+</body>
+</html>
