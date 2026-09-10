@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>사차함수와 절댓값의 미분가능성 — 수업용</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--bg:#0d1425;--panel:#16203a;--line:#2c3a63;--txt:#e9eefb;--dim:#93a3c6;
+      --amber:#fbbf24;--coral:#fb7185;--teal:#2dd4bf;--violet:#a78bfa}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg)}
+body{font-family:'Space Grotesk','Noto Sans KR',sans-serif;color:var(--txt)}
+#stage{position:absolute;left:0;top:0;width:1600px;height:900px;transform-origin:0 0;
+  background:radial-gradient(1200px 700px at 20% -10%,#1a2544 0%,var(--bg) 60%);
+  display:flex;flex-direction:column;padding:16px 30px 18px}
+i{font-style:italic;font-family:Arial,Helvetica,'Noto Sans KR',sans-serif;font-weight:600;letter-spacing:.3px}
+
+header{display:flex;align-items:center;gap:20px;flex:0 0 auto;margin-bottom:12px}
+.ttl{font-size:25px;font-weight:700;letter-spacing:-.3px}
+.ttl b{color:var(--amber)}
+.tabs{display:flex;gap:8px;margin-left:auto}
+.tab{padding:9px 20px;border-radius:11px;background:#1a2440;border:2px solid var(--line);
+  color:var(--dim);font-size:19px;font-weight:700;cursor:pointer;transition:.18s;font-family:inherit}
+.tab.on{background:var(--amber);border-color:var(--amber);color:#241a00}
+
+/* 전체화면 버튼 (추가) */
+.fsbtn{display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border-radius:11px;
+  background:#1a2440;border:2px solid var(--teal);color:var(--teal);font-size:19px;font-weight:700;
+  cursor:pointer;font-family:inherit;transition:.18s;white-space:nowrap}
+.fsbtn:hover{background:rgba(45,212,191,.14)}
+.fsbtn svg{width:22px;height:22px;flex:none}
+
+main{flex:1;position:relative}
+.panel{position:absolute;inset:0;display:none;padding-bottom:58px}
+.panel.on{display:flex;gap:18px}
+.card{background:var(--panel);border:2px solid var(--line);border-radius:18px;padding:20px 24px}
+.rv{opacity:0;transform:translateY(16px);transition:opacity .4s,transform .4s}
+.rv.on{opacity:1;transform:none}
+.next{position:absolute;right:0;bottom:0;padding:11px 30px;border-radius:13px;border:none;
+  background:var(--teal);color:#04302a;font-size:21px;font-weight:700;cursor:pointer;font-family:inherit;
+  box-shadow:0 6px 18px rgba(45,212,191,.25);z-index:5}
+.next:disabled{opacity:.25;cursor:default;box-shadow:none}
+.reset{position:absolute;right:150px;bottom:0;padding:11px 20px;border-radius:13px;
+  border:2px solid var(--line);background:#1a2440;color:var(--dim);font-size:19px;font-weight:700;
+  cursor:pointer;font-family:inherit;z-index:5}
+
+.eq{font-size:26px;line-height:1.55}
+.frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;
+  margin:0 5px;font-size:.86em;line-height:1.05;position:relative;top:-.06em}
+.frac .n{padding:0 7px 3px;border-bottom:2.5px solid currentColor}
+.frac .d{padding:3px 7px 0}
+.mline{display:flex;align-items:center;justify-content:center;flex-wrap:nowrap;white-space:nowrap;gap:2px}
+.am{color:var(--amber)}.co{color:var(--coral)}.te{color:var(--teal)}.vi{color:var(--violet)}
+.dimtx{color:var(--dim)}
+
+#p0{flex-direction:column;align-items:center;justify-content:center;gap:24px}
+.qbox{width:1180px;padding:24px 38px}
+.qhead{font-size:29px;font-weight:700;line-height:1.5}
+.cond{margin-top:16px;border:2px solid var(--line);border-radius:14px;padding:18px 26px;background:#111a30}
+.cond div{font-size:25px;line-height:1.8}
+.cond span.k{color:var(--amber);font-weight:700;margin-right:10px}
+.road{display:flex;gap:18px}
+.rc{width:378px;padding:18px 22px;border-radius:16px;background:var(--panel);border:2px solid var(--line)}
+.rc .num{font-size:17px;font-weight:700;letter-spacing:2px;color:var(--teal)}
+.rc .h{font-size:23px;font-weight:700;margin:6px 0 8px}
+.rc .s{font-size:19px;color:var(--dim);line-height:1.5}
+
+.left{width:646px;display:flex;flex-direction:column;gap:12px}
+.right{flex:1;display:flex;flex-direction:column;gap:12px}
+.steplabel{font-size:18px;font-weight:700;letter-spacing:2px;color:var(--teal);margin-bottom:8px}
+.row{display:flex;align-items:center;gap:12px;font-size:24px;line-height:1.5}
+.tagbox{border-left:5px solid var(--amber);padding:8px 0 8px 18px;margin:6px 0}
+.result{background:linear-gradient(90deg,rgba(251,191,36,.18),rgba(251,191,36,0));
+  border:2px solid var(--amber);border-radius:14px;padding:14px 20px;font-size:28px;font-weight:700}
+
+.sliderwrap{display:flex;align-items:center;gap:16px;font-size:23px}
+input[type=range]{-webkit-appearance:none;appearance:none;height:16px;border-radius:8px;
+  background:linear-gradient(90deg,#334166,#4a5c8f);outline:none;flex:1}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:44px;height:44px;border-radius:50%;
+  background:var(--amber);border:4px solid #0d1425;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.5)}
+input[type=range]::-moz-range-thumb{width:44px;height:44px;border-radius:50%;background:var(--amber);
+  border:4px solid #0d1425;cursor:pointer}
+.twin{display:flex;gap:12px}
+.tw{flex:1;text-align:center}
+.tw .cap{font-size:20px;font-weight:700;margin-bottom:5px}
+.readout{display:flex;gap:12px}
+.rd{flex:1;text-align:center;border:2px solid var(--line);border-radius:12px;padding:7px 6px;background:#111a30}
+.rd .t{font-size:17px;color:var(--dim)}.rd .v{font-size:25px;font-weight:700}
+.verdict{text-align:center;font-size:24px;font-weight:700;padding:8px;border-radius:12px;border:2px solid}
+.verdict.bad{color:var(--coral);border-color:var(--coral);background:rgba(251,113,133,.1)}
+.verdict.good{color:var(--teal);border-color:var(--teal);background:rgba(45,212,191,.12)}
+
+.mini3{display:flex;gap:10px}
+.mini{flex:1;text-align:center;border:2px solid var(--line);border-radius:14px;padding:7px;background:#111a30}
+.mini .lab{font-size:20px;font-weight:700;margin-top:2px}
+.grid8{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ccard{border:2px solid var(--line);border-radius:12px;padding:8px 12px;background:#111a30;cursor:pointer;
+  transition:.16s;display:flex;align-items:center;gap:10px}
+.ccard.sel{border-color:var(--amber);background:#1e2848}
+.ccard .nm{font-size:19px;font-weight:700;flex:1;line-height:1.2}
+.ccard .nm em{display:block;font-style:normal;font-size:16px;color:var(--dim)}
+.ccard .bd{font-size:18px;font-weight:700;padding:3px 10px;border-radius:9px;background:#2b3760;color:var(--dim);min-width:60px;text-align:center}
+.ccard.done .bd{background:rgba(251,113,133,.18);color:var(--coral)}
+.ccard.done.ok .bd{background:rgba(45,212,191,.2);color:var(--teal)}
+.ccard.done.ok{border-color:var(--teal)}
+.hint{font-size:20px;color:var(--dim);text-align:center}
+
+.case{border:2px solid var(--line);border-radius:16px;padding:14px 20px;background:var(--panel)}
+.case .ch{font-size:23px;font-weight:700;color:var(--violet);margin-bottom:6px}
+.expand{font-size:21px;color:var(--dim);line-height:1.5}
+.sols{display:flex;gap:14px}
+.sol{flex:1;border:2px solid var(--line);border-radius:16px;background:var(--panel);padding:10px 12px;text-align:center}
+.sol .hh{font-size:20px;color:var(--violet);font-weight:700;margin-bottom:4px}
+.sol .ff{font-size:22px;font-weight:700;margin-top:6px}
+.sol .f1{font-size:19px;color:var(--dim);margin-top:5px;line-height:1.2}
+.sol .vv{font-size:27px;font-weight:700;color:var(--amber);margin-top:4px}
+.total{border:3px solid var(--amber);border-radius:18px;padding:12px 30px;
+  background:linear-gradient(90deg,rgba(251,191,36,.16),rgba(45,212,191,.10));font-size:33px;font-weight:700}
+.scalenote{font-size:16px;color:#6f80a8;text-align:center}
+svg{display:block;margin:0 auto}
+.fsbtn svg{display:inline-block;margin:0}
+</style>
+</head>
+<body>
+<div id="stage">
+
+<header>
+  <div class="ttl">최고차항의 계수가 1인 사차함수 — <b>모든 f(−1)의 값의 합</b></div>
+  <div class="tabs">
+    <button class="tab on" data-p="0">문제</button>
+    <button class="tab" data-p="1">STEP 1</button>
+    <button class="tab" data-p="2">STEP 2</button>
+    <button class="tab" data-p="3">STEP 3</button>
+  </div>
+  <button class="fsbtn" id="fsBtn" title="전체화면으로 보기">
+    <svg id="fsIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+    <span id="fsLabel">전체화면</span>
+  </button>
+</header>
+
+<main>
+
+<!-- ============ PANEL 0 ============ -->
+<section class="panel on" id="p0">
+  <div class="card qbox">
+    <div class="qhead">다음 조건을 만족시키는 최고차항의 계수가 1인 모든 사차함수 <span class="am">f(x)</span>에 대하여
+      모든 <span class="am">f(−1)</span>의 값의 합은?</div>
+    <div class="cond">
+      <div><span class="k">(가)</span> f(0) = 0</div>
+      <div><span class="k">(나)</span> 함수 f(|x−1|)은 x = 1에서 미분가능하다.</div>
+      <div><span class="k">(다)</span> 함수 |f(x) − f(1)|이 x = <i>k</i>에서 미분가능하지 않은 실수 <i>k</i>의 개수는 1이다.</div>
+    </div>
+  </div>
+  <div class="road">
+    <div class="rc rv" data-s="1"><div class="num">STEP 1</div><div class="h">(가)·(나)로 식 줄이기</div>
+      <div class="s">평행이동 → f(|x|)의 미분가능성<br>f(x) = x⁴ + <i>a</i>x³ + <i>b</i>x²</div></div>
+    <div class="rc rv" data-s="2"><div class="num">STEP 2</div><div class="h">(다) → 근의 중복도</div>
+      <div class="s">|f(x)−f(1)|이 꺾이는 곳<br>= <b>중복도 1</b>인 근</div></div>
+    <div class="rc rv" data-s="3"><div class="num">STEP 3</div><div class="h">일차항 계수 = 0</div>
+      <div class="s">남은 미지수 α, β를 결정하고<br>f(−1) 세 값을 모두 더하기</div></div>
+  </div>
+  <button class="next" id="n0">다음 ▶</button>
+</section>
+
+<!-- ============ PANEL 1 ============ -->
+<section class="panel" id="p1">
+  <div class="left">
+    <div class="card" style="flex:1">
+      <div class="steplabel">STEP 1 · 조건 (가), (나)</div>
+      <div class="eq">f(x) = x⁴ + <i>a</i>x³ + <i>b</i>x² + <span class="co"><i>c</i></span>x + <span class="vi"><i>d</i></span></div>
+
+      <div class="rv tagbox" data-s="1">
+        <div class="row"><span class="am">(가)</span> f(0) = 0 &nbsp;⟹&nbsp; <span class="vi"><i>d</i> = 0</span></div>
+      </div>
+
+      <div class="rv tagbox" data-s="2" style="border-color:var(--teal)">
+        <div class="row" style="font-size:22px;color:var(--dim)">(나) y = f(|x−1|)의 그래프를</div>
+        <div class="row" style="font-size:23px"><b class="te">x축 방향으로 −1만큼 평행이동</b>하면 &nbsp;y = f(|x|)</div>
+        <div class="row" style="font-size:22px;color:var(--dim);margin-top:6px">
+          평행이동은 미분가능성을 바꾸지 않으므로</div>
+        <div class="row" style="font-size:23px">f(|x−1|)이 x=1에서 미분가능 ⟺ <b class="am">f(|x|)가 x=0에서 미분가능</b></div>
+      </div>
+
+      <div class="rv tagbox" data-s="3" style="border-color:var(--coral)">
+        <div class="row">x &gt; 0 : f(|x|) = f(x) &nbsp;→&nbsp; 우미분계수 = <span class="te">f′(0)</span></div>
+        <div class="row">x &lt; 0 : f(|x|) = f(−x) &nbsp;→&nbsp; 좌미분계수 = <span class="co">−f′(0)</span></div>
+        <div class="row" style="margin-top:6px">두 값이 같아야 하므로 &nbsp;<b>f′(0) = 0</b> ⟹ <span class="co"><i>c</i> = 0</span></div>
+      </div>
+
+      <div class="rv result" data-s="4" style="margin-top:10px">f(x) = x⁴ + <i>a</i>x³ + <i>b</i>x²</div>
+      <div class="rv row dimtx" data-s="4" style="font-size:20px;margin-top:8px">
+        → f(x)에는 <b class="am">일차항이 없다</b>. STEP 3에서 결정적으로 쓰인다.</div>
+    </div>
+  </div>
+
+  <div class="right">
+    <div class="card" style="flex:1;display:flex;flex-direction:column;gap:10px">
+      <div style="font-size:21px;font-weight:700">슬라이더로 <span class="am"><i>c</i></span>를 바꿔 보자
+        <span class="dimtx" style="font-size:18px">( f(x) = x⁴ + <i>c</i>x 로 관찰 )</span></div>
+      <div class="sliderwrap"><span class="am" style="font-weight:700"><i>c</i></span>
+        <input type="range" id="cs" min="-30" max="30" step="1" value="20">
+        <span id="cv" style="font-weight:700;width:74px;text-align:right">2.0</span></div>
+      <div class="twin" style="flex:1">
+        <div class="tw"><div class="cap dimtx">y = f(x)</div><div id="g1a"></div></div>
+        <div class="tw"><div class="cap am">y = f(|x|)</div><div id="g1b"></div></div>
+      </div>
+      <div class="readout">
+        <div class="rd"><div class="t">좌미분계수 −f′(0)</div><div class="v co" id="dl">−2.0</div></div>
+        <div class="rd"><div class="t">우미분계수 f′(0)</div><div class="v te" id="dr">2.0</div></div>
+      </div>
+      <div class="verdict bad" id="vd">x = 0 에서 꺾인다 — 미분불가능</div>
+      <div class="scalenote">※ 세로축은 모양이 잘 보이도록 확대 표시 (원점 부근은 실제 비율)</div>
+    </div>
+  </div>
+  <button class="reset" data-r="1">처음부터</button>
+  <button class="next" id="n1">다음 ▶</button>
+</section>
+
+<!-- ============ PANEL 2 ============ -->
+<section class="panel" id="p2">
+  <div class="left">
+    <div class="card">
+      <div class="steplabel">STEP 2 · 조건 (다)</div>
+      <div class="eq" style="font-size:23px">h(x) = f(x) − f(1) &nbsp;<span class="dimtx" style="font-size:19px">(사차식, 항상 h(1) = 0)</span></div>
+      <div style="font-size:21px;margin:10px 0 8px;color:var(--dim)">|f(x)−f(1)|이 꺾이는 곳은 <b class="am">근의 중복도</b>가 결정한다</div>
+      <div class="mini3" id="mini"></div>
+      <div class="rv" data-s="1" style="margin-top:12px;font-size:23px;line-height:1.5;text-align:center;
+        border:2px solid var(--amber);border-radius:13px;padding:11px;background:rgba(251,191,36,.1)">
+        |h(x)|가 x = <i>k</i>에서 미분불가능 ⟺ <i>k</i>가 <b class="am">중복도 1</b>인 근
+      </div>
+    </div>
+    <div class="card rv" data-s="3" style="flex:1">
+      <div style="font-size:21px;color:var(--dim);line-height:1.55">단순근이 <b class="te">정확히 1개</b>인 경우는
+        <b>(3중근) + (단순근)</b> 뿐이다. 그런데 h는 항상 x = 1을 근으로 가지므로</div>
+      <div class="eq" style="margin-top:10px;font-size:27px;text-align:center;line-height:1.9">
+        <span class="am">h(x) = (x−1)³(x−α)</span><br>또는<br><span class="te">h(x) = (x−1)(x−β)³</span></div>
+    </div>
+  </div>
+  <div class="right">
+    <div class="card" style="flex:1;display:flex;flex-direction:column;gap:9px">
+      <div style="font-size:21px;font-weight:700">카드를 <span class="am">모두 터치</span>해 꺾인 점의 개수를 확인하자</div>
+      <div class="grid8" id="cards"></div>
+      <div class="twin" style="flex:1">
+        <div class="tw"><div class="cap dimtx">y = h(x)</div><div id="g2a"></div></div>
+        <div class="tw"><div class="cap am">y = |h(x)|</div><div id="g2b"></div></div>
+      </div>
+      <div class="hint" id="h2">위 카드를 눌러 보세요 (0 / 8)</div>
+      <div class="scalenote">※ 세로축은 모양이 잘 보이도록 확대 표시 (x축 부근은 실제 비율)</div>
+    </div>
+  </div>
+  <button class="reset" data-r="2">처음부터</button>
+  <button class="next" id="n2">다음 ▶</button>
+</section>
+
+<!-- ============ PANEL 3 ============ -->
+<section class="panel" id="p3">
+  <div style="flex:1;display:flex;flex-direction:column;gap:12px">
+    <div class="card" style="padding:12px 24px">
+      <div class="steplabel" style="margin:0">STEP 3 · f(x)에 일차항이 없다 ⟹ h(x)의 <span class="am">x 계수 = 0</span></div>
+    </div>
+    <div style="display:flex;gap:14px">
+      <div class="case rv" data-s="1" style="flex:1">
+        <div class="ch">경우 ① &nbsp; h(x) = (x−1)³(x−α)</div>
+        <div class="expand" style="color:#c3cee6">= (x³ − 3x² + 3x − 1)(x − α)</div>
+        <div class="expand">= x⁴ − (α+3)x³ + (3α+3)x² <b class="am">− (3α+1)</b>x + α</div>
+        <div class="mline" style="font-size:24px;margin-top:6px;justify-content:flex-start">
+          <span>−(3α+1) = 0 &nbsp;⟹&nbsp; α =&nbsp;</span>
+          <span class="am mline">−<span class="frac"><span class="n">1</span><span class="d">3</span></span></span></div>
+      </div>
+      <div class="case rv" data-s="2" style="flex:1.2">
+        <div class="ch">경우 ② &nbsp; h(x) = (x−1)(x−β)³</div>
+        <div class="expand" style="color:#c3cee6">= (x − 1)(x³ − 3βx² + 3β²x − β³)</div>
+        <div class="expand">= x⁴ − (3β+1)x³ + (3β²+3β)x² <b class="te">− (β³+3β²)</b>x + β³</div>
+        <div style="font-size:24px;margin-top:6px">β²(β+3) = 0 &nbsp;⟹&nbsp; β = <span class="te">0</span> 또는 β = <span class="te">−3</span>
+          <span class="dimtx" style="font-size:19px">&nbsp;(β=1이면 4중근이라 제외)</span></div>
+      </div>
+    </div>
+    <div class="sols rv" data-s="3" id="sols"></div>
+    <div class="total rv mline" data-s="4">
+      <span class="am mline"><span class="frac"><span class="n">17</span><span class="d">3</span></span></span>
+      <span>&nbsp;+ 2 + 11 =&nbsp;</span>
+      <span class="te mline"><span class="frac"><span class="n">56</span><span class="d">3</span></span></span>
+      <span class="dimtx" style="font-size:23px">&nbsp;&nbsp;정답 ①</span>
+    </div>
+  </div>
+  <button class="reset" data-r="3">처음부터</button>
+  <button class="next" id="n3">다음 ▶</button>
+</section>
+
+</main>
+</div>
+
+<script>
+/* ============ viewport scaling ============ */
+function fit(){
+  const vw=(window.visualViewport?window.visualViewport.width:window.innerWidth);
+  const vh=(window.visualViewport?window.visualViewport.height:window.innerHeight);
+  const s=Math.min(vw/1600,vh/900);
+  document.getElementById('stage').style.transform=
+    'translate('+((vw-1600*s)/2)+'px,'+((vh-900*s)/2)+'px) scale('+s+')';
+}
+addEventListener('resize',fit);addEventListener('orientationchange',fit);
+if(window.visualViewport){visualViewport.addEventListener('resize',fit);visualViewport.addEventListener('scroll',fit);}
+fit();[60,300,700].forEach(t=>setTimeout(fit,t));
+
+/* ============ fullscreen (추가) ============ */
+(function(){
+  const btn=document.getElementById('fsBtn');
+  const lab=document.getElementById('fsLabel');
+  const icon=document.getElementById('fsIcon');
+  const ICON_IN='<path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>';
+  const ICON_OUT='<path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M16 3v3a2 2 0 0 0 2 2h3"/><path d="M8 21v-3a2 2 0 0 0-2-2H3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/>';
+  function isFs(){return !!(document.fullscreenElement||document.webkitFullscreenElement);}
+  function sync(){
+    const on=isFs();
+    lab.textContent=on?'창으로':'전체화면';
+    icon.innerHTML=on?ICON_OUT:ICON_IN;
+    btn.title=on?'전체화면 해제':'전체화면으로 보기';
+  }
+  function toggle(){
+    if(!isFs()){
+      const el=document.documentElement;
+      const req=el.requestFullscreen||el.webkitRequestFullscreen;
+      if(req){Promise.resolve(req.call(el)).catch(function(){});}
+    }else{
+      const exit=document.exitFullscreen||document.webkitExitFullscreen;
+      if(exit){Promise.resolve(exit.call(document)).catch(function(){});}
+    }
+    setTimeout(sync,120);
+  }
+  btn.addEventListener('click',toggle);
+  ['fullscreenchange','webkitfullscreenchange'].forEach(function(ev){
+    document.addEventListener(ev,function(){sync();fit();[60,300,700].forEach(t=>setTimeout(fit,t));});
+  });
+  // F 키로도 전환 (리모컨/키보드 병행)
+  document.addEventListener('keydown',function(e){
+    if(e.key==='f'||e.key==='F'){toggle();}
+  });
+  sync();
+})();
+
+/* ============ plot with soft (kink-preserving) y-compression ============
+   u = S*y/(S+|y|)  →  |y|≪S 이면 u≈y (원점 근처 실제 모양 보존),
+                        |y|≫S 이면 u→S (큰 값만 눌러서 화면에 담음)          */
+function plot(o){
+  const w=o.w,h=o.h,S=o.S;
+  const wy=S?(y=>S*y/(S+Math.abs(y))):(y=>y);
+  const ymin=o.ymin,ymax=o.ymax,xmin=o.xmin,xmax=o.xmax;
+  const X=x=>(x-xmin)/(xmax-xmin)*w, Y=y=>h-(wy(y)-ymin)/(ymax-ymin)*h;
+  let s='<svg viewBox="0 0 '+w+' '+h+'" width="'+w+'" height="'+h+'">';
+  s+='<rect width="'+w+'" height="'+h+'" rx="14" fill="#111a30"/>';
+  for(let g=Math.ceil(xmin);g<=xmax;g++)
+    s+='<line x1="'+X(g)+'" y1="0" x2="'+X(g)+'" y2="'+h+'" stroke="#22304f" stroke-width="1"/>';
+  s+='<line x1="0" y1="'+Y(0)+'" x2="'+w+'" y2="'+Y(0)+'" stroke="#5d6f9e" stroke-width="2.5"/>';
+  if(xmin<0&&xmax>0)s+='<line x1="'+X(0)+'" y1="0" x2="'+X(0)+'" y2="'+h+'" stroke="#5d6f9e" stroke-width="2.5"/>';
+  (o.vlines||[]).forEach(v=>{s+='<line x1="'+X(v.x)+'" y1="0" x2="'+X(v.x)+'" y2="'+h+'" stroke="'+v.c+'" stroke-width="2" stroke-dasharray="7 6" opacity=".8"/>';
+    if(v.t)s+='<text x="'+(X(v.x)+7)+'" y="20" fill="'+v.c+'" font-size="17" font-weight="700" font-family="Space Grotesk">'+v.t+'</text>';});
+  (o.curves||[]).forEach(c=>{
+    const N=c.samples||620;let d='',pen=false;
+    for(let i=0;i<=N;i++){const x=xmin+(xmax-xmin)*i/N,y=c.fn(x);
+      if(!isFinite(y)){pen=false;continue;}
+      let py=Y(y); if(py<-6||py>h+6){pen=false;continue;}
+      d+=(pen?'L':'M')+X(x).toFixed(1)+' '+py.toFixed(1)+' ';pen=true;}
+    s+='<path d="'+d+'" fill="none" stroke="'+c.color+'" stroke-width="'+(c.w||4.5)+'" stroke-linejoin="round" stroke-linecap="round"/>';});
+  (o.dots||[]).forEach(p=>{
+    s+='<circle cx="'+X(p.x)+'" cy="'+Y(0)+'" r="'+(p.r||9)+'" fill="'+p.c+'" stroke="#111a30" stroke-width="3"/>';
+    if(p.t)s+='<text x="'+X(p.x)+'" y="'+(Y(0)-18)+'" fill="'+p.c+'" font-size="19" font-weight="700" text-anchor="middle" font-family="Space Grotesk">'+p.t+'</text>';});
+  return s+'</svg>';
+}
+function maxAbs(fn,a,b){let m=0;for(let i=0;i<=500;i++){const y=fn(a+(b-a)*i/500);if(isFinite(y))m=Math.max(m,Math.abs(y));}return m||1;}
+function pair(id1,id2,fn,a,b,W,H,dots,vl){
+  const S=maxAbs(fn,a,b)/7;
+  document.getElementById(id1).innerHTML=plot({w:W,h:H,xmin:a,xmax:b,S:S,ymin:-1.04*S,ymax:1.04*S,
+    curves:[{fn:fn,color:'#7f92c4'}],vlines:vl||[],dots:(dots||[]).map(d=>({x:d.x,c:'#5d6f9e',r:8}))});
+  document.getElementById(id2).innerHTML=plot({w:W,h:H,xmin:a,xmax:b,S:S,ymin:-0.18*S,ymax:1.04*S,
+    curves:[{fn:x=>Math.abs(fn(x)),color:'#fbbf24'}],vlines:vl||[],dots:dots||[]});
+}
+
+/* ============ reveal engine ============ */
+const steps={0:3,1:4,2:3,3:4},cur={0:0,1:0,2:0,3:0};
+function setStep(p,s){cur[p]=Math.min(s,steps[p]);
+  document.querySelectorAll('#p'+p+' .rv').forEach(e=>e.classList.toggle('on',+e.dataset.s<=cur[p]));
+  document.getElementById('n'+p).disabled=(cur[p]>=steps[p]);}
+for(let p=0;p<4;p++)document.getElementById('n'+p).onclick=()=>setStep(p,cur[p]+1);
+document.querySelectorAll('.reset').forEach(b=>b.onclick=()=>{const p=+b.dataset.r;if(p===2)resetCards();setStep(p,0);});
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));t.classList.add('on');
+  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('on'));
+  document.getElementById('p'+t.dataset.p).classList.add('on');fit();});
+[0,1,2,3].forEach(p=>setStep(p,0));
+
+/* ============ PANEL 1 ============ */
+const cs=document.getElementById('cs');
+function draw1(){
+  const c=(+cs.value)/10;
+  document.getElementById('cv').textContent=c.toFixed(1);
+  document.getElementById('dl').textContent=(-c).toFixed(1);
+  document.getElementById('dr').textContent=c.toFixed(1);
+  const smooth=Math.abs(c)<1e-9,col=smooth?'#2dd4bf':'#fb7185';
+  const vd=document.getElementById('vd');
+  vd.className='verdict '+(smooth?'good':'bad');
+  vd.textContent=smooth?'f′(0) = 0 → x = 0에서 매끄럽다 — 미분가능 ✓':'x = 0에서 꺾인다 — 미분불가능 ✗';
+  const f=x=>x*x*x*x+c*x, fa=x=>f(Math.abs(x));
+  const a=-1.7,b=1.7,S=Math.max(maxAbs(fa,a,b),maxAbs(f,a,b))/6.5;
+  document.getElementById('g1a').innerHTML=plot({w:390,h:268,xmin:a,xmax:b,S:S,ymin:-1.04*S,ymax:1.04*S,
+    curves:[{fn:f,color:'#7f92c4'}]});
+  document.getElementById('g1b').innerHTML=plot({w:390,h:268,xmin:a,xmax:b,S:S,ymin:-1.04*S,ymax:1.04*S,
+    curves:[{fn:fa,color:col}],vlines:[{x:0,c:'#fbbf24'}],
+    dots:[{x:0,c:col,r:10,t:smooth?'매끄러움':'꺾임'}]});
+  if(smooth&&cur[1]<3)setStep(1,3);
+}
+cs.addEventListener('input',draw1);draw1();
+
+/* ============ PANEL 2 minis ============ */
+const minis=[{t:'|x|',f:x=>Math.abs(x),k:true,l:'중복도 1 → 꺾임'},
+             {t:'|x²|',f:x=>x*x,k:false,l:'중복도 2 → 매끄러움'},
+             {t:'|x³|',f:x=>Math.abs(x*x*x),k:false,l:'중복도 3 → 매끄러움'}];
+document.getElementById('mini').innerHTML=minis.map(m=>
+ '<div class="mini">'+plot({w:180,h:112,xmin:-1.15,xmax:1.15,ymin:-0.2,ymax:1.12,
+   curves:[{fn:m.f,color:m.k?'#fb7185':'#2dd4bf',w:4.5}],dots:[{x:0,c:m.k?'#fb7185':'#2dd4bf',r:8}]})+
+ '<div class="lab" style="color:'+(m.k?'#fb7185':'#2dd4bf')+'">y = '+m.t+'</div>'+
+ '<div style="font-size:16px;color:#93a3c6">'+m.l+'</div></div>').join('');
+
+/* ============ PANEL 2 cards ============ */
+const P=(x,r,m)=>Math.pow(x-r,m);
+const CASES=[
+ {nm:'4중근',ex:'(x−1)⁴',f:x=>P(x,1,4),k:[],a:-0.4,b:2.4},
+ {nm:'3중근 + 단순근',ex:'(x−1)³(x+1)',f:x=>P(x,1,3)*(x+1),k:[-1],ok:true,a:-1.6,b:1.9},
+ {nm:'2중근 + 2중근',ex:'(x−1)²(x+1)²',f:x=>P(x,1,2)*P(x,-1,2),k:[],a:-2.2,b:2.2},
+ {nm:'2중근 + 단순근 2개',ex:'(x−1)²(x+1)(x−2)',f:x=>P(x,1,2)*(x+1)*(x-2),k:[-1,2],a:-1.8,b:2.6},
+ {nm:'단순근 4개',ex:'(x²−0.36)(x²−2.56)',f:x=>(x*x-0.36)*(x*x-2.56),k:[-1.6,-0.6,0.6,1.6],a:-2,b:2},
+ {nm:'단순근 2개 + 허근쌍',ex:'(x−1)(x+1)(x²+1)',f:x=>(x-1)*(x+1)*(x*x+1),k:[-1,1],a:-2,b:2},
+ {nm:'2중근 + 허근쌍',ex:'(x−1)²(x²+1)',f:x=>P(x,1,2)*(x*x+1),k:[],a:-0.8,b:2.8},
+ {nm:'실근 없음',ex:'(x²+1)(x²+2)',f:x=>(x*x+1)*(x*x+2),k:[],a:-1.8,b:1.8}];
+let seen=new Set();
+const cw=document.getElementById('cards');
+cw.innerHTML=CASES.map((c,i)=>'<div class="ccard'+(c.ok?' ok':'')+'" data-i="'+i+'">'+
+  '<div class="nm">'+c.nm+'<em>'+c.ex+'</em></div><div class="bd">?</div></div>').join('');
+function drawCase(i){const c=CASES[i];
+  pair('g2a','g2b',c.f,c.a,c.b,390,236,c.k.map(x=>({x:x,c:'#fb7185',r:10,t:'꺾임'})),
+       [{x:1,c:'#a78bfa',t:'x = 1'}]);}
+cw.querySelectorAll('.ccard').forEach(el=>el.onclick=()=>{
+  const i=+el.dataset.i;
+  cw.querySelectorAll('.ccard').forEach(x=>x.classList.remove('sel'));
+  el.classList.add('sel','done');
+  el.querySelector('.bd').textContent=CASES[i].k.length+'개';
+  drawCase(i);seen.add(i);
+  document.getElementById('h2').innerHTML=seen.size<8
+    ?'카드를 눌러 보세요 ('+seen.size+' / 8)'
+    :'<b style="color:#2dd4bf">꺾인 점이 1개인 경우는 «3중근 + 단순근» 뿐!</b>';
+  if(cur[2]<1)setStep(2,1);
+  if(seen.size>=8&&cur[2]<3)setStep(2,3);});
+function resetCards(){seen=new Set();
+  cw.querySelectorAll('.ccard').forEach(x=>{x.classList.remove('sel','done');x.querySelector('.bd').textContent='?';});
+  document.getElementById('g2a').innerHTML='';document.getElementById('g2b').innerHTML='';
+  document.getElementById('h2').textContent='카드를 눌러 보세요 (0 / 8)';}
+
+/* ============ PANEL 3 ============ */
+const FR=(n,d)=>'<span class="frac"><span class="n">'+n+'</span><span class="d">'+d+'</span></span>';
+const F=[
+ {t:'α = −'+FR(1,3),h:'h(x) = (x−1)³(x+'+FR(1,3)+')',f:x=>x*x*x*x-8/3*x*x*x+2*x*x,
+  ft:'f(x) = x⁴ − '+FR(8,3)+'x³ + 2x²',
+  f1:'f(1) = '+FR(1,3)+' 이므로&nbsp; h(x) = f(x) − '+FR(1,3),
+  v:'f(−1) = '+FR(17,3),k:-1/3,a:-1.3,b:1.8},
+ {t:'β = 0',h:'h(x) = (x−1)x³',f:x=>x*x*x*x-x*x*x,ft:'f(x) = x⁴ − x³',
+  f1:'<b class="te">f(1) = 0 이므로&nbsp; h(x) = f(x)</b>',
+  v:'f(−1) = 2',k:1,a:-1,b:1.7},
+ {t:'β = −3',h:'h(x) = (x−1)(x+3)³',f:x=>x*x*x*x+8*x*x*x+18*x*x,ft:'f(x) = x⁴ + 8x³ + 18x²',
+  f1:'f(1) = 27 이므로&nbsp; h(x) = f(x) − 27',
+  v:'f(−1) = 11',k:1,a:-4.2,b:1.5}];
+document.getElementById('sols').innerHTML=F.map((s,i)=>
+ '<div class="sol"><div class="hh mline">'+s.t+' &nbsp;·&nbsp; '+s.h+'</div>'+
+ '<div class="twin"><div class="tw"><div class="cap dimtx" style="font-size:17px">y = h(x)</div><div id="s'+i+'a"></div></div>'+
+ '<div class="tw"><div class="cap am" style="font-size:17px">y = |h(x)|</div><div id="s'+i+'b"></div></div></div>'+
+ '<div class="ff mline">'+s.ft+'</div>'+
+ '<div class="f1 mline">'+s.f1+'</div>'+
+ '<div class="vv mline">'+s.v+'</div></div>').join('');
+F.forEach((s,i)=>{const f1=s.f(1);
+  pair('s'+i+'a','s'+i+'b',x=>s.f(x)-f1,s.a,s.b,224,150,[{x:s.k,c:'#fb7185',r:9,t:'꺾임'}],
+       [{x:1,c:'#a78bfa'}]);});
+</script>
+</body>
+</html>

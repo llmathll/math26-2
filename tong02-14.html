@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>수열 aₙ₊₁ = |aₙ| − 1 · 부분합 문제</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0c1322; --panel:#141f33; --panel2:#1a2942; --line:#2b3d5c;
+  --text:#eef4fc; --dim:#9db2d0;
+  --amber:#f7c24d; --coral:#ff8272; --teal:#54d8ce; --green:#63e296; --violet:#b39cff;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);overscroll-behavior:none}
+body{font-family:'Space Grotesk','Noto Sans KR',system-ui,sans-serif;color:var(--text);
+     -webkit-user-select:none;user-select:none;touch-action:manipulation}
+#stage{position:absolute;left:0;top:0;width:1600px;height:900px;transform-origin:0 0;
+       background:radial-gradient(1200px 700px at 78% 12%, #16233c 0%, #0c1322 60%)}
+
+/* ── 수식 표기: sub/sup 은 translateY 로 위치 제어(브라우저 간 일관성) ── */
+i{font-family:'Times New Roman',Georgia,serif;font-style:italic;font-weight:600}
+sub{position:relative;top:.34em;vertical-align:baseline;line-height:0;
+     font-size:.60em;font-style:italic;letter-spacing:.01em}
+sub.u{font-style:normal}
+sup{position:relative;top:-.48em;vertical-align:baseline;line-height:0;font-size:.60em}
+.nw{white-space:nowrap}
+.frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;
+      margin:0 5px;line-height:1.06;font-size:.80em;transform:translateY(-.06em)}
+.frac>span:first-child{padding:0 6px 2px}
+.frac>span:last-child{padding:2px 6px 0;border-top:2px solid currentColor}
+.sig{position:relative;display:inline-block;font-size:1.35em;line-height:.92;vertical-align:-0.18em;
+     padding:0 17px;font-style:normal;font-weight:700}
+.sig .hi,.sig .lo{position:absolute;left:50%;transform:translateX(-50%);font-size:.40em;
+     font-family:'Times New Roman',Georgia,serif;font-style:italic;font-weight:600;white-space:nowrap}
+.sig .hi{top:-0.54em} .sig .lo{bottom:-0.50em}
+
+/* ── 머리말 ── */
+#hdr{position:absolute;left:24px;top:10px;width:1552px;height:112px}
+.r1{display:flex;align-items:center;gap:16px;height:58px}
+.r1 .no{font-weight:700;font-size:28px;color:#0c1322;background:var(--amber);border-radius:12px;padding:3px 18px}
+.r1 .ttl{font-size:31px;font-weight:500;letter-spacing:-.2px;white-space:nowrap}
+.r1 .rec{font-size:33px;color:var(--teal);background:rgba(84,216,206,.12);
+         border:2px solid rgba(84,216,206,.42);border-radius:14px;padding:3px 22px;white-space:nowrap}
+#fsBtn{margin-left:auto;display:inline-flex;align-items:center;gap:10px;flex:none;
+       background:rgba(255,255,255,.07);border:2px solid var(--line);border-radius:13px;color:var(--text);
+       font-family:inherit;font-size:21px;font-weight:600;padding:8px 20px;cursor:pointer;transition:.15s}
+#fsBtn:hover{background:rgba(255,255,255,.16)}
+#fsBtn svg{width:24px;height:24px;flex:none}
+.r2{display:flex;align-items:center;height:52px;font-size:29px;color:#dbe6f5;white-space:nowrap}
+.r2 b{color:var(--amber);font-weight:700}
+
+/* ── 패널 ── */
+.panel{position:absolute;top:128px;height:748px;background:var(--panel);border:1px solid var(--line);border-radius:18px}
+#left{left:24px;width:648px;padding:14px;display:flex;flex-direction:column;gap:10px}
+#right{left:688px;width:888px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+
+/* 풀이 단계 */
+#steps{flex:1;display:flex;flex-direction:column;gap:7px;overflow:hidden}
+.st{flex:1 1 0;min-height:0;overflow:hidden;background:rgba(255,255,255,.04);
+    border:1px solid transparent;border-left:5px solid var(--teal);border-radius:11px;padding:2px 14px;
+    display:flex;align-items:center;
+    font-size:24px;line-height:1.22;color:#e0eaf7;opacity:0;transform:translateX(-12px);transition:.35s}
+.st .in{width:100%}
+.st .frac{font-size:.70em;margin:0 3px}
+.st:nth-child(4){flex:1.3 1 0}
+.st.on{opacity:1;transform:none}
+.st.hi{background:rgba(84,216,206,.14);border-color:rgba(84,216,206,.34)}
+.st .t{display:block;font-weight:700;color:var(--teal);font-size:18px;line-height:1.2;letter-spacing:.2px}
+.st b{color:var(--amber);font-weight:700}
+
+/* 이동 */
+#nav{display:flex;gap:10px;align-items:center;height:44px;flex:none}
+.stepdots{display:flex;gap:7px;margin-left:6px}
+.sd{width:12px;height:12px;border-radius:50%;background:#33486b;transition:.2s}
+.sd.on{background:var(--teal);transform:scale(1.15)}
+.khint{margin-left:auto;font-size:14.5px;color:#677ea3;text-align:right;line-height:1.35}
+
+/* 결과 표 */
+#tbl{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--panel2);flex:none}
+#tbl .row{display:grid;grid-template-columns:76px 1fr 1fr 1fr 104px;align-items:center;height:41px;
+          font-size:23px;border-top:1px solid rgba(255,255,255,.07);text-align:center}
+#tbl .row.h{height:38px;font-size:15px;color:var(--dim);border-top:none;background:rgba(255,255,255,.05)}
+#tbl .row .c1{font-weight:700;color:var(--amber);font-size:25px}
+#tbl .row.done{background:rgba(99,226,150,.10)}
+#tbl .row.bad{background:rgba(255,130,114,.10)}
+#tbl .row .m{font-weight:700;font-size:25px}
+#tbl .row.done .m{color:var(--green)} #tbl .row.bad .m{color:var(--coral)}
+#tbl .row .vd{font-size:19px;color:var(--dim)}
+#tbl .row.done .vd{color:var(--green)} #tbl .row.bad .vd{color:var(--coral)}
+#tbl .foot{height:52px;display:flex;align-items:center;justify-content:center;gap:14px;
+           border-top:1px solid var(--line);background:rgba(247,194,77,.09);font-size:24px;font-weight:700;color:#8ba1c2}
+#tbl .foot .val{color:var(--amber);font-size:30px}
+#tbl .foot.on{color:var(--text)}
+
+/* ── 오른쪽 구역 ── */
+.sec{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:10px 14px;position:relative;flex:none}
+.sec .lbl{position:absolute;top:-12px;left:16px;background:var(--panel);padding:0 10px;font-size:16.5px;
+          color:var(--dim);letter-spacing:.2px;white-space:nowrap}
+.btn{white-space:nowrap;background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:10px;color:var(--text);
+     font-family:inherit;font-size:20px;padding:8px 17px;cursor:pointer;transition:.15s}
+.btn:hover{background:rgba(255,255,255,.16)}
+.btn.pri{background:var(--teal);color:#0c1322;border-color:var(--teal);font-weight:700}
+.btn.sm{padding:7px 12px;font-size:18px}
+.btn.rd{width:44px;height:44px;padding:0;font-size:26px;line-height:1}
+.btn:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
+
+#ctl{height:76px;display:flex;align-items:center;gap:12px}
+.a1box{display:flex;align-items:center;gap:10px}
+.a1lab{font-size:26px;color:var(--dim);white-space:nowrap}
+.a1val{font-size:38px;font-weight:700;color:var(--amber);min-width:58px;text-align:center}
+#slider{width:118px;height:30px;-webkit-appearance:none;appearance:none;background:transparent;cursor:pointer}
+#slider::-webkit-slider-runnable-track{height:8px;background:var(--line);border-radius:4px}
+#slider::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;
+  background:var(--amber);margin-top:-9px;border:2px solid #0c1322}
+#slider::-moz-range-track{height:8px;background:var(--line);border-radius:4px}
+#slider::-moz-range-thumb{width:24px;height:24px;border:2px solid #0c1322;border-radius:50%;background:var(--amber)}
+.presets{display:flex;gap:7px;margin-left:auto}
+.pre{white-space:nowrap;background:rgba(255,255,255,.07);border:1px solid var(--line);border-radius:10px;padding:6px 11px;
+     font-size:21px;cursor:pointer;color:var(--dim)}
+.pre.on{background:var(--amber);color:#0c1322;border-color:var(--amber);font-weight:700}
+
+/* 수직선 */
+#nl{height:140px}
+#nlwrap{position:relative;height:96px;margin-top:14px}
+#axis{position:absolute;left:0;right:0;top:58px;height:2px;background:var(--line)}
+.tick{position:absolute;top:52px;width:2px;height:12px;background:#41597f;transform:translateX(-1px)}
+.tick.z{background:var(--dim);height:18px;top:49px}
+.tlab{position:absolute;top:70px;transform:translateX(-50%);font-size:18px;color:#8098bd}
+.tlab.z{color:var(--text);font-weight:700}
+#dot{position:absolute;top:47px;width:24px;height:24px;border-radius:50%;background:var(--amber);
+     transform:translate(-12px,0);box-shadow:0 0 0 7px rgba(247,194,77,.2);transition:left .32s cubic-bezier(.4,1.4,.5,1)}
+#dotlab{position:absolute;top:2px;transform:translateX(-50%);font-size:23px;color:var(--amber);
+        white-space:nowrap;transition:left .32s cubic-bezier(.4,1.4,.5,1);font-weight:600}
+#dotlab .v{font-size:31px;font-weight:700}
+#dot.neg{background:var(--coral);box-shadow:0 0 0 7px rgba(255,130,114,.2)}
+#dotlab.neg{color:var(--coral)}
+
+/* 감소 구간 카드 */
+#strip{height:160px}
+#cards{display:flex;gap:6px;margin-top:12px;height:118px;align-items:stretch}
+.card{flex:1;border-radius:10px;background:rgba(255,255,255,.055);border:1px solid var(--line);
+      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+      cursor:pointer;transition:.18s;min-width:0;overflow:hidden}
+.card .n{font-size:18px;color:var(--dim);white-space:nowrap}
+.card .v{font-size:34px;font-weight:700;line-height:1.05;white-space:nowrap}
+.card .s{font-size:17px;color:var(--teal);white-space:nowrap}
+#cards.dense .card .n{font-size:15px}
+#cards.dense .card .v{font-size:27px}
+#cards.dense .card .s{font-size:14px}
+.card.zero .v{color:var(--violet)}
+.card.sel{border-color:var(--amber);background:rgba(247,194,77,.16);box-shadow:0 0 0 2px rgba(247,194,77,.32)}
+.card.ghost{border-style:dashed;border-color:#3a4f72;background:transparent;cursor:default}
+.card.ghost .n{color:#5a729a}
+.card.next{border-style:dashed;border-color:var(--teal);background:rgba(84,216,206,.1);cursor:pointer;
+           animation:pulse 1.3s infinite}
+.card.next .v{color:var(--teal);font-size:21px}
+#cards.dense .card.next .v{font-size:16px}
+.card.next .n,.card.next .s{color:var(--teal)}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(84,216,206,.4)}50%{box-shadow:0 0 0 9px rgba(84,216,206,0)}}
+
+/* 진동 구간 */
+#osc{height:194px;transition:.3s}
+#osc.lock{opacity:.32;filter:grayscale(.6)}
+#chips{display:flex;align-items:center;gap:7px;margin-top:12px;height:58px}
+.chip{width:62px;height:54px;border-radius:10px;display:flex;flex-direction:column;align-items:center;
+      justify-content:center;background:rgba(255,255,255,.055);border:1px solid var(--line)}
+.chip .cv{font-size:25px;font-weight:700}
+.chip .cn{font-size:14px;color:var(--dim);white-space:nowrap}
+.chip.neg{border-color:rgba(255,130,114,.5);background:rgba(255,130,114,.13)}
+.chip.neg .cv{color:var(--coral)}
+.chip.zero .cv{color:var(--violet)}
+.chip.cur{border-color:var(--amber);background:rgba(247,194,77,.17);width:150px;height:58px}
+.chip.cur .cv{color:var(--amber)}
+.chip.cur .cn{font-size:16px}
+.ddots{color:var(--dim);font-size:25px;padding:0 3px}
+.oscnote{font-size:18px;color:var(--dim);margin-left:auto;text-align:right;line-height:1.45}
+.oscnote b{color:var(--coral)}
+
+#trackwrap{margin-top:10px;display:flex;align-items:center;gap:11px}
+#track{position:relative;flex:1;height:44px;border-radius:12px;background:rgba(255,255,255,.055);
+       border:1px solid var(--line);cursor:pointer;touch-action:none}
+#fill{position:absolute;left:0;top:0;bottom:0;border-radius:11px;
+      background:linear-gradient(90deg,rgba(84,216,206,.18),rgba(84,216,206,.4))}
+#handle{position:absolute;top:-7px;width:44px;height:58px;border-radius:11px;background:var(--teal);
+        border:2px solid #0c1322;transform:translateX(-22px);display:flex;align-items:center;justify-content:center;
+        color:#0c1322;font-weight:700;font-size:21px;cursor:grab;box-shadow:0 3px 10px rgba(0,0,0,.45)}
+#handle.grab{cursor:grabbing}
+#handle.hitt{background:var(--green)}
+.trkend{font-size:17px;color:#7f96b8;white-space:nowrap}
+.jrow{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:19px;color:var(--dim)}
+.jrow .kv{background:rgba(255,255,255,.055);border:1px solid var(--line);border-radius:10px;padding:3px 13px;white-space:nowrap}
+.jrow .kv b{color:var(--text);font-size:23px}
+
+/* 판정 */
+#read{flex:1;display:flex;align-items:center;justify-content:center;gap:24px;transition:.25s}
+#eq{font-size:38px;display:flex;align-items:center;gap:12px;white-space:nowrap}
+#eq .op{color:var(--dim);font-size:30px}
+#eq .res{font-weight:700;font-size:50px}
+#verdict{font-size:21px;line-height:1.45;color:var(--dim);width:336px;word-break:keep-all}
+#read.good{background:rgba(99,226,150,.13);border-color:rgba(99,226,150,.5)}
+#read.good #eq .res{color:var(--green)}
+#read.bad #eq .res{color:var(--coral)}
+#read.warn{background:rgba(247,194,77,.11);border-color:rgba(247,194,77,.5)}
+#read.warn #eq .res{color:var(--amber)}
+#read .hint{font-size:24px;color:var(--dim)}
+
+.toast{position:absolute;left:1132px;top:18px;transform:translate(-50%,-16px);background:var(--green);color:#0c1322;
+       font-weight:700;font-size:27px;padding:12px 32px;border-radius:13px;opacity:0;transition:.35s;pointer-events:none;z-index:9}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+@media (prefers-reduced-motion: reduce){
+  *{transition-duration:.01ms !important;animation:none !important}
+}
+</style>
+</head>
+<body>
+<div id="stage">
+
+  <div id="hdr">
+    <div class="r1">
+      <span class="no">14</span>
+      <span class="ttl">첫째항이 자연수인 수열 { <i>a</i><sub>n</sub> }</span>
+      <span class="rec"><i>a</i><sub>n+1</sub> = |<i>a</i><sub>n</sub>| − 1</span>
+      <button id="fsBtn" title="전체화면">
+        <svg id="fsIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></svg>
+        <span id="fsLabel">전체화면</span>
+      </button>
+    </div>
+    <div class="r2">
+      <span>10 ≤ <i>m</i> ≤ 100 인 자연수 <i>m</i> 에 대하여
+        <b><i>a</i><sub>m</sub> × <span class="sig">Σ<span class="hi">m</span><span class="lo">k=1</span></span> <i>a</i><sub>k</sub> = −55</b>
+        가 되도록 하는 모든 <i>m</i> 의 값의 합은?</span>
+    </div>
+  </div>
+
+  <!-- 왼쪽 : 풀이 단계 + 결과 표 -->
+  <div class="panel" id="left">
+    <div id="steps"></div>
+
+    <div id="nav">
+      <button class="btn sm" id="prevb">◀ 이전</button>
+      <button class="btn pri sm" id="nextb">다음 단계 ▶</button>
+      <div class="stepdots" id="dots"></div>
+      <span class="khint">Space·→ 다음 &nbsp; ↑↓ <i>j</i> 조절 &nbsp; F 전체화면<br>1~4 : 첫째항 11~14 &nbsp; A 끝까지 &nbsp; R 리셋</span>
+    </div>
+
+    <div id="tbl">
+      <div class="row h">
+        <span>첫째항 <i>N</i></span>
+        <span>최대합 <span class="frac" style="font-size:13px"><span><i>N</i>(<i>N</i>+1)</span><span>2</span></span></span>
+        <span><i>j</i> = 최대합 − 55</span>
+        <span><i>m</i> = <i>N</i> + 2<i>j</i></span>
+        <span>판정</span>
+      </div>
+      <div class="row" data-n="11"><span class="c1">11</span><span class="p">?</span><span class="j">?</span><span class="m">?</span><span class="vd">—</span></div>
+      <div class="row" data-n="12"><span class="c1">12</span><span class="p">?</span><span class="j">?</span><span class="m">?</span><span class="vd">—</span></div>
+      <div class="row" data-n="13"><span class="c1">13</span><span class="p">?</span><span class="j">?</span><span class="m">?</span><span class="vd">—</span></div>
+      <div class="row" data-n="14"><span class="c1">14</span><span class="p">?</span><span class="j">?</span><span class="m">?</span><span class="vd">—</span></div>
+      <div class="foot" id="foot"><span>모든 <i>m</i> 의 값의 합 =</span><span class="val" id="footv">?</span></div>
+    </div>
+  </div>
+
+  <!-- 오른쪽 : 조작 영역 -->
+  <div class="panel" id="right">
+
+    <div class="sec" id="ctl">
+      <span class="lbl">첫째항 조절</span>
+      <div class="a1box">
+        <span class="a1lab"><i>a</i><sub class="u">1</sub> =</span>
+        <button class="btn rd" id="minus">−</button>
+        <span class="a1val" id="a1val">5</span>
+        <button class="btn rd" id="plus">+</button>
+        <input type="range" id="slider" min="1" max="14" value="5">
+      </div>
+      <div class="presets" id="presets"></div>
+      <button class="btn sm" id="genall">끝까지 ▶</button>
+      <button class="btn sm" id="reset">리셋</button>
+    </div>
+
+    <div class="sec" id="nl">
+      <span class="lbl">수직선 위의 <i>a</i><sub>n</sub></span>
+      <div id="nlwrap"><div id="axis"></div><div id="dotlab"></div><div id="dot"></div></div>
+    </div>
+
+    <div class="sec" id="strip">
+      <span class="lbl">감소 구간 — 점선 카드를 터치하면 |<i>a</i><sub>n</sub>| − 1 이 계산됩니다 &nbsp;(<i>S</i> : 부분합)</span>
+      <div id="cards"></div>
+    </div>
+
+    <div class="sec lock" id="osc">
+      <span class="lbl">진동 구간 — 0, −1 이 반복</span>
+      <div id="chips"></div>
+      <div id="trackwrap">
+        <span class="trkend"><i>j</i>=1</span>
+        <div id="track"><div id="fill"></div><div id="handle">1</div></div>
+        <span class="trkend" id="jmaxlab"><i>j</i></span>
+        <button class="btn rd" id="jm">−</button>
+        <button class="btn rd" id="jp">+</button>
+      </div>
+      <div class="jrow">
+        <span>−1 의 개수 <i>j</i> 를 드래그 →</span>
+        <span class="kv"><i>m</i> = <i>N</i> + 2<i>j</i> = <b id="kvm">–</b></span>
+        <span class="kv"><i>S</i><sub>m</sub> = <b id="kvs">–</b></span>
+        <span class="kv" style="border-color:rgba(247,194,77,.55)">목표 <i>S</i><sub>m</sub> = <b style="color:var(--amber)">55</b></span>
+      </div>
+    </div>
+
+    <div class="sec" id="read">
+      <span class="lbl">판정</span>
+      <div id="eq"><span class="hint">항 카드를 터치하거나 <i>j</i> 를 움직여 보세요</span></div>
+      <div id="verdict"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+'use strict';
+
+/* ===================== 16:9 스케일링 ===================== */
+const stage = document.getElementById('stage');
+function fit(){
+  const vv = window.visualViewport;
+  const w = vv ? vv.width : window.innerWidth;
+  const h = vv ? vv.height : window.innerHeight;
+  const s = Math.min(w/1600, h/900);
+  stage.style.transform =
+    'translate(' + Math.round((w-1600*s)/2) + 'px,' + Math.round((h-900*s)/2) + 'px) scale(' + s + ')';
+}
+function fitSoon(){ [0,60,300,700].forEach(function(t){ setTimeout(fit,t); }); }
+addEventListener('resize', fit);
+addEventListener('orientationchange', fitSoon);
+addEventListener('load', fitSoon);
+if (window.visualViewport){
+  visualViewport.addEventListener('resize', fit);
+  visualViewport.addEventListener('scroll', fit);
+}
+document.addEventListener('fullscreenchange', fitSoon);
+document.addEventListener('webkitfullscreenchange', fitSoon);
+fitSoon();
+
+/* ===================== 전체화면 ===================== */
+const fsBtn = document.getElementById('fsBtn');
+const fsIcon = document.getElementById('fsIcon');
+const fsLabel = document.getElementById('fsLabel');
+const ICON_ENTER = '<path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>';
+const ICON_EXIT  = '<path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M16 3v3a2 2 0 0 0 2 2h3"/><path d="M8 21v-3a2 2 0 0 0-2-2H3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/>';
+function isFs(){ return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+function syncFs(){
+  const on = isFs();
+  fsIcon.innerHTML = on ? ICON_EXIT : ICON_ENTER;
+  fsLabel.textContent = on ? '창으로' : '전체화면';
+  fsBtn.title = on ? '전체화면 해제' : '전체화면으로 보기';
+}
+function toggleFs(){
+  if(!isFs()){
+    const el = document.documentElement;
+    const req = el.requestFullscreen || el.webkitRequestFullscreen;
+    if(req) Promise.resolve(req.call(el)).catch(function(){});
+  }else{
+    const ex = document.exitFullscreen || document.webkitExitFullscreen;
+    if(ex) Promise.resolve(ex.call(document)).catch(function(){});
+  }
+  setTimeout(syncFs,150);
+}
+fsBtn.addEventListener('click', toggleFs);
+document.addEventListener('fullscreenchange', syncFs);
+document.addEventListener('webkitfullscreenchange', syncFs);
+syncFs();
+
+/* ===================== 수학 ===================== */
+const NMIN = 1, NMAX = 14;
+const peak = N => N*(N+1)/2;                                  /* 첫 0 까지의 합 = 최대 부분합 */
+const aVal = (N,n) => n <= N+1 ? N-n+1 : (((n-N-1)%2===1) ? -1 : 0);
+const sumVal = (N,n) => n <= N+1 ? n*N - n*(n-1)/2 : peak(N) - Math.floor((n-N)/2);
+const jmaxOf = N => Math.max(peak(N)-40, 8);                  /* 슬라이더 범위 */
+const mf = x => String(x).replace('-','\u2212');              /* 유니코드 마이너스 */
+
+const S = {N:5, gen:1, j:0, sel:null, step:0, found:{11:null,12:null,13:null,14:null}, done:false};
+
+/* ===================== 풀이 단계 ===================== */
+const FRAC = '<span class="frac"><span><i>N</i>(<i>N</i>+1)</span><span>2</span></span>';
+const STEPS = [
+ {t:'① 수열의 규칙',   h:'1씩 줄어 <span class="nw"><i>a</i><sub>N+1</sub> = 0</span>, 이후 <b>0, −1</b> 반복'},
+ {t:'② <i>a</i><sub>m</sub> 의 값', h:'곱이 음수 ⟹ 음수인 항은 −1 뿐 ⟹ <b class="nw"><i>a</i><sub>m</sub> = −1</b>'},
+ {t:'③ 부분합 확정',   h:'<span class="nw">(−1) × <i>S</i><sub>m</sub> = −55</span> ⟹ <b class="nw"><i>S</i><sub>m</sub> = 55</b>'},
+ {t:'④ 부분합의 변화', h:'합의 최대는 '+FRAC+', −1 하나마다 1씩 감소'},
+ {t:'⑤ N 의 범위',     h:'<span class="nw"><i>j</i> = 최대합 − 55 ≥ 1</span> ⟹ <b class="nw"><i>N</i> ≥ 11</b>'},
+ {t:'⑥ m 의 위치',     h:'<i>j</i> 번째 −1 ⟹ <b class="nw"><i>m</i> = <i>N</i> + 2<i>j</i></b> <span class="nw">= <i>N</i><sup>2</sup> + 2<i>N</i> − 110</span>'}
+];
+const stepsEl = document.getElementById('steps');
+STEPS.forEach(function(s){
+  const d = document.createElement('div');
+  d.className = 'st';
+  d.innerHTML = '<div class="in"><span class="t">'+s.t+'</span>'+s.h+'</div>';
+  stepsEl.appendChild(d);
+});
+const dotsEl = document.getElementById('dots');
+STEPS.forEach(function(){ const d=document.createElement('div'); d.className='sd'; dotsEl.appendChild(d); });
+
+function renderSteps(){
+  Array.prototype.forEach.call(stepsEl.children,function(el,i){
+    el.classList.toggle('on', i < S.step);
+    el.classList.toggle('hi', i === S.step-1);
+  });
+  Array.prototype.forEach.call(dotsEl.children,function(d,i){ d.classList.toggle('on', i < S.step); });
+  document.getElementById('prevb').disabled = (S.step === 0);
+}
+
+/* ===================== 첫째항 프리셋 ===================== */
+const preHost = document.getElementById('presets');
+[5,11,12,13,14].forEach(function(v){
+  const b = document.createElement('div');
+  b.className = 'pre'; b.textContent = v; b.dataset.v = v;
+  b.onclick = function(){ setN(v); };
+  preHost.appendChild(b);
+});
+
+/* ===================== 렌더 ===================== */
+function setN(v){
+  v = Math.max(NMIN, Math.min(NMAX, v));
+  S.N = v; S.gen = 1; S.j = 0; S.sel = {t:'dec', m:1};
+  renderAll();
+}
+
+function renderCtl(){
+  document.getElementById('a1val').textContent = S.N;
+  document.getElementById('slider').value = S.N;
+  Array.prototype.forEach.call(preHost.children,function(b){ b.classList.toggle('on', +b.dataset.v === S.N); });
+}
+
+function renderNL(){
+  const wrap = document.getElementById('nlwrap');
+  Array.prototype.forEach.call(wrap.querySelectorAll('.tick,.tlab'), function(e){ e.remove(); });
+  const W = wrap.clientWidth || 858, pad = 40, vmin = -2, vmax = Math.max(S.N, 4);
+  const X = v => pad + (v-vmin)/(vmax-vmin)*(W-2*pad);
+  for(let v=vmin; v<=vmax; v++){
+    const t = document.createElement('div');
+    t.className = 'tick' + (v===0 ? ' z' : ''); t.style.left = X(v)+'px'; wrap.appendChild(t);
+    const l = document.createElement('div');
+    l.className = 'tlab' + (v===0 ? ' z' : ''); l.style.left = X(v)+'px'; l.textContent = mf(v); wrap.appendChild(l);
+  }
+  const n = (S.sel && S.sel.t==='osc') ? S.N + 2*Math.max(S.j,1) : (S.sel ? S.sel.m : S.gen);
+  const v = aVal(S.N, n);
+  const dot = document.getElementById('dot'), lab = document.getElementById('dotlab');
+  dot.style.left = X(v)+'px';
+  lab.style.left = Math.max(70, Math.min(X(v), W-80))+'px';
+  dot.classList.toggle('neg', v<0); lab.classList.toggle('neg', v<0);
+  lab.innerHTML = '<i>a</i><sub>'+n+'</sub> = <span class="v">'+mf(v)+'</span>';
+}
+
+function renderCards(){
+  const host = document.getElementById('cards');
+  host.innerHTML = '';
+  const total = S.N + 1;
+  host.classList.toggle('dense', total >= 11);
+  for(let n=1; n<=total; n++){
+    const d = document.createElement('div');
+    if(n <= S.gen){
+      const v = aVal(S.N,n);
+      d.className = 'card' + (v===0 ? ' zero' : '') + ((S.sel && S.sel.t==='dec' && S.sel.m===n) ? ' sel' : '');
+      d.innerHTML = '<span class="n"><i>a</i><sub>'+n+'</sub></span><span class="v">'+mf(v)+
+                    '</span><span class="s"><i>S</i>='+sumVal(S.N,n)+'</span>';
+      d.onclick = (function(k){ return function(){ S.sel={t:'dec',m:k}; renderNL(); renderCards(); renderRead(); }; })(n);
+    }else if(n === S.gen+1){
+      d.className = 'card next';
+      d.innerHTML = '<span class="n"><i>a</i><sub>'+n+'</sub></span><span class="v">|<i>a</i><sub>'+(n-1)+
+                    '</sub>|−1</span><span class="s">터치</span>';
+      d.onclick = (function(k){ return function(){
+        S.gen = k; S.sel = {t:'dec', m:k};
+        if(S.gen === total){ S.j = 1; S.sel = {t:'osc'}; }
+        renderAll();
+      }; })(n);
+    }else{
+      d.className = 'card ghost';
+      d.innerHTML = '<span class="n"><i>a</i><sub>'+n+'</sub></span>';
+    }
+    host.appendChild(d);
+  }
+}
+
+function renderOsc(){
+  const box = document.getElementById('osc');
+  box.classList.toggle('lock', S.gen < S.N+1);
+
+  const chips = document.getElementById('chips');
+  chips.innerHTML = '';
+  for(let k=1; k<=5; k++){
+    const idx = S.N + k, v = aVal(S.N, idx);
+    const c = document.createElement('div');
+    c.className = 'chip ' + (v<0 ? 'neg' : 'zero');
+    c.innerHTML = '<span class="cv">'+mf(v)+'</span><span class="cn"><i>a</i><sub>'+idx+'</sub></span>';
+    chips.appendChild(c);
+  }
+  const dd = document.createElement('span'); dd.className='ddots'; dd.textContent='⋯'; chips.appendChild(dd);
+
+  const jj = Math.max(S.j,1), m = S.N + 2*jj;
+  const cur = document.createElement('div');
+  cur.className = 'chip cur neg';
+  cur.innerHTML = '<span class="cv">−1</span><span class="cn"><i>a</i><sub>'+m+'</sub> &nbsp;<i>j</i> = '+jj+'</span>';
+  chips.appendChild(cur);
+
+  const note = document.createElement('div');
+  note.className = 'oscnote';
+  note.innerHTML = '−1 은 <b>두 칸마다</b> 등장<br><i>m</i> = <i>N</i> + 2<i>j</i>';
+  chips.appendChild(note);
+
+  const jmax = jmaxOf(S.N);
+  document.getElementById('jmaxlab').innerHTML = '<i>j</i>=' + jmax;
+  const trk = document.getElementById('track');
+  const h = document.getElementById('handle');
+  const f = document.getElementById('fill');
+  const p = (jj-1)/(jmax-1), W = trk.clientWidth || 560, PAD = 24;
+  const px = PAD + p*(W-2*PAD);
+  h.style.left = px+'px'; h.textContent = jj; f.style.width = px+'px';
+  h.classList.toggle('hitt', sumVal(S.N,m) === 55);
+  document.getElementById('kvm').textContent = S.j ? m : '–';
+  document.getElementById('kvs').textContent = S.j ? sumVal(S.N,m) : '–';
+}
+
+function renderRead(){
+  const eq = document.getElementById('eq');
+  const vd = document.getElementById('verdict');
+  const box = document.getElementById('read');
+  box.classList.remove('good','bad','warn');
+  vd.innerHTML = '';
+
+  if(!S.sel){
+    eq.innerHTML = '<span class="hint">항 카드를 터치하거나 <i>j</i> 를 움직여 보세요</span>';
+    return;
+  }
+  const m = (S.sel.t==='osc') ? S.N + 2*Math.max(S.j,1) : S.sel.m;
+  const a = aVal(S.N,m), s = sumVal(S.N,m), p = a*s;
+  const af = a<0 ? '('+mf(a)+')' : String(a);
+
+  eq.innerHTML = '<span><i>a</i><sub>'+m+'</sub> × <i>S</i><sub>'+m+'</sub></span><span class="op">=</span>'
+    + '<span>'+af+' × '+mf(s)+'</span><span class="op">=</span><span class="res">'+mf(p)+'</span>';
+
+  if(p === -55){
+    const ok = (m>=10 && m<=100);
+    box.classList.add(ok ? 'good' : 'warn');
+    vd.innerHTML = ok
+      ? '<b style="color:var(--green)">−55 성립!</b><br>10 ≤ <i>m</i> = '+m+' ≤ 100 ✓'
+      : '<b style="color:var(--amber)">−55 는 성립하지만</b><br><i>m</i> = '+m+' 은 범위 밖 ✗';
+    record(S.N, m, ok);
+  }else if(a >= 0){
+    vd.innerHTML = '<i>a</i><sub>'+m+'</sub> ≥ 0 이므로<br>곱이 음수가 될 수 없음';
+  }else{
+    box.classList.add('bad');
+    vd.innerHTML = '<i>S</i><sub>'+m+'</sub> 가 55 가 아니므로<br>−55 가 아님';
+  }
+}
+
+function record(N,m,ok){
+  if(!(N in S.found) || S.found[N]) return;
+  S.found[N] = {m:m, ok:ok};
+  fillRow(document.querySelector('#tbl .row[data-n="'+N+'"]'), N, ok);
+  toast('첫째항 ' + N + ' → m = ' + m + (ok ? ' ✓' : ' (범위 밖 ✗)'));
+  if([11,12,13].every(function(n){ return S.found[n]; }) && !S.done) revealAnswer();
+}
+
+function fillRow(row,N,ok){
+  if(!row) return;
+  row.querySelector('.p').textContent = peak(N);
+  row.querySelector('.j').textContent = peak(N)-55;
+  row.querySelector('.m').textContent = N*N + 2*N - 110;
+  row.querySelector('.vd').textContent = ok ? '✓' : '✗ 범위 밖';
+  row.classList.add(ok ? 'done' : 'bad');
+}
+
+function revealAnswer(){
+  S.done = true;
+  [11,12,13,14].forEach(function(N){
+    if(!S.found[N]){
+      const m = N*N + 2*N - 110, ok = (m>=10 && m<=100);
+      S.found[N] = {m:m, ok:ok};
+      fillRow(document.querySelector('#tbl .row[data-n="'+N+'"]'), N, ok);
+    }
+  });
+  document.getElementById('footv').textContent = '33 + 58 + 85 = 176';
+  document.getElementById('foot').classList.add('on');
+  S.step = STEPS.length;
+  renderSteps();
+  updateNextBtn();
+}
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('on');
+  clearTimeout(t._h);
+  t._h = setTimeout(function(){ t.classList.remove('on'); }, 2400);
+}
+
+function updateNextBtn(){
+  const b = document.getElementById('nextb');
+  if(S.done && S.step >= STEPS.length){ b.textContent = '완료'; b.disabled = true; }
+  else{ b.textContent = '다음 단계 ▶'; b.disabled = false; }
+}
+
+function renderAll(){
+  renderCtl(); renderNL(); renderCards(); renderOsc(); renderRead(); renderSteps(); updateNextBtn();
+}
+
+/* ===================== 조작 ===================== */
+document.getElementById('slider').oninput = function(e){ setN(+e.target.value); };
+document.getElementById('plus').onclick  = function(){ setN(S.N+1); };
+document.getElementById('minus').onclick = function(){ setN(S.N-1); };
+document.getElementById('genall').onclick = function(){
+  S.gen = S.N+1; S.j = Math.max(S.j,1); S.sel = {t:'osc'}; renderAll();
+};
+document.getElementById('reset').onclick = function(){
+  S.gen = 1; S.j = 0; S.sel = {t:'dec', m:1}; renderAll();
+};
+
+function setJ(v){
+  if(S.gen < S.N+1) return;
+  S.j = Math.max(1, Math.min(jmaxOf(S.N), v));
+  S.sel = {t:'osc'};
+  renderNL(); renderOsc(); renderRead();
+}
+document.getElementById('jp').onclick = function(){ setJ(S.j+1); };
+document.getElementById('jm').onclick = function(){ setJ(S.j-1); };
+
+const trk = document.getElementById('track');
+let dragging = false;
+function jFromX(x){
+  const r = trk.getBoundingClientRect();
+  const pad = 24 * (r.width / (trk.clientWidth||r.width));
+  const p = Math.max(0, Math.min(1, (x - r.left - pad) / Math.max(1, r.width - 2*pad)));
+  return Math.round(1 + p*(jmaxOf(S.N)-1));
+}
+trk.addEventListener('pointerdown', function(e){
+  if(S.gen < S.N+1) return;
+  dragging = true; trk.setPointerCapture(e.pointerId);
+  document.getElementById('handle').classList.add('grab');
+  setJ(jFromX(e.clientX));
+});
+trk.addEventListener('pointermove', function(e){ if(dragging) setJ(jFromX(e.clientX)); });
+['pointerup','pointercancel'].forEach(function(ev){
+  trk.addEventListener(ev, function(){
+    dragging = false;
+    document.getElementById('handle').classList.remove('grab');
+  });
+});
+
+function nextStep(){
+  if(S.step < STEPS.length){ S.step++; renderSteps(); updateNextBtn(); }
+  else if(!S.done){ revealAnswer(); }
+}
+function prevStep(){ if(S.step > 0){ S.step--; renderSteps(); updateNextBtn(); } }
+document.getElementById('nextb').onclick = nextStep;
+document.getElementById('prevb').onclick = prevStep;
+
+addEventListener('keydown', function(e){
+  const k = e.key;
+  if(k===' ' || k==='ArrowRight' || k==='PageDown'){ e.preventDefault(); nextStep(); }
+  else if(k==='ArrowLeft' || k==='PageUp'){ e.preventDefault(); prevStep(); }
+  else if(k==='ArrowUp'){ e.preventDefault(); setJ(S.j+1); }
+  else if(k==='ArrowDown'){ e.preventDefault(); setJ(S.j-1); }
+  else if(k==='f' || k==='F'){ toggleFs(); }
+  else if(k==='r' || k==='R'){ setN(S.N); }
+  else if(k==='a' || k==='A'){ document.getElementById('genall').click(); }
+  else if('01234'.indexOf(k) >= 0){ setN({'0':5,'1':11,'2':12,'3':13,'4':14}[k]); }
+});
+
+/* ===================== init ===================== */
+S.step = 1;
+setN(5);
+setTimeout(function(){ renderNL(); renderOsc(); }, 80);
+</script>
+</body>
+</html>
