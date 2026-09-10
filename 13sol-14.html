@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>서로 지목하는 쌍이 하나 이상일 확률</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#0a1524;}
+  :root{
+    --navy:#0e1c2e; --panel:#152a41;
+    --panel-2:#1b3350; --line:rgba(255,255,255,.10);
+    --ink:#eaf1f8; --dim:#8ba3bd;
+    --amber:#f7c04a; --coral:#ff8b6b; --teal:#4fd6c9;
+  }
+  body{font-family:'Noto Sans KR','Space Grotesk',system-ui,sans-serif;color:var(--ink);}
+  .num,.sg{font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-feature-settings:"tnum";}
+
+  #stage{
+    position:fixed;left:0;top:0;width:1600px;height:900px;transform-origin:0 0;
+    background:
+      radial-gradient(1200px 700px at 20% -10%, #17304b 0%, rgba(23,48,75,0) 60%),
+      linear-gradient(180deg,#0e1c2e 0%,#0b1626 100%);
+    display:grid;grid-template-rows:88px 1fr 74px;gap:16px;padding:20px 32px 18px;
+  }
+
+  /* ---------- 상단 ---------- */
+  #top{display:flex;align-items:center;justify-content:space-between;gap:24px;}
+  #qbox{display:flex;align-items:center;gap:18px;min-width:0;}
+  #qbox .tag{
+    flex:none;padding:9px 16px;border-radius:10px;background:rgba(247,192,74,.14);
+    border:1px solid rgba(247,192,74,.42);color:var(--amber);font-size:21px;font-weight:700;letter-spacing:.02em;
+  }
+  #qbox h1{margin:0;font-size:29px;font-weight:700;letter-spacing:-.015em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  #qbox h1 em{font-style:normal;color:var(--amber);}
+  #steps{display:flex;gap:10px;flex:none;}
+  .pill{
+    width:52px;height:52px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.04);
+    color:var(--dim);font-size:23px;font-weight:700;cursor:pointer;transition:.18s;
+    font-family:'Space Grotesk',sans-serif;
+  }
+  .pill:hover{border-color:rgba(255,255,255,.3);color:var(--ink);}
+  .pill.on{background:var(--amber);border-color:var(--amber);color:#12233a;}
+
+  /* ---------- 본문 ---------- */
+  main{display:grid;grid-template-columns:1fr 540px;gap:20px;min-height:0;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:22px;position:relative;overflow:hidden;min-width:0;}
+  #boardPanel{padding:14px 20px 16px;display:flex;flex-direction:column;}
+  #boardHead{display:flex;align-items:center;justify-content:space-between;height:36px;flex:none;}
+  #boardHead .t{font-size:22px;color:var(--dim);font-weight:500;}
+  #boardHead .r{font-size:22px;color:var(--dim);}
+  #boardBody{flex:1;min-height:0;position:relative;}
+  #board{position:absolute;inset:0;width:100%;height:100%;touch-action:none;}
+
+  /* 노드 */
+  .node{cursor:pointer;}
+  .node circle.bg{fill:#20395a;stroke:#3d6088;stroke-width:3;transition:.15s;}
+  .node.A circle.bg{stroke:#8a5a4a;}
+  .node.B circle.bg{stroke:#2f6f74;}
+  .node text{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:44px;fill:var(--ink);
+    text-anchor:middle;dominant-baseline:central;pointer-events:none;user-select:none;}
+  .node.sel circle.bg{stroke:var(--amber);stroke-width:6;filter:url(#glowA);}
+  .node.mut circle.bg{fill:#4a3a16;stroke:var(--amber);stroke-width:6;}
+  .node.dimmed{opacity:.35;}
+  .node.pick circle.bg{stroke:var(--teal);stroke-width:6;}
+
+  .colcap{font-family:'Noto Sans KR',sans-serif;font-size:27px;font-weight:700;fill:var(--dim);text-anchor:middle;}
+
+  .edge{fill:none;stroke-linecap:round;}
+  .e-coral{stroke:var(--coral);stroke-width:7;}
+  .e-teal{stroke:var(--teal);stroke-width:7;}
+  .e-amber{stroke:var(--amber);stroke-width:11;filter:url(#glowA);}
+  .e-ghost{stroke:#4d6b8c;stroke-width:5;stroke-dasharray:11 10;opacity:.85;}
+  .e-no{stroke:#a3453c;stroke-width:5;stroke-dasharray:9 11;opacity:.9;}
+  .e-temp{stroke:var(--amber);stroke-width:7;stroke-dasharray:12 10;}
+
+  .mbadge circle{fill:#4a3a16;stroke:var(--amber);stroke-width:3;}
+  .mbadge text{font-size:30px;fill:var(--amber);text-anchor:middle;dominant-baseline:central;
+    font-family:'Space Grotesk',sans-serif;font-weight:700;}
+  .cnt circle{fill:#123c3f;stroke:var(--teal);stroke-width:3;}
+  .cnt.zero circle{fill:#3f1a18;stroke:#e2685a;}
+  .cnt text{font-size:34px;fill:var(--teal);text-anchor:middle;dominant-baseline:central;
+    font-family:'Space Grotesk',sans-serif;font-weight:700;}
+  .cnt.zero text{fill:#ff9b8f;}
+  .xmark{stroke:#e2685a;stroke-width:6;stroke-linecap:round;}
+
+  @keyframes pop{0%{transform:scale(.4);opacity:0}60%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+  .pop{animation:pop .34s cubic-bezier(.2,.9,.3,1.2) both;transform-box:fill-box;transform-origin:center;}
+  @keyframes dash{to{stroke-dashoffset:-42}}
+  .flow{stroke-dasharray:14 12;animation:dash .9s linear infinite;}
+
+  /* ---------- 사이드 ---------- */
+  #side{display:flex;flex-direction:column;gap:14px;min-height:0;min-width:0;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:18px 22px;}
+  .card .lab{font-size:20px;color:var(--dim);font-weight:500;margin-bottom:10px;}
+  .big{font-family:'Space Grotesk',sans-serif;font-weight:700;letter-spacing:-.01em;}
+
+  .statline{display:flex;align-items:baseline;justify-content:space-between;}
+  .statline .v{font-size:46px;}
+  .dots{display:flex;gap:9px;margin-top:14px;}
+  .dot{width:100%;height:12px;border-radius:6px;background:rgba(255,255,255,.10);transition:.25s;}
+  .dot.on{background:var(--coral);}
+  .dot.onb{background:var(--teal);}
+
+  #verdict{border-width:2px;transition:.2s;}
+  #verdict.hide{opacity:0;pointer-events:none;}
+  #verdict.yes{border-color:var(--amber);background:rgba(247,192,74,.13);}
+  #verdict.no{border-color:rgba(255,255,255,.22);background:rgba(255,255,255,.04);}
+  #vTitle{font-size:34px;font-weight:700;}
+  #vSub{font-size:22px;color:var(--dim);margin-top:6px;}
+
+  .simRow{display:flex;gap:12px;margin-top:12px;}
+  .bar{position:relative;height:26px;border-radius:13px;background:rgba(255,255,255,.09);overflow:hidden;margin-top:14px;}
+  .bar i{position:absolute;left:0;top:0;bottom:0;background:var(--amber);border-radius:13px;width:0;transition:width .12s linear;}
+  .barMark{position:absolute;top:-8px;bottom:-8px;width:3px;background:var(--teal);left:78.6%;}
+  .simNums{display:flex;justify-content:space-between;margin-top:12px;font-size:24px;color:var(--dim);}
+  .simNums b{font-family:'Space Grotesk',sans-serif;font-size:30px;color:var(--ink);font-weight:700;}
+
+  .chipGrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:6px;}
+  .chip{height:74px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.04);
+    display:flex;align-items:center;justify-content:center;gap:10px;font-size:26px;color:var(--dim);transition:.2s;
+    font-family:'Space Grotesk',sans-serif;font-weight:700;}
+  .chip.on{background:rgba(79,214,201,.14);border-color:var(--teal);color:var(--ink);}
+  .chip .x{font-size:22px;opacity:.7;}
+
+  .caseCard{border:1px solid var(--line);border-radius:18px;padding:14px 18px;background:rgba(255,255,255,.03);
+    cursor:pointer;transition:.18s;}
+  .caseCard:hover{border-color:rgba(255,255,255,.3);}
+  .caseCard.on{border-color:var(--amber);background:rgba(247,192,74,.10);}
+  .caseCard .hd{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .caseCard .nm{font-size:22px;font-weight:700;min-width:0;}
+  .caseCard .pf{font-size:25px;font-family:'Space Grotesk','Noto Sans KR',sans-serif;font-weight:600;
+    color:var(--dim);white-space:nowrap;flex:none;}
+  .caseCard .pf b{color:var(--coral);font-weight:700;font-size:29px;}
+  .caseCard .bd{margin-top:10px;display:none;align-items:baseline;justify-content:space-between;}
+  .caseCard.on .bd{display:flex;}
+  .caseCard .ex{font-size:25px;color:var(--dim);font-family:'Space Grotesk',sans-serif;}
+  .caseCard .st{font-size:34px;color:var(--amber);font-family:'Space Grotesk',sans-serif;font-weight:700;}
+
+  #sumRow{margin-top:2px;padding:14px 20px;border-radius:16px;background:rgba(79,214,201,.10);
+    border:1px solid rgba(79,214,201,.4);display:flex;align-items:baseline;justify-content:space-between;
+    opacity:0;transition:.3s;}
+  #sumRow.on{opacity:1;}
+  #sumRow .l{font-size:22px;color:var(--dim);}
+  #sumRow .v{font-size:42px;color:var(--teal);font-family:'Space Grotesk',sans-serif;font-weight:700;}
+
+  /* 분수 */
+  .frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;
+    margin:0 .16em;font-family:'Space Grotesk',sans-serif;line-height:1.06;}
+  .frac .n{padding:0 .3em .04em;}
+  .frac .d{padding:.06em .3em 0;border-top:3px solid currentColor;}
+  .sub{font-size:.62em;display:inline-block;transform:translateY(.30em);}
+
+  .eq{display:flex;align-items:center;justify-content:center;gap:.28em;font-size:42px;
+    font-family:'Space Grotesk',sans-serif;font-weight:600;}
+  .eq.small{font-size:34px;}
+  #ansCard{border:2px solid var(--amber);background:rgba(247,192,74,.12);}
+  #ansCard .eq{font-size:52px;color:var(--amber);font-weight:700;}
+
+  /* ---------- 하단 ---------- */
+  #ctl{display:flex;align-items:center;gap:14px;}
+  .btn{height:56px;padding:0 26px;border-radius:14px;border:1px solid var(--line);
+    background:rgba(255,255,255,.05);color:var(--ink);font-size:23px;font-weight:700;cursor:pointer;
+    font-family:'Noto Sans KR',sans-serif;transition:.15s;display:flex;align-items:center;gap:10px;}
+  .btn:hover{background:rgba(255,255,255,.11);border-color:rgba(255,255,255,.3);}
+  .btn:active{transform:translateY(1px);}
+  .btn.primary{background:var(--amber);border-color:var(--amber);color:#12233a;}
+  .btn.primary:hover{background:#ffcf68;}
+  .btn.ghost{color:var(--dim);}
+  .btn[disabled]{opacity:.32;pointer-events:none;}
+  #hint{flex:1;text-align:center;font-size:22px;color:var(--dim);}
+
+  /* ---------- 729 격자 ---------- */
+  #gridWrap{position:absolute;inset:0;display:none;grid-template-columns:600px 1fr;gap:26px;align-items:center;}
+  #gridWrap.on{display:grid;}
+  #grid729{display:grid;grid-template-columns:repeat(27,1fr);gap:2px;width:594px;height:594px;}
+  #grid729 div{border-radius:2px;background:#26405d;cursor:pointer;}
+  #grid729 div.m{background:var(--amber);}
+  #grid729 div.k{outline:3px solid #fff;outline-offset:1px;z-index:2;}
+  .legend{display:flex;flex-direction:column;gap:14px;}
+  .lgRow{display:flex;align-items:center;gap:12px;font-size:23px;color:var(--dim);}
+  .sw{width:26px;height:26px;border-radius:6px;flex:none;}
+  .lgRow b{font-family:'Space Grotesk',sans-serif;font-size:28px;color:var(--ink);}
+  #mini{width:300px;height:210px;}
+</style>
+</head>
+<body>
+<div id="stage">
+
+  <!-- 상단 -->
+  <header id="top">
+    <div id="qbox">
+      <span class="tag">확률</span>
+      <h1>각 반 대표 3명이 상대를 임의로 지목 — <em>서로 지목하는 쌍이 1개 이상일 확률</em></h1>
+    </div>
+    <div id="steps">
+      <button class="pill on" data-s="1">1</button>
+      <button class="pill" data-s="2">2</button>
+      <button class="pill" data-s="3">3</button>
+      <button class="pill" data-s="4">4</button>
+    </div>
+  </header>
+
+  <!-- 본문 -->
+  <main>
+    <section class="panel" id="boardPanel">
+      <div id="boardHead">
+        <div class="t" id="bTitle">직접 연결해 보기</div>
+        <div class="r" id="bRight"></div>
+      </div>
+      <div id="boardBody">
+        <svg id="board" viewBox="0 0 932 596" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <filter id="glowA" x="-60%" y="-60%" width="220%" height="220%">
+              <feGaussianBlur stdDeviation="7" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <marker id="mk-coral" viewBox="0 0 26 26" refX="23" refY="13" markerWidth="26" markerHeight="26"
+                    orient="auto" markerUnits="userSpaceOnUse">
+              <path d="M3 3 L24 13 L3 23 Z" fill="#ff8b6b"/></marker>
+            <marker id="mk-teal" viewBox="0 0 26 26" refX="23" refY="13" markerWidth="26" markerHeight="26"
+                    orient="auto" markerUnits="userSpaceOnUse">
+              <path d="M3 3 L24 13 L3 23 Z" fill="#4fd6c9"/></marker>
+            <marker id="mk-amber" viewBox="0 0 26 26" refX="21" refY="13" markerWidth="30" markerHeight="30"
+                    orient="auto" markerUnits="userSpaceOnUse">
+              <path d="M3 3 L24 13 L3 23 Z" fill="#f7c04a"/></marker>
+            <marker id="mk-ghost" viewBox="0 0 26 26" refX="23" refY="13" markerWidth="22" markerHeight="22"
+                    orient="auto" markerUnits="userSpaceOnUse">
+              <path d="M4 4 L23 13 L4 22 Z" fill="#4d6b8c"/></marker>
+          </defs>
+          <g id="lyCaps"></g>
+          <g id="lyEdges"></g>
+          <g id="lyNodes"></g>
+          <g id="lyBadge"></g>
+          <g id="lyTemp"></g>
+        </svg>
+
+        <div id="gridWrap">
+          <div id="grid729"></div>
+          <div class="legend">
+            <div class="lgRow"><span class="sw" style="background:#f7c04a"></span>
+              <span><b>573</b> · 서로 지목하는 쌍 있음</span></div>
+            <div class="lgRow"><span class="sw" style="background:#26405d"></span>
+              <span><b>156</b> · 없음 (여사건)</span></div>
+            <svg id="mini" viewBox="0 0 300 210"></svg>
+            <div class="lgRow" id="miniCap" style="font-size:21px">칸을 눌러 보세요</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <aside id="side"></aside>
+  </main>
+
+  <!-- 하단 -->
+  <footer id="ctl">
+    <button class="btn ghost" id="prev">← 이전</button>
+    <div id="hint"></div>
+    <span id="extra" style="display:flex;gap:12px"></span>
+    <button class="btn primary" id="next">다음 →</button>
+  </footer>
+</div>
+
+<script>
+/* =========================================================
+   16:9 스테이지 스케일링 (TV 미러링 대응)
+   ========================================================= */
+(function(){
+  const stage=document.getElementById('stage');
+  function fit(){
+    const vv=window.visualViewport;
+    const vw=(vv&&vv.width)||document.documentElement.clientWidth||window.innerWidth;
+    const vh=(vv&&vv.height)||document.documentElement.clientHeight||window.innerHeight;
+    const s=Math.min(vw/1600, vh/900);
+    const x=(vw-1600*s)/2, y=(vh-900*s)/2;
+    stage.style.transform='translate('+x+'px,'+y+'px) scale('+s+')';
+  }
+  window.__fit=fit;
+  fit();
+  ['resize','orientationchange','pageshow','load'].forEach(function(ev){
+    window.addEventListener(ev,function(){ fit(); [60,300,700].forEach(function(t){setTimeout(fit,t);}); });
+  });
+  if(window.visualViewport){
+    visualViewport.addEventListener('resize',fit);
+    visualViewport.addEventListener('scroll',fit);
+  }
+  document.addEventListener('DOMContentLoaded',fit);
+  [60,300,700].forEach(function(t){setTimeout(fit,t);});
+  if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){fit();setTimeout(fit,120);});
+})();
+
+/* =========================================================
+   상수 / 상태
+   ========================================================= */
+const R=58;
+const POS={
+  A:[{x:280,y:104},{x:280,y:298},{x:280,y:492}],
+  B:[{x:652,y:104},{x:652,y:298},{x:652,y:492}]
+};
+const NAME={A:['A','A','A'],B:['B','B','B']};
+
+const S={
+  step:1,
+  A:[null,null,null],   // A_i 가 지목한 B 인덱스
+  B:[null,null,null],   // B_j 가 지목한 A 인덱스
+  fan:new Set(),        // 2단계: 펼쳐본 노드
+  caseIdx:null,         // 3단계: 선택된 케이스
+  caseSeen:new Set(),
+  openB:new Set(),      // 3단계: 열어본 B
+  sim:{n:0,k:0},
+  simTimer:null,
+  sel:null,             // {c:'A',i:0}
+  drag:null,
+  cell:null             // 4단계 선택 칸
+};
+
+function sb(t){ return '<span class="sub">'+t+'</span>'; }
+const CASES=[
+  { name:'서로 다른 3명을 지목', A:[0,2,1], pat:6,
+    patTxt:'3! = <b>6</b> 가지' },
+  { name:'두 명에게 몰려서 지목', A:[0,2,2], pat:18,
+    patTxt:sb(3)+'C'+sb(2)+' × '+sb(3)+'P'+sb(2)+' = <b>18</b> 가지' },
+  { name:'한 명에게 모두 몰려서 지목', A:[1,1,1], pat:3,
+    patTxt:sb(3)+'C'+sb(1)+' = <b>3</b> 가지' }
+];
+// 각 케이스에서 B반 학생이 고를 수 있는 상대 수 (B1,B2,B3 순)
+function allowedCounts(cs){
+  return [0,1,2].map(function(j){
+    let ban=0; for(let i=0;i<3;i++) if(cs.A[i]===j) ban++;
+    return 3-ban;
+  });
+}
+function caseVal(cs){ const c=allowedCounts(cs); return c[0]*c[1]*c[2]; }
+function caseSub(cs){ return cs.pat*caseVal(cs); }
+
+const svg=document.getElementById('board');
+const lyCaps=document.getElementById('lyCaps');
+const lyEdges=document.getElementById('lyEdges');
+const lyNodes=document.getElementById('lyNodes');
+const lyBadge=document.getElementById('lyBadge');
+const lyTemp=document.getElementById('lyTemp');
+const NS='http://www.w3.org/2000/svg';
+
+function E(tag,attrs,parent){
+  const e=document.createElementNS(NS,tag);
+  if(attrs) for(const k in attrs) e.setAttribute(k,attrs[k]);
+  if(parent) parent.appendChild(e);
+  return e;
+}
+function clear(g){ while(g.firstChild) g.removeChild(g.firstChild); }
+
+/* ---------- 노드 그리기 (1회) ---------- */
+const nodeEls={A:[],B:[]};
+(function buildNodes(){
+  const c1=E('text',{class:'colcap',x:POS.A[0].x,y:26},lyCaps); c1.textContent='A반 대표';
+  const c2=E('text',{class:'colcap',x:POS.B[0].x,y:26},lyCaps); c2.textContent='B반 대표';
+  ['A','B'].forEach(function(c){
+    POS[c].forEach(function(p,i){
+      const g=E('g',{class:'node '+c},lyNodes);
+      E('circle',{class:'bg',cx:p.x,cy:p.y,r:R},g);
+      const t=E('text',{x:p.x,y:p.y+2},g);
+      t.textContent=c;
+      const s=E('tspan',{dy:12,'font-size':28},t); s.textContent=(i+1);
+      g.dataset.c=c; g.dataset.i=i;
+      nodeEls[c].push(g);
+    });
+  });
+})();
+
+/* ---------- 좌표 변환 ---------- */
+function toSvg(ev){
+  const m=svg.getScreenCTM();
+  if(!m) return {x:0,y:0};
+  const p=new DOMPoint(ev.clientX,ev.clientY).matrixTransform(m.inverse());
+  return {x:p.x,y:p.y};
+}
+function hitNode(pt,cls){
+  let best=null,bd=1e9;
+  const list=cls?[cls]:['A','B'];
+  list.forEach(function(c){
+    POS[c].forEach(function(p,i){
+      const d=Math.hypot(p.x-pt.x,p.y-pt.y);
+      if(d<bd){bd=d;best={c:c,i:i,d:d};}
+    });
+  });
+  return (best&&best.d<R+26)?best:null;
+}
+
+/* ---------- 간선 경로 ---------- */
+function edgePath(p,q,off,shrinkEnd){
+  const dx=q.x-p.x, dy=q.y-p.y, L=Math.hypot(dx,dy)||1;
+  const ux=dx/L, uy=dy/L, px=uy, py=-ux;
+  const sx=p.x+ux*(R+4)+px*off, sy=p.y+uy*(R+4)+py*off;
+  const ex=q.x-ux*(R+(shrinkEnd||10))+px*off, ey=q.y-uy*(R+(shrinkEnd||10))+py*off;
+  return 'M '+sx+' '+sy+' L '+ex+' '+ey;
+}
+function drawEdge(from,to,cls,marker,off){
+  const e=E('path',{class:'edge '+cls,d:edgePath(from,to,off||0)},lyEdges);
+  if(marker) e.setAttribute('marker-end','url(#'+marker+')');
+  return e;
+}
+
+/* ---------- 상호 쌍 계산 ---------- */
+function mutualPairs(){
+  const out=[];
+  for(let i=0;i<3;i++){
+    const j=S.A[i];
+    if(j!==null&&S.B[j]===i) out.push([i,j]);
+  }
+  return out;
+}
+function assignedCount(){
+  let n=0; S.A.forEach(v=>{if(v!==null)n++;}); S.B.forEach(v=>{if(v!==null)n++;}); return n;
+}
+
+/* =========================================================
+   렌더
+   ========================================================= */
+function render(){
+  document.querySelectorAll('.pill').forEach(function(b){ b.classList.toggle('on', +b.dataset.s===S.step); });
+  document.getElementById('gridWrap').classList.toggle('on', S.step===4);
+  svg.style.display = (S.step===4)?'none':'block';
+  renderBoard();
+  renderSide();
+  renderCtl();
+}
+
+function renderBoard(){
+  clear(lyEdges); clear(lyBadge); clear(lyTemp);
+  ['A','B'].forEach(function(c){ nodeEls[c].forEach(function(g){ g.className.baseVal='node '+c; }); });
+
+  if(S.step===1){
+    document.getElementById('bTitle').textContent='직접 연결해 보기';
+    const mp=mutualPairs();
+    const mset=new Set(); mp.forEach(function(p){ mset.add('A'+p[0]); mset.add('B'+p[1]); });
+    for(let i=0;i<3;i++) if(S.A[i]!==null){
+      const mu=mset.has('A'+i)&&S.B[S.A[i]]===i;
+      drawEdge(POS.A[i],POS.B[S.A[i]], mu?'e-amber':'e-coral', mu?'mk-amber':'mk-coral', 20);
+    }
+    for(let j=0;j<3;j++) if(S.B[j]!==null){
+      const mu=mset.has('B'+j)&&S.A[S.B[j]]===j;
+      drawEdge(POS.B[j],POS.A[S.B[j]], mu?'e-amber':'e-teal', mu?'mk-amber':'mk-teal', 20);
+    }
+    mp.forEach(function(p){
+      nodeEls.A[p[0]].classList.add('mut'); nodeEls.B[p[1]].classList.add('mut');
+      const a=POS.A[p[0]], b=POS.B[p[1]];
+      const g=E('g',{class:'mbadge pop'},lyBadge);
+      E('circle',{cx:(a.x+b.x)/2,cy:(a.y+b.y)/2,r:29},g);
+      const t=E('text',{x:(a.x+b.x)/2,y:(a.y+b.y)/2+1},g); t.textContent='⇄';
+    });
+    if(S.sel) nodeEls[S.sel.c][S.sel.i].classList.add('sel');
+    document.getElementById('bRight').textContent = assignedCount()+' / 6 지목';
+  }
+
+  if(S.step===2){
+    document.getElementById('bTitle').textContent='한 사람의 선택지는 몇 가지?';
+    ['A','B'].forEach(function(c){
+      const other=(c==='A')?'B':'A';
+      POS[c].forEach(function(p,i){
+        if(!S.fan.has(c+i)) return;
+        nodeEls[c][i].classList.add('pick');
+        POS[other].forEach(function(q,k){
+          drawEdge(p,q,'e-ghost'+(k===0?'':''),'mk-ghost', (k-1)*17);
+        });
+      });
+    });
+    document.getElementById('bRight').textContent=S.fan.size+' / 6 확인';
+  }
+
+  if(S.step===3){
+    document.getElementById('bTitle').textContent='서로 지목하는 쌍이 하나도 없으려면?';
+    document.getElementById('bRight').textContent = (S.caseIdx===null)?'오른쪽 경우를 눌러 보세요':'B반 학생을 눌러 선택지를 확인';
+    if(S.caseIdx!==null){
+      const cs=CASES[S.caseIdx];
+      // A반 화살표
+      for(let i=0;i<3;i++) drawEdge(POS.A[i],POS.B[cs.A[i]],'e-coral','mk-coral',20);
+      // 각 B의 금지/허용
+      for(let j=0;j<3;j++){
+        const banned=[]; for(let i=0;i<3;i++) if(cs.A[i]===j) banned.push(i);
+        const allowed=[0,1,2].filter(k=>banned.indexOf(k)<0);
+        const p=POS.B[j];
+        const g=E('g',{class:'cnt pop'+(allowed.length===0?' zero':'')},lyBadge);
+        E('circle',{cx:p.x+72,cy:p.y-52,r:30},g);
+        const t=E('text',{x:p.x+72,y:p.y-51},g); t.textContent=allowed.length;
+        if(S.openB.has(j)){
+          nodeEls.B[j].classList.add('pick');
+          allowed.forEach(function(k){ drawEdge(POS.B[j],POS.A[k],'e-teal','mk-teal',20); });
+          banned.forEach(function(k){
+            const e=drawEdge(POS.B[j],POS.A[k],'e-no',null,20);
+            const mx=(POS.B[j].x+POS.A[k].x)/2, my=(POS.B[j].y+POS.A[k].y)/2;
+            const gg=E('g',{class:'pop'},lyBadge);
+            E('line',{class:'xmark',x1:mx-13,y1:my-13,x2:mx+13,y2:my+13},gg);
+            E('line',{class:'xmark',x1:mx+13,y1:my-13,x2:mx-13,y2:my+13},gg);
+          });
+        }
+      }
+    }
+  }
+}
+
+/* ---------- 사이드 ---------- */
+function frac(n,d){ return '<span class="frac"><span class="n">'+n+'</span><span class="d">'+d+'</span></span>'; }
+
+function renderSide(){
+  const side=document.getElementById('side');
+  if(S.step===1){
+    const mp=mutualPairs(), done=assignedCount()===6;
+    side.innerHTML=
+      '<div class="card">'+
+        '<div class="lab">지목 현황</div>'+
+        '<div class="statline"><span style="font-size:22px;color:var(--dim)">A반 → B반</span>'+
+          '<span class="big v num" style="font-size:36px">'+S.A.filter(v=>v!==null).length+' / 3</span></div>'+
+        '<div class="dots">'+[0,1,2].map(i=>'<div class="dot'+(S.A[i]!==null?' on':'')+'"></div>').join('')+'</div>'+
+        '<div class="statline" style="margin-top:16px"><span style="font-size:22px;color:var(--dim)">B반 → A반</span>'+
+          '<span class="big v num" style="font-size:36px">'+S.B.filter(v=>v!==null).length+' / 3</span></div>'+
+        '<div class="dots">'+[0,1,2].map(i=>'<div class="dot'+(S.B[i]!==null?' onb':'')+'"></div>').join('')+'</div>'+
+      '</div>'+
+      '<div class="card '+(done?(mp.length?'yes':'no'):'hide')+'" id="verdict" style="'+(done?'':'opacity:0;')+'">'+
+        '<div id="vTitle" style="color:'+(mp.length?'var(--amber)':'var(--ink)')+'">'+
+          (mp.length? '서로 지목하는 쌍 '+mp.length+'개' : '서로 지목하는 쌍 없음')+'</div>'+
+        '<div id="vSub">'+(mp.length? '구하는 사건에 해당' : '여사건에 해당')+'</div>'+
+      '</div>'+
+      '<div class="card" style="flex:1;display:flex;flex-direction:column;justify-content:center">'+
+        '<div class="lab">무작위 시행</div>'+
+        '<div class="simNums"><span>시행 <b class="num" id="simN">'+S.sim.n+'</b></span>'+
+          '<span>쌍 있음 <b class="num" id="simK">'+S.sim.k+'</b></span>'+
+          '<span>비율 <b class="num" id="simP">'+(S.sim.n? (S.sim.k/S.sim.n).toFixed(3):'—')+'</b></span></div>'+
+        '<div class="bar"><i id="simBar" style="width:'+(S.sim.n?(S.sim.k/S.sim.n*100):0)+'%"></i>'+
+          '<span class="barMark"></span></div>'+
+        '<div style="margin-top:12px;font-size:20px;color:var(--teal);text-align:right">이론값 0.786</div>'+
+      '</div>';
+  }
+
+  if(S.step===2){
+    const all=S.fan.size===6;
+    side.innerHTML=
+      '<div class="card"><div class="lab">각자 고를 수 있는 상대</div>'+
+        '<div class="chipGrid">'+
+          [0,1,2].map(i=>'<div class="chip'+(S.fan.has('A'+i)?' on':'')+'">A<span class="sub">'+(i+1)+'</span><span class="x">3</span></div>').join('')+
+          [0,1,2].map(i=>'<div class="chip'+(S.fan.has('B'+i)?' on':'')+'">B<span class="sub">'+(i+1)+'</span><span class="x">3</span></div>').join('')+
+        '</div>'+
+      '</div>'+
+      '<div class="card" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;'+
+        (all?'border:2px solid var(--amber);background:rgba(247,192,74,.10)':'')+'">'+
+        (all
+          ? '<div class="lab">전체 경우의 수</div><div class="eq" style="color:var(--amber);font-size:56px">'+
+            '3<span class="sub" style="transform:translateY(-.55em)">6</span> = 729</div>'
+          : '<div style="font-size:24px;color:var(--dim);text-align:center;line-height:1.7">6명을 모두 눌러<br>선택지를 확인해 보세요</div>')+
+      '</div>';
+  }
+
+  if(S.step===3){
+    const all=S.caseSeen.size===3;
+    side.innerHTML=
+      '<div class="card" style="flex:1;display:flex;flex-direction:column;gap:12px;justify-content:space-between">'+
+        '<div class="lab" style="margin:0">A반의 지목 형태로 나누기</div>'+
+        CASES.map(function(c,k){
+          const on=S.caseSeen.has(k);
+          const ct=allowedCounts(c), val=caseVal(c);
+          return '<div class="caseCard'+(on?' on':'')+'" data-case="'+k+'"'+
+            (S.caseIdx===k?' style="border-color:var(--amber);box-shadow:0 0 0 2px rgba(247,192,74,.35)"':'')+'>'+
+            '<div class="hd"><span class="nm">'+c.name+'</span><span class="pf">'+c.patTxt+'</span></div>'+
+            '<div class="bd"><span class="ex">'+ct.join(' × ')+' = '+val+'</span>'+
+              '<span class="st">'+c.pat+' × '+val+' = '+(c.pat*val)+'</span></div>'+
+          '</div>';
+        }).join('')+
+        '<div id="sumRow" class="'+(all?'on':'')+'"><span class="l">여사건의 경우의 수</span>'+
+          '<span class="v">'+CASES.map(caseSub).join(' + ')+' = '+CASES.reduce(function(a,c){return a+caseSub(c);},0)+'</span></div>'+
+      '</div>';
+    side.querySelectorAll('.caseCard').forEach(function(el){
+      el.addEventListener('click',function(){
+        const k=+el.dataset.case;
+        S.caseIdx=(S.caseIdx===k)?null:k;
+        if(S.caseIdx!==null) S.caseSeen.add(k);
+        S.openB.clear();
+        render();
+      });
+    });
+  }
+
+  if(S.step===4){
+    side.innerHTML=
+      '<div class="card"><div class="lab">전체 경우의 수</div>'+
+        '<div class="eq" style="justify-content:flex-start">3<span class="sub" style="transform:translateY(-.55em)">6</span> = 729</div></div>'+
+      '<div class="card"><div class="lab">여사건 — 서로 지목하는 쌍이 없음</div>'+
+        '<div class="eq" style="justify-content:flex-start">156 &nbsp;→&nbsp; '+frac(156,729)+' = '+frac(52,243)+'</div></div>'+
+      '<div class="card" id="ansCard" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px">'+
+        '<div class="lab" style="margin:0">구하는 확률</div>'+
+        '<div class="eq">1 − '+frac(52,243)+' = '+frac(191,243)+'</div>'+
+        '<div style="font-size:24px;color:var(--dim)" class="num">≈ 0.786</div>'+
+      '</div>';
+  }
+}
+
+/* ---------- 하단 ---------- */
+function renderCtl(){
+  const hints={
+    1:'학생을 끌어서(또는 눌렀다가 상대를 눌러) 지목을 연결하세요',
+    2:'여섯 명을 하나씩 눌러 선택지를 펼쳐 보세요',
+    3:'경우를 고른 뒤 B반 학생을 눌러 가능한 지목을 확인하세요',
+    4:'가로 27 × 세로 27 = 729칸. 칸을 누르면 그 경우가 그려집니다'
+  };
+  document.getElementById('hint').textContent=hints[S.step];
+  const ex=document.getElementById('extra');
+  ex.innerHTML='';
+  if(S.step===1){
+    const b1=document.createElement('button'); b1.className='btn'; b1.textContent='무작위 지목';
+    b1.onclick=randomAssign;
+    const b2=document.createElement('button'); b2.className='btn'; b2.textContent='200회 실험';
+    b2.onclick=runSim;
+    const b3=document.createElement('button'); b3.className='btn ghost'; b3.textContent='지우기';
+    b3.onclick=function(){ S.A=[null,null,null];S.B=[null,null,null];S.sel=null;render(); };
+    ex.appendChild(b1); ex.appendChild(b2); ex.appendChild(b3);
+  }
+  if(S.step===2){
+    const b=document.createElement('button'); b.className='btn ghost'; b.textContent='접기';
+    b.onclick=function(){ S.fan.clear(); render(); };
+    ex.appendChild(b);
+  }
+  if(S.step===3){
+    const b=document.createElement('button'); b.className='btn ghost'; b.textContent='지우기';
+    b.onclick=function(){ S.caseIdx=null; S.openB.clear(); S.caseSeen.clear(); render(); };
+    ex.appendChild(b);
+  }
+  document.getElementById('prev').disabled=(S.step===1);
+  document.getElementById('next').disabled=(S.step===4);
+}
+
+/* =========================================================
+   상호작용
+   ========================================================= */
+['A','B'].forEach(function(c){
+  nodeEls[c].forEach(function(g,i){
+    g.addEventListener('pointerdown',function(ev){
+      ev.preventDefault();
+      if(S.step===2){ const key=c+i; if(S.fan.has(key)) S.fan.delete(key); else S.fan.add(key); render(); return; }
+      if(S.step===3){ if(c==='B'&&S.caseIdx!==null){ if(S.openB.has(i)) S.openB.delete(i); else S.openB.add(i); render(); } return; }
+      if(S.step!==1) return;
+      S.drag={c:c,i:i,moved:false};
+      svg.setPointerCapture(ev.pointerId);
+    });
+  });
+});
+svg.addEventListener('pointermove',function(ev){
+  if(!S.drag) return;
+  S.drag.moved=true;
+  const pt=toSvg(ev), p=POS[S.drag.c][S.drag.i];
+  clear(lyTemp);
+  E('path',{class:'edge e-temp flow',d:'M '+p.x+' '+p.y+' L '+pt.x+' '+pt.y},lyTemp);
+});
+svg.addEventListener('pointerup',function(ev){
+  if(!S.drag) return;
+  const d=S.drag; S.drag=null; clear(lyTemp);
+  const other=(d.c==='A')?'B':'A';
+  const hit=hitNode(toSvg(ev),other);
+  if(hit){ setChoice(d.c,d.i,hit.i); S.sel=null; render(); return; }
+  // 탭이면 선택 모드
+  const self=hitNode(toSvg(ev),d.c);
+  if(!d.moved||(self&&self.i===d.i)){
+    if(S.sel&&S.sel.c!==d.c){ setChoice(S.sel.c,S.sel.i,d.i); S.sel=null; }
+    else S.sel=(S.sel&&S.sel.c===d.c&&S.sel.i===d.i)?null:{c:d.c,i:d.i};
+  }
+  render();
+});
+svg.addEventListener('pointercancel',function(){ S.drag=null; clear(lyTemp); });
+svg.addEventListener('pointerdown',function(ev){
+  if(S.step!==1) return;
+  if(ev.target.closest('.node')) return;
+  const hit=hitNode(toSvg(ev));
+  if(!hit&&S.sel){ S.sel=null; render(); }
+});
+function setChoice(c,i,j){ if(c==='A') S.A[i]=j; else S.B[i]=j; }
+
+function randomAssign(){
+  for(let i=0;i<3;i++){ S.A[i]=Math.floor(Math.random()*3); S.B[i]=Math.floor(Math.random()*3); }
+  S.sel=null; render();
+}
+function trial(){
+  const a=[0,0,0],b=[0,0,0];
+  for(let i=0;i<3;i++){a[i]=(Math.random()*3)|0;b[i]=(Math.random()*3)|0;}
+  for(let i=0;i<3;i++) if(b[a[i]]===i) return 1;
+  return 0;
+}
+function runSim(){
+  if(S.simTimer) return;
+  let left=200;
+  S.simTimer=setInterval(function(){
+    const batch=Math.min(10,left);
+    for(let t=0;t<batch;t++){ S.sim.n++; S.sim.k+=trial(); }
+    left-=batch;
+    const n=document.getElementById('simN'), k=document.getElementById('simK'),
+          p=document.getElementById('simP'), bar=document.getElementById('simBar');
+    if(n){ n.textContent=S.sim.n; k.textContent=S.sim.k;
+           p.textContent=(S.sim.k/S.sim.n).toFixed(3);
+           bar.style.width=(S.sim.k/S.sim.n*100)+'%'; }
+    if(left<=0){ clearInterval(S.simTimer); S.simTimer=null; }
+  },40);
+}
+
+/* ---------- 729 격자 ---------- */
+function digits(v){ return [v%3, ((v/3)|0)%3, ((v/9)|0)%3]; }
+function hasMutual(a,b){ const A=digits(a),B=digits(b); for(let i=0;i<3;i++) if(B[A[i]]===i) return true; return false; }
+(function buildGrid(){
+  const g=document.getElementById('grid729');
+  const frag=document.createDocumentFragment();
+  for(let r=0;r<27;r++) for(let c=0;c<27;c++){
+    const d=document.createElement('div');
+    if(hasMutual(r,c)) d.className='m';
+    d.dataset.r=r; d.dataset.c=c;
+    frag.appendChild(d);
+  }
+  g.appendChild(frag);
+  g.addEventListener('click',function(ev){
+    const t=ev.target.closest('div[data-r]'); if(!t) return;
+    g.querySelectorAll('.k').forEach(x=>x.classList.remove('k'));
+    t.classList.add('k');
+    drawMini(+t.dataset.r,+t.dataset.c);
+  });
+})();
+function drawMini(r,c){
+  const m=document.getElementById('mini');
+  clear(m);
+  const A=digits(r),B=digits(c);
+  const ax=64, bx=236, ys=[38,105,172], rr=21;
+  const P={A:ys.map(y=>({x:ax,y:y})), B:ys.map(y=>({x:bx,y:y}))};
+  function seg(p,q,off,col){
+    const dx=q.x-p.x,dy=q.y-p.y,L=Math.hypot(dx,dy)||1,ux=dx/L,uy=dy/L,px=uy,py=-ux;
+    E('line',{x1:p.x+ux*(rr+2)+px*off,y1:p.y+uy*(rr+2)+py*off,
+              x2:q.x-ux*(rr+8)+px*off,y2:q.y-uy*(rr+8)+py*off,
+              stroke:col,'stroke-width':3.4,'stroke-linecap':'round'},m);
+  }
+  let mut=0;
+  for(let i=0;i<3;i++) if(B[A[i]]===i) mut++;
+  for(let i=0;i<3;i++){ const isM=(B[A[i]]===i); seg(P.A[i],P.B[A[i]],7,isM?'#f7c04a':'#ff8b6b'); }
+  for(let j=0;j<3;j++){ const isM=(A[B[j]]===j); seg(P.B[j],P.A[B[j]],7,isM?'#f7c04a':'#4fd6c9'); }
+  ['A','B'].forEach(function(k){
+    P[k].forEach(function(p,i){
+      E('circle',{cx:p.x,cy:p.y,r:rr,fill:'#20395a',stroke:k==='A'?'#8a5a4a':'#2f6f74','stroke-width':2},m);
+      const t=E('text',{x:p.x,y:p.y+6,'text-anchor':'middle','font-size':18,fill:'#eaf1f8',
+        'font-family':'Space Grotesk, sans-serif','font-weight':700},m);
+      t.textContent=k+(i+1);
+    });
+  });
+  document.getElementById('miniCap').innerHTML= mut
+    ? '<span style="color:#f7c04a;font-weight:700">서로 지목하는 쌍 '+mut+'개</span>'
+    : '<span style="color:#8ba3bd">서로 지목하는 쌍 없음</span>';
+}
+
+/* ---------- 이동 ---------- */
+function go(n){
+  const ae=document.activeElement; if(ae&&ae.blur) ae.blur();
+  S.step=Math.max(1,Math.min(4,n));
+  if(S.step===4 && !document.querySelector('#grid729 .k')){
+    const g=document.getElementById('grid729');
+    setTimeout(function(){ const first=g.children[0]; if(first){ first.classList.add('k'); drawMini(0,0);} },10);
+  }
+  render();
+}
+document.getElementById('next').onclick=function(){ go(S.step+1); };
+document.getElementById('prev').onclick=function(){ go(S.step-1); };
+document.querySelectorAll('.pill').forEach(function(b){ b.onclick=function(){ go(+b.dataset.s); }; });
+window.addEventListener('keydown',function(e){
+  if(e.key===' '||e.key==='ArrowRight'||e.key==='PageDown'){ e.preventDefault(); go(S.step+1); }
+  else if(e.key==='ArrowLeft'||e.key==='PageUp'||e.key==='Backspace'){ e.preventDefault(); go(S.step-1); }
+  else if(e.key>='1'&&e.key<='4'){ go(+e.key); }
+  else if(e.key==='r'||e.key==='R'){ if(S.step===1) randomAssign(); }
+});
+
+render();
+</script>
+</body>
+</html>

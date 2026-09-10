@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>도서 대출 확률</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0b1322; --card:#152238; --card2:#1b2b45; --line:#2b3f63;
+  --ink:#eaf1fb; --dim:#93a8c8;
+  --amber:#f5b942; --coral:#ff7a66; --sky:#5aa9f5; --teal:#3ed9b0; --red:#ff5f6d;
+}
+html,body{height:100%;overflow:hidden;background:#05080f;
+  font-family:'Noto Sans KR','Space Grotesk',sans-serif;color:var(--ink);
+  -webkit-user-select:none;user-select:none;touch-action:manipulation}
+#wrap{position:fixed;inset:0}
+#stage{position:absolute;left:50%;top:50%;width:1600px;height:900px;
+  transform-origin:center center;display:flex;flex-direction:column;overflow:hidden;
+  background:radial-gradient(1300px 800px at 15% -15%,#20345a 0%,#101c33 50%,#0a1120 100%);}
+.num{font-family:'Space Grotesk','Noto Sans KR',sans-serif}
+
+/* ---------- header ---------- */
+header{flex:0 0 auto;height:100px;display:flex;align-items:center;gap:26px;
+  padding:0 40px;border-bottom:1px solid var(--line);background:rgba(10,17,32,.45)}
+.brand{font-size:31px;font-weight:900;letter-spacing:-.6px;line-height:1.15}
+.brand small{display:block;font-size:16px;font-weight:500;color:var(--dim);margin-top:5px;letter-spacing:0}
+nav{margin-left:auto;display:flex;gap:9px}
+.tab{padding:13px 20px;border-radius:13px;background:var(--card);border:1.5px solid var(--line);
+  color:#a6bada;font-size:19px;font-weight:700;cursor:pointer;transition:.15s;white-space:nowrap}
+.tab:hover{border-color:#43619a}
+.tab.on{background:var(--amber);color:#101c33;border-color:var(--amber);box-shadow:0 6px 22px rgba(245,185,66,.28)}
+.tab i{font-style:normal;opacity:.6;margin-right:6px;font-family:'Space Grotesk'}
+.tab.on i{opacity:.75}
+
+/* ---------- panels ---------- */
+main{flex:1;position:relative}
+.panel{position:absolute;inset:0;padding:24px 40px 26px;display:none;flex-direction:column}
+.panel.on{display:flex}
+.card{background:linear-gradient(180deg,rgba(27,43,69,.92),rgba(19,32,53,.92));
+  border:1.5px solid var(--line);border-radius:20px}
+.h{font-size:22px;font-weight:800;color:#cfe0f8;letter-spacing:-.3px;display:flex;align-items:center;gap:10px}
+.h::before{content:'';width:6px;height:22px;border-radius:3px;background:var(--amber)}
+
+/* ---------- panel 1 : rule sandbox ---------- */
+.p1{display:grid;grid-template-columns:1084px 1fr;gap:24px;height:100%}
+.gwrap{padding:20px 24px 18px;display:flex;flex-direction:column}
+.grow{display:grid;grid-template-columns:112px repeat(5,1fr);gap:11px;margin-bottom:11px}
+.rlab{display:flex;align-items:center;justify-content:flex-end;padding-right:12px;
+  font-size:21px;font-weight:800;color:#b7cbe8;gap:9px}
+.rlab .dot{width:16px;height:16px;border-radius:5px}
+.dhead{background:#101d33;border:1.5px solid var(--line);border-radius:12px;height:60px;
+  display:flex;align-items:center;justify-content:center;gap:10px;font-size:17px;color:var(--dim);font-weight:600}
+.dhead b{font-size:26px;font-weight:900;color:#eaf1fb;font-family:'Space Grotesk'}
+.dhead.now{border-color:var(--amber);background:rgba(245,185,66,.14);color:#f0d8a2}
+.dhead.now b{color:var(--amber)}
+.cell{height:148px;border-radius:14px;border:2px solid #2b3f63;background:#101c31;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  transition:.16s;position:relative;overflow:hidden}
+.cell .bk{width:58px;height:72px;border-radius:4px 8px 8px 4px;background:#2b3f63;position:relative;transition:.16s}
+.cell .bk::after{content:'';position:absolute;left:6px;top:0;bottom:0;width:4px;background:rgba(0,0,0,.3)}
+.cell .tag{font-size:17px;font-weight:800;color:#7d92b3;letter-spacing:.5px}
+.cell.idle{opacity:.34}
+.cell.sel{border-color:#4d76c0;background:#152744;cursor:pointer;box-shadow:0 0 0 0 rgba(77,118,192,.5);animation:bob 1.6s infinite}
+.cell.sel:hover{border-color:#7fa8ee;background:#1b3457;transform:translateY(-2px)}
+.cell.sel .tag{color:#9dbdf0}
+@keyframes bob{0%,100%{box-shadow:0 0 0 0 rgba(120,165,240,.35)}50%{box-shadow:0 0 0 7px rgba(120,165,240,0)}}
+.cell.pick{border-color:var(--pc);background:color-mix(in srgb,var(--pc) 20%,#101c31);box-shadow:0 8px 26px rgba(0,0,0,.35)}
+.cell.pick .bk{background:var(--pc);box-shadow:0 4px 14px rgba(0,0,0,.4)}
+.cell.pick .tag{color:#fff;background:var(--pc);color:#0d1626;padding:2px 10px;border-radius:20px}
+.cell.blk{border-color:#4a3350;background:repeating-linear-gradient(45deg,#1c1526,#1c1526 8px,#241a30 8px,#241a30 16px)}
+.cell.blk .bk{background:#6c4a72;opacity:.5}
+.cell.blk .tag{color:#d79ae0}
+.gfoot{display:grid;grid-template-columns:112px repeat(5,1fr);gap:11px;margin-top:2px}
+.cbadge{height:54px;border-radius:12px;border:1.5px dashed #33507f;display:flex;align-items:center;
+  justify-content:center;font-size:26px;font-weight:900;color:var(--teal);font-family:'Space Grotesk';opacity:0;transition:.25s}
+.cbadge.on{opacity:1;border-style:solid;border-color:rgba(62,217,176,.45);background:rgba(62,217,176,.1)}
+.f1{margin-top:auto;height:96px;border-radius:16px;border:1.5px solid var(--line);background:#101d33;
+  display:flex;align-items:center;justify-content:center;gap:16px;font-size:34px;font-weight:800;
+  font-family:'Space Grotesk';color:#6f86a8;transition:.25s}
+.f1.on{border-color:var(--teal);background:rgba(62,217,176,.1);color:#eaf1fb}
+.f1 b{color:var(--teal);font-size:46px}
+.f1 .ph{font-size:20px;font-family:'Noto Sans KR';color:#5d7194;font-weight:600}
+
+.side{padding:20px 22px;display:flex;flex-direction:column;gap:16px}
+.rule{display:flex;flex-direction:column;gap:0}
+.rstep{display:flex;align-items:center;gap:14px;padding:11px 0}
+.rstep .n{width:34px;height:34px;flex:0 0 34px;border-radius:10px;display:flex;align-items:center;
+  justify-content:center;font-size:17px;font-weight:900;font-family:'Space Grotesk'}
+.rstep .t{font-size:19px;font-weight:600;color:#cfe0f8;line-height:1.35}
+.rstep .t em{font-style:normal;font-weight:800}
+.goal{border-radius:16px;padding:16px 18px;background:rgba(245,185,66,.1);border:1.5px solid rgba(245,185,66,.4)}
+.goal .lb{font-size:16px;color:#f0d8a2;font-weight:700;margin-bottom:10px}
+.goal .bg{font-size:28px;font-weight:900;color:var(--amber);letter-spacing:1px}
+.seqbox{border-radius:16px;border:1.5px solid var(--line);background:#101d33;padding:16px 18px}
+.seqbox .lb{font-size:15px;color:var(--dim);font-weight:700;margin-bottom:12px}
+.seqrow{display:flex;gap:10px;justify-content:center;align-items:flex-end}
+.sq{display:flex;flex-direction:column;align-items:center;gap:6px}
+.sq .d{width:44px;height:44px;border-radius:12px;background:#1d2c47;border:2px solid #2b3f63;transition:.2s}
+.sq .l{font-size:15px;font-weight:800;color:#8ea3c4;font-family:'Space Grotesk'}
+.sq.ace .l{color:var(--amber)}
+.sq.ace .d{border-color:rgba(245,185,66,.55)}
+.verd{margin-top:14px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+  font-size:22px;font-weight:800;background:#16233a;color:#6f86a8;transition:.2s}
+.verd.ok{background:rgba(62,217,176,.16);color:var(--teal)}
+.verd.no{background:rgba(255,95,109,.14);color:#ff8f99}
+.btn{border:1.5px solid var(--line);background:var(--card2);color:#cfe0f8;font-family:inherit;
+  font-size:19px;font-weight:700;padding:13px 22px;border-radius:13px;cursor:pointer;transition:.15s}
+.btn:hover{border-color:#4d76c0;background:#22375a}
+.btn.pri{background:var(--amber);color:#101c33;border-color:var(--amber)}
+.btn.pri:hover{background:#ffcb5c}
+.btn:disabled{opacity:.32;cursor:default}
+.side .btn{margin-top:auto}
+
+/* ---------- panel 2 / 3 : slot cards ---------- */
+.p23{height:100%;display:flex;flex-direction:column;align-items:center}
+.mid{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%}
+.bandbox{width:1404px;height:64px;position:relative;margin-top:6px}
+.cards{display:grid;grid-template-columns:repeat(5,260px);gap:26px;margin-top:2px}
+.sc{height:392px;border-radius:18px;border:2px solid var(--line);background:#132036;
+  padding:14px;display:flex;flex-direction:column;align-items:center;gap:11px;
+  opacity:0;transform:translateY(16px);transition:.32s cubic-bezier(.2,.9,.3,1)}
+.sc.on{opacity:1;transform:none}
+.sc.hi{border-color:var(--amber);background:rgba(245,185,66,.09)}
+.sc .hd{font-size:16px;color:var(--dim);font-weight:600;display:flex;align-items:center;gap:9px}
+.sc .hd b{font-size:27px;font-weight:900;color:#eaf1fb;font-family:'Space Grotesk'}
+.sc.hi .hd b{color:var(--amber)}
+.chips{display:flex;flex-direction:column;gap:7px;width:100%}
+.chip{height:58px;border-radius:11px;display:flex;align-items:center;gap:10px;padding:0 12px;
+  font-size:17px;font-weight:700;border:2px solid;transition:.2s}
+.chip .sw{width:22px;height:26px;border-radius:3px 6px 6px 3px}
+.chip.yes{border-color:var(--cc);background:color-mix(in srgb,var(--cc) 16%,#132036);color:#eaf1fb}
+.chip.yes .sw{background:var(--cc)}
+.chip.no{border-color:#2b3f63;background:#0f1a2c;color:#5d7194;text-decoration:line-through;opacity:.65}
+.chip.no .sw{background:#2b3f63}
+.chip .x{margin-left:auto;font-size:16px;color:#7d92b3;text-decoration:none}
+.sc .note{font-size:15px;color:#8ea3c4;text-align:center;line-height:1.35;min-height:19px}
+.sc .cnt{margin-top:auto;width:100%;height:58px;border-radius:12px;background:#0f1a2c;border:1.5px solid var(--line);
+  display:flex;align-items:center;justify-content:center;font-size:27px;font-weight:900;font-family:'Space Grotesk';color:var(--teal)}
+.sc.hi .cnt{border-color:rgba(245,185,66,.45);color:var(--amber)}
+.fbig{margin-top:26px;height:104px;padding:0 46px;border-radius:18px;border:2px solid var(--line);background:#101d33;
+  display:flex;align-items:center;gap:18px;font-size:38px;font-weight:800;font-family:'Space Grotesk';
+  color:#eaf1fb;opacity:0;transform:scale(.96);transition:.3s}
+.fbig.on{opacity:1;transform:none;border-color:var(--teal);background:rgba(62,217,176,.1)}
+.fbig b{font-size:50px;color:var(--teal)}
+.fbig .eq{color:#6f86a8}
+.ctrl{margin-top:0;padding-top:8px;display:flex;gap:12px;align-items:center;justify-content:center;width:100%}
+.stepdots{display:flex;gap:7px;margin:0 14px}
+.stepdots i{width:9px;height:9px;border-radius:50%;background:#2b3f63}
+.stepdots i.on{background:var(--amber)}
+
+/* ---------- panel 4 : 48 list ---------- */
+.p4{height:100%;display:flex;flex-direction:column}
+.p4top{display:flex;align-items:center;gap:14px;margin-bottom:10px}
+.legend{display:flex;gap:6px;align-items:center;margin-left:18px;padding:7px 14px;border-radius:12px;
+  background:#101d33;border:1.5px solid var(--line)}
+.legend .lg{display:flex;flex-direction:column;align-items:center;gap:3px}
+.legend .lg span{width:24px;height:24px;border-radius:7px;background:#2b3f63}
+.legend .lg b{font-size:13px;font-family:'Space Grotesk';color:#8ea3c4}
+.legend .lg.ace b{color:var(--amber)}
+.legend .lg.ace span{box-shadow:0 0 0 2px rgba(245,185,66,.6)}
+.cnttxt{margin-left:auto;font-size:20px;font-weight:700;color:#cfe0f8}
+.cnttxt b{font-family:'Space Grotesk';font-size:26px;color:var(--amber)}
+.blocks{display:flex;flex-direction:column;flex:1;justify-content:space-evenly;margin-top:2px}
+.blk{display:flex;align-items:center;gap:14px}
+.blkl{width:104px;flex:0 0 104px;font-size:18px;font-weight:800;color:#b7cbe8;display:flex;align-items:center;gap:8px}
+.blkl .sw{width:16px;height:20px;border-radius:3px 5px 5px 3px}
+.strips{display:grid;grid-template-columns:repeat(8,1fr);gap:9px;flex:1}
+.strip{height:66px;border-radius:12px;border:2px solid #263a5c;background:#101c31;
+  display:flex;align-items:center;justify-content:center;gap:4px;cursor:pointer;transition:.14s;position:relative}
+.strip:hover{border-color:#4d76c0}
+.strip .p{width:29px;height:29px;border-radius:9px;transition:.14s}
+.strip.sel{border-color:var(--amber);background:rgba(245,185,66,.14);box-shadow:0 0 0 2px rgba(245,185,66,.25)}
+.strip.ok{border-color:var(--teal);background:rgba(62,217,176,.18)}
+.strip.bad{border-color:var(--red);background:rgba(255,95,109,.14);opacity:.85}
+.strip.miss{border-color:var(--teal);border-style:dashed;background:rgba(62,217,176,.07)}
+.strip.dim{opacity:.2}
+.strip .mk{position:absolute;right:-6px;top:-8px;width:22px;height:22px;border-radius:50%;
+  font-size:13px;font-weight:900;display:none;align-items:center;justify-content:center;color:#0d1626}
+.strip.ok .mk,.strip.bad .mk{display:flex}
+.strip.ok .mk{background:var(--teal)}
+.strip.bad .mk{background:var(--red)}
+.res{margin-top:auto;display:flex;align-items:center;justify-content:center;gap:30px;
+  height:170px;opacity:0;transition:.35s}
+.res.on{opacity:1}
+.frac{display:flex;flex-direction:column;align-items:center;font-family:'Space Grotesk';font-weight:800}
+.frac .nu,.frac .de{font-size:50px;line-height:1.1;padding:0 12px}
+.frac .br{height:4px;width:100%;background:#eaf1fb;border-radius:2px;margin:6px 0}
+.frac.big .nu,.frac.big .de{font-size:68px}
+.frac.big .br{background:var(--teal);height:5px}
+.frac.big{color:var(--teal)}
+.eqs{font-size:50px;color:#6f86a8;font-family:'Space Grotesk'}
+.reslab{font-size:17px;color:var(--dim);text-align:center;margin-top:8px;font-weight:600}
+.fnote{font-size:20px;color:#8ea3c4;font-weight:600;max-width:330px;line-height:1.5}
+</style>
+</head>
+<body>
+<div id="wrap"><div id="stage">
+
+  <header>
+    <div class="brand">도서 대출 확률
+      <small>A~E가 5일간 하루 1명씩 · 3권 중 1권 대출 · 다음 날 반납 · 반납한 다음 날부터 다시 대출 가능</small>
+    </div>
+    <nav>
+      <button class="tab on" data-p="1"><i>1</i>규칙</button>
+      <button class="tab" data-p="2"><i>2</i>전체 경우의 수</button>
+      <button class="tab" data-p="3"><i>3</i>A·C·E 같은 책</button>
+      <button class="tab" data-p="4"><i>4</i>48가지 확인</button>
+    </nav>
+  </header>
+
+  <main>
+
+    <!-- ================= PANEL 1 ================= -->
+    <section class="panel on" id="pan1">
+      <div class="p1">
+        <div class="card gwrap">
+          <div id="g1"></div>
+          <div class="f1" id="f1"></div>
+        </div>
+
+        <div class="card side">
+          <div class="h">대출 규칙</div>
+          <div class="rule">
+            <div class="rstep"><div class="n" style="background:var(--amber);color:#101c33">1</div>
+              <div class="t"><em>n일</em>에 대출</div></div>
+            <div class="rstep"><div class="n" style="background:#6c4a72;color:#fff">2</div>
+              <div class="t"><em>n+1일</em>에 반납 → 그날은 <em style="color:#d79ae0">대출 불가</em></div></div>
+            <div class="rstep"><div class="n" style="background:var(--teal);color:#0d1626">3</div>
+              <div class="t"><em>n+2일</em>부터 다시 대출 가능</div></div>
+          </div>
+          <div class="goal">
+            <div class="lb">구하려는 사건</div>
+            <div class="bg">A · C · E 가 같은 책</div>
+          </div>
+          <div class="seqbox">
+            <div class="lb">지금까지의 대출</div>
+            <div class="seqrow" id="seq1"></div>
+            <div class="verd" id="verd1">5일 모두 선택해 보세요</div>
+          </div>
+          <button class="btn pri" id="rst1">다시 하기</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= PANEL 2 ================= -->
+    <section class="panel" id="pan2">
+      <div class="p23">
+        <div class="h" style="align-self:flex-start">전체 경우의 수 — 아무 조건 없이</div>
+        <div class="mid">
+          <div class="bandbox"></div>
+          <div class="cards" id="cards2"></div>
+          <div class="fbig" id="fb2"><span>3 × 2 × 2 × 2 × 2 =</span><b>48</b></div>
+        </div>
+        <div class="ctrl">
+          <button class="btn" id="p2prev">◀ 이전</button>
+          <div class="stepdots" id="p2dots"></div>
+          <button class="btn pri" id="p2next">다음 ▶</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= PANEL 3 ================= -->
+    <section class="panel" id="pan3">
+      <div class="p23">
+        <div class="h" style="align-self:flex-start">A · C · E 가 모두 같은 책인 경우</div>
+        <div class="mid">
+          <div class="bandbox"><svg id="band" width="1404" height="64" viewBox="0 0 1404 64"></svg></div>
+          <div class="cards" id="cards3"></div>
+          <div class="fbig" id="fb3"><span>3 × 2 × 1 × 2 × 1 =</span><b>12</b></div>
+        </div>
+        <div class="ctrl">
+          <button class="btn" id="p3prev">◀ 이전</button>
+          <div class="stepdots" id="p3dots"></div>
+          <button class="btn pri" id="p3next">다음 ▶</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= PANEL 4 ================= -->
+    <section class="panel" id="pan4">
+      <div class="p4">
+        <div class="p4top">
+          <div class="h">48가지 중 A·C·E가 같은 것을 골라 보세요</div>
+          <div class="legend" id="lg4"></div>
+          <div class="cnttxt">선택 <b id="selN">0</b> 개</div>
+          <button class="btn" id="rst4" style="margin-left:12px">다시</button>
+          <button class="btn pri" id="chk4">정답 확인</button>
+        </div>
+        <div class="blocks" id="blocks4"></div>
+        <div class="res" id="res4">
+          <div>
+            <div class="frac"><div class="nu">12</div><div class="br"></div><div class="de">48</div></div>
+            <div class="reslab">조건 만족 / 전체</div>
+          </div>
+          <div class="eqs">=</div>
+          <div>
+            <div class="frac big"><div class="nu">1</div><div class="br"></div><div class="de">4</div></div>
+            <div class="reslab" style="color:var(--teal)">구하는 확률</div>
+          </div>
+          <div class="fnote">A·C·E 는 각각 <b style="color:#eaf1fb">앞날 책만 피하면</b> 자유롭게 같은 책을 다시 빌릴 수 있다.</div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div></div>
+
+<script>
+/* ---------- scale to viewport ---------- */
+const stage=document.getElementById('stage');
+function fit(){const s=Math.min(innerWidth/1600,innerHeight/900);
+  stage.style.transform=`translate(-50%,-50%) scale(${s})`;}
+addEventListener('resize',fit);new ResizeObserver(fit).observe(document.body);fit();
+
+const BOOKS=[{n:'책 1',c:'#f5b942'},{n:'책 2',c:'#ff7a66'},{n:'책 3',c:'#5aa9f5'}];
+const STU=['A','B','C','D','E'];
+
+/* ---------- tabs ---------- */
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>show(+t.dataset.p));
+function show(p){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',+t.dataset.p===p));
+  document.querySelectorAll('.panel').forEach((s,i)=>s.classList.toggle('on',i+1===p));
+  cur=p;
+}
+let cur=1;
+
+/* ================= PANEL 1 ================= */
+const S1={pick:[null,null,null,null,null]};
+(function build1(){
+  const g=document.getElementById('g1');
+  let h='<div class="grow">'+'<div class="rlab"></div>';
+  for(let d=0;d<5;d++) h+=`<div class="dhead" data-h="${d}">${d+1}일<b>${STU[d]}</b></div>`;
+  h+='</div>';
+  for(let b=0;b<3;b++){
+    h+='<div class="grow">'+`<div class="rlab"><span class="dot" style="background:${BOOKS[b].c}"></span>${BOOKS[b].n}</div>`;
+    for(let d=0;d<5;d++)
+      h+=`<div class="cell" data-d="${d}" data-b="${b}" style="--pc:${BOOKS[b].c}"><span class="bk"></span><span class="tag"></span></div>`;
+    h+='</div>';
+  }
+  h+='<div class="gfoot"><div class="rlab" style="font-size:17px;color:#8ea3c4">선택지 수</div>';
+  for(let d=0;d<5;d++) h+=`<div class="cbadge" data-c="${d}">${d===0?3:2}</div>`;
+  h+='</div>';
+  g.innerHTML=h;
+  g.querySelectorAll('.cell').forEach(el=>el.onclick=()=>{
+    const d=+el.dataset.d,b=+el.dataset.b;
+    if(d!==nextDay()||blocked(d,b))return;
+    S1.pick[d]=b;render1();
+  });
+  const sq=document.getElementById('seq1');
+  sq.innerHTML=STU.map((s,i)=>`<div class="sq${(i%2===0)?' ace':''}"><span class="d" data-q="${i}"></span><b class="l">${s}</b></div>`).join('');
+})();
+function nextDay(){return S1.pick.findIndex(v=>v===null);}
+function blocked(d,b){return d>0&&S1.pick[d-1]===b;}
+function render1(){
+  const c=nextDay();
+  document.querySelectorAll('#g1 .cell').forEach(el=>{
+    const d=+el.dataset.d,b=+el.dataset.b,tag=el.querySelector('.tag');
+    el.className='cell';tag.textContent='';
+    if(S1.pick[d]===b){el.classList.add('pick');tag.textContent='대출';}
+    else if(blocked(d,b)){el.classList.add('blk');tag.textContent='반납';}
+    else if(d===c){el.classList.add('sel');tag.textContent='선택';}
+    else el.classList.add('idle');
+  });
+  document.querySelectorAll('#g1 .dhead').forEach(el=>el.classList.toggle('now',+el.dataset.h===c));
+  document.querySelectorAll('#g1 .cbadge').forEach(el=>el.classList.toggle('on',c===-1||+el.dataset.c<=c));
+  document.querySelectorAll('#seq1 .d').forEach(el=>{
+    const i=+el.dataset.q,v=S1.pick[i];
+    el.style.background=v===null?'#1d2c47':BOOKS[v].c;
+    el.style.borderColor=v===null?'#2b3f63':BOOKS[v].c;
+  });
+  const f=document.getElementById('f1'),v=document.getElementById('verd1');
+  f.classList.toggle('on',c===-1);
+  const done=c===-1?5:c;
+  if(done===0) f.innerHTML='<span class="ph">한 명씩 고를 때마다 경우의 수가 쌓입니다</span>';
+  else{
+    const parts=[];for(let i=0;i<done;i++)parts.push(i===0?'3':'2');
+    f.innerHTML='<span>'+parts.join(' × ')+(c===-1?' =</span><b>48</b>':'</span>');
+  }
+  v.className='verd';
+  if(c===-1){
+    const ok=S1.pick[0]===S1.pick[2]&&S1.pick[2]===S1.pick[4];
+    v.classList.add(ok?'ok':'no');
+    v.textContent=ok?'✓ A · C · E 가 모두 같은 책':'✗ A · C · E 가 같지 않음';
+  }else v.textContent=`${STU[c]} (${c+1}일) 의 책을 고르세요`;
+}
+document.getElementById('rst1').onclick=()=>{S1.pick=[null,null,null,null,null];render1();};
+render1();
+
+/* ================= PANEL 2 / 3 ================= */
+const NEU='#7fa8ee';
+const R=(t,c,ok)=>({t,c,ok});
+const real=b=>R(BOOKS[b].n,BOOKS[b].c,1);
+const gone=t=>R(t,'#2b3f63',0);
+const some=t=>R(t,NEU,1);
+const DATA2=[
+  {hd:'1일 · A',rows:[real(0),real(1),real(2)],note:'3권 모두 대출 가능',cnt:'3'},
+  {hd:'2일 · B',rows:[gone('A가 빌린 책'),some('나머지 책'),some('나머지 책')],note:'A의 책은 반납 중',cnt:'2'},
+  {hd:'3일 · C',rows:[gone('B가 빌린 책'),some('나머지 책'),some('나머지 책')],note:'B의 책은 반납 중',cnt:'2'},
+  {hd:'4일 · D',rows:[gone('C가 빌린 책'),some('나머지 책'),some('나머지 책')],note:'C의 책은 반납 중',cnt:'2'},
+  {hd:'5일 · E',rows:[gone('D가 빌린 책'),some('나머지 책'),some('나머지 책')],note:'D의 책은 반납 중',cnt:'2'}];
+const DATA3=[
+  {hd:'1일 · A',rows:[real(0),real(1),real(2)],note:'공통으로 쓸 책 고르기 (예: 책 1)',cnt:'3',hi:1},
+  {hd:'2일 · B',rows:[gone(BOOKS[0].n),real(1),real(2)],note:'A의 책은 반납 중',cnt:'2'},
+  {hd:'3일 · C',rows:[real(0),gone(BOOKS[1].n),gone(BOOKS[2].n)],note:'A의 책 → 2일 반납 → 3일 가능 ✓',cnt:'1',hi:1},
+  {hd:'4일 · D',rows:[gone(BOOKS[0].n),real(1),real(2)],note:'C의 책은 반납 중',cnt:'2'},
+  {hd:'5일 · E',rows:[real(0),gone(BOOKS[1].n),gone(BOOKS[2].n)],note:'C의 책 → 4일 반납 → 5일 가능 ✓',cnt:'1',hi:1}];
+function cardHTML(d){
+  const ch=d.rows.map(r=>`<div class="chip ${r.ok?'yes':'no'}" style="--cc:${r.c}"><span class="sw"></span>${r.t}<span class="x">${r.ok?'':'✕'}</span></div>`).join('');
+  const [day,st]=d.hd.split(' · ');
+  return `<div class="sc${d.hi?' hi':''}"><div class="hd">${day}<b>${st}</b></div>
+    <div class="chips">${ch}</div><div class="note">${d.note}</div><div class="cnt">${d.cnt} 가지</div></div>`;
+}
+document.getElementById('cards2').innerHTML=DATA2.map(cardHTML).join('');
+document.getElementById('cards3').innerHTML=DATA3.map(cardHTML).join('');
+/* band over A,C,E in panel3 */
+(function band(){
+  const cx=[228-98,800-98,1372-98]; // relative to the 1404-wide row
+  const y=52;
+  let s=`<path d="M${cx[0]} ${y} L${cx[2]} ${y}" stroke="#f5b942" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+  cx.forEach(x=>{s+=`<path d="M${x} ${y} L${x} ${y+12}" stroke="#f5b942" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="${x}" cy="${y}" r="8" fill="#101c33" stroke="#f5b942" stroke-width="3.5"/>`;});
+  s+=`<rect x="${cx[1]-92}" y="${y-48}" width="184" height="36" rx="18" fill="#f5b942"/>
+      <text x="${cx[1]}" y="${y-23}" text-anchor="middle" font-size="19" font-weight="800" fill="#101c33"
+      font-family="Noto Sans KR, sans-serif">같은 책</text>`;
+  document.getElementById('band').innerHTML=s;
+  document.getElementById('band').style.opacity=0;
+})();
+function mkStepper(pid,cardsId,fbId,dotsId,prevId,nextId,total,onRender){
+  let st=0;
+  const dots=document.getElementById(dotsId);
+  dots.innerHTML=Array.from({length:total},()=>'<i></i>').join('');
+  function r(){
+    const cards=document.querySelectorAll('#'+cardsId+' .sc');
+    cards.forEach((c,i)=>c.classList.toggle('on',i<st));
+    document.getElementById(fbId).classList.toggle('on',st>=total);
+    dots.querySelectorAll('i').forEach((d,i)=>d.classList.toggle('on',i<st));
+    document.getElementById(prevId).disabled=st===0;
+    document.getElementById(nextId).disabled=st>=total;
+    if(onRender)onRender(st);
+  }
+  document.getElementById(nextId).onclick=()=>{if(st<total){st++;r();}};
+  document.getElementById(prevId).onclick=()=>{if(st>0){st--;r();}};
+  r();
+  return{next:()=>{if(st<total){st++;r();}},prev:()=>{if(st>0){st--;r();}},reset:()=>{st=0;r();}};
+}
+const ST2=mkStepper(2,'cards2','fb2','p2dots','p2prev','p2next',6);
+const ST3=mkStepper(3,'cards3','fb3','p3dots','p3prev','p3next',6,
+  st=>{document.getElementById('band').style.opacity=st>=1?1:0;});
+
+/* ================= PANEL 4 ================= */
+const ALL=[];
+(function rec(s){if(s.length===5){ALL.push(s.slice());return;}
+  for(let b=0;b<3;b++) if(!s.length||b!==s[s.length-1]) rec(s.concat(b));})([]);
+const isFav=s=>s[0]===s[2]&&s[2]===s[4];
+document.getElementById('lg4').innerHTML=STU.map((s,i)=>
+  `<div class="lg${i%2===0?' ace':''}"><span></span><b>${s}</b></div>`).join('');
+(function build4(){
+  let h='';
+  for(let b=0;b<3;b++){
+    h+=`<div class="blk"><div class="blkl"><span class="sw" style="background:${BOOKS[b].c}"></span>${BOOKS[b].n} 시작</div><div class="strips">`;
+    ALL.forEach((s,i)=>{if(s[0]!==b)return;
+      h+=`<div class="strip" data-i="${i}">`+s.map(x=>`<span class="p" style="background:${BOOKS[x].c}"></span>`).join('')+`<span class="mk"></span></div>`;});
+    h+='</div></div>';
+  }
+  document.getElementById('blocks4').innerHTML=h;
+  document.querySelectorAll('#blocks4 .strip').forEach(el=>el.onclick=()=>{
+    if(checked)return;
+    el.classList.toggle('sel');
+    document.getElementById('selN').textContent=document.querySelectorAll('#blocks4 .strip.sel').length;
+  });
+})();
+let checked=false;
+document.getElementById('chk4').onclick=()=>{
+  checked=true;
+  const none=document.querySelectorAll('#blocks4 .strip.sel').length===0;
+  document.querySelectorAll('#blocks4 .strip').forEach(el=>{
+    const s=ALL[+el.dataset.i],sel=el.classList.contains('sel');
+    el.classList.remove('sel');
+    if(isFav(s)&&(sel||none)){el.classList.add('ok');el.querySelector('.mk').textContent='✓';}
+    else if(isFav(s)){el.classList.add('miss');}
+    else if(sel){el.classList.add('bad');el.querySelector('.mk').textContent='✕';}
+    else el.classList.add('dim');
+  });
+  document.getElementById('selN').textContent=12;
+  document.getElementById('res4').classList.add('on');
+};
+document.getElementById('rst4').onclick=()=>{
+  checked=false;
+  document.querySelectorAll('#blocks4 .strip').forEach(el=>{el.className='strip';el.querySelector('.mk').textContent='';});
+  document.getElementById('selN').textContent=0;
+  document.getElementById('res4').classList.remove('on');
+};
+
+/* ---------- keyboard (presenter remote) ---------- */
+addEventListener('keydown',e=>{
+  if(['1','2','3','4'].includes(e.key)){show(+e.key);return;}
+  if(e.key==='ArrowRight'||e.key===' '){e.preventDefault();
+    if(cur===2)ST2.next();else if(cur===3)ST3.next();else if(cur===4)document.getElementById('chk4').click();}
+  if(e.key==='ArrowLeft'){e.preventDefault();if(cur===2)ST2.prev();else if(cur===3)ST3.prev();}
+  if(e.key==='r'||e.key==='R'){
+    if(cur===1)document.getElementById('rst1').click();
+    else if(cur===2)ST2.reset();else if(cur===3)ST3.reset();
+    else document.getElementById('rst4').click();}
+});
+</script>
+</body>
+</html>
