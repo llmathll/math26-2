@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>11-14 · 정사각형 8개 점의 삼각형 확률</title>
+<style>
+/* chalk-stage.css v2 — 공통 스타일 (단일 파일 배포용 인라인 사본) */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap');
+
+:root {
+  --bg-deep:      #0a1420;
+  --bg:           #0e1b2b;
+  --panel:        #16283e;
+  --panel-2:      #1d3350;
+  --line:         rgba(214, 229, 245, .18);
+  --line-strong:  rgba(214, 229, 245, .38);
+
+  --chalk:        #eaf1f8;
+  --chalk-soft:   #b9cadd;
+  --chalk-faint:  #7d94ad;
+
+  --amber:        #f5b642;
+  --coral:        #ff7d6a;
+  --teal:         #49d1c0;
+  --violet:       #9d8cf5;
+
+  --amber-dim:    rgba(245, 182,  66, .16);
+  --coral-dim:    rgba(255, 125, 106, .16);
+  --teal-dim:     rgba( 73, 209, 192, .16);
+  --violet-dim:   rgba(157, 140, 245, .16);
+
+  --f-en: 'Space Grotesk';
+  --f-kr: 'Noto Sans KR';
+  --t-hero:   76px;
+  --t-title:  54px;
+  --t-h2:     40px;
+  --t-body:   32px;
+  --t-small:  26px;
+  --t-tag:    22px;
+
+  --r-s: 10px;
+  --r-m: 18px;
+  --r-l: 28px;
+
+  --sheet-pad-x: 40px;
+  --sheet-pad-t: 30px;
+  --sheet-pad-b: 26px;
+  --sheet-gap:   18px;
+  --stage-pad:   44px;
+
+  --pcard-w:    108px;
+  --pcard-h:    150px;
+  --pcard-fs:    56px;
+  --pcard-sm-w:  54px;
+  --pcard-sm-h:  76px;
+  --pcard-sm-fs: 28px;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: var(--bg-deep);
+  overscroll-behavior: none;
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  color: var(--chalk);
+  font-family: var(--f-en), var(--f-kr), system-ui, sans-serif;
+  font-size: var(--t-body);
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.viewport { position: fixed; inset: 0; overflow: hidden; background: var(--bg-deep); }
+
+.stage {
+  position: absolute;
+  top: 0; left: 0;
+  width: 1600px; height: 900px;
+  transform-origin: 0 0;
+  will-change: transform;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 90% at 18% 8%, #16273b 0%, rgba(22,39,59,0) 60%),
+    radial-gradient(100% 80% at 92% 96%, #142335 0%, rgba(20,35,53,0) 62%),
+    var(--bg);
+}
+.stage::before {
+  content: "";
+  position: absolute; inset: 0;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(115deg, rgba(255,255,255,.014) 0 2px, rgba(255,255,255,0) 2px 7px),
+    radial-gradient(130% 110% at 50% 45%, rgba(0,0,0,0) 55%, rgba(0,0,0,.34) 100%);
+}
+
+.sheet {
+  position: relative; z-index: 1;
+  width: 100%; height: 100%;
+  padding: var(--sheet-pad-t) var(--sheet-pad-x) var(--sheet-pad-b);
+  display: flex; flex-direction: column; gap: var(--sheet-gap);
+}
+.sheet--loose { padding: var(--stage-pad); gap: 26px; }
+
+.app-head {
+  flex: 0 0 auto;
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 24px; padding-bottom: 14px; border-bottom: 2px solid var(--line);
+}
+.app-title { margin: 0; font-size: var(--t-title); font-weight: 700; letter-spacing: -.02em; line-height: 1.1; }
+.app-sub { margin: 6px 0 0; font-size: var(--t-small); font-weight: 400; color: var(--chalk-soft); }
+.stamp { display: inline-block; margin-right: 14px; color: var(--amber); font-size: 1em; font-weight: 700; letter-spacing: -.02em; vertical-align: baseline; }
+
+.tabnav { display: flex; align-items: center; gap: 12px; }
+.tabnav .btn { padding: 11px 24px; font-size: var(--t-tag); }
+.tabnav .btn.is-active { background: var(--amber-dim); border-color: var(--amber); color: var(--amber); }
+
+.app-foot {
+  flex: 0 0 auto;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 20px; padding-top: 14px; border-top: 2px solid var(--line);
+}
+
+.panelWrap, .panel-wrap { display: flex; flex-direction: column; gap: var(--sheet-gap); flex: 1 1 auto; min-height: 0; }
+.panelWrap[hidden], .panel-wrap[hidden] { display: none; }
+
+.panel { position: relative; padding: 26px 30px; border: 2px solid var(--line); border-radius: var(--r-l); background: var(--panel); }
+.panel--flat  { background: transparent; }
+.panel--raise { background: var(--panel-2); border-color: var(--line-strong); }
+.panel--tight { padding: 18px 20px; border-radius: var(--r-m); }
+
+.quote {
+  padding: 24px 30px 24px 34px;
+  border-left: 8px solid var(--amber);
+  border-radius: 0 var(--r-m) var(--r-m) 0;
+  background: rgba(245, 182, 66, .07);
+  font-size: var(--t-body); line-height: 1.55;
+}
+
+.result {
+  padding: 18px 30px; border: 3px solid var(--amber); border-radius: var(--r-l);
+  background: var(--amber-dim); font-size: var(--t-h2); font-weight: 600; text-align: center;
+}
+.result.is-teal  { border-color: var(--teal);  background: var(--teal-dim); }
+.result.is-coral { border-color: var(--coral); background: var(--coral-dim); }
+.result.is-off   { border-color: var(--line);  background: transparent; }
+
+.tag {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 16px; border: 2px solid var(--line-strong); border-radius: 999px;
+  font-size: var(--t-tag); font-weight: 500; color: var(--chalk-soft); white-space: nowrap;
+}
+.tag.is-amber  { border-color: var(--amber);  color: var(--amber);  background: var(--amber-dim); }
+.tag.is-coral  { border-color: var(--coral);  color: var(--coral);  background: var(--coral-dim); }
+.tag.is-teal   { border-color: var(--teal);   color: var(--teal);   background: var(--teal-dim); }
+.tag.is-violet { border-color: var(--violet); color: var(--violet); background: var(--violet-dim); }
+.tag--lg { padding: 10px 22px; font-size: var(--t-small); }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 13px 28px; border: 2px solid var(--line-strong); border-radius: 999px;
+  background: transparent; color: var(--chalk); font-family: inherit;
+  font-size: var(--t-small); font-weight: 600; cursor: pointer;
+  transition: background .18s ease, border-color .18s ease, color .18s ease, opacity .18s ease;
+}
+.btn:hover  { background: rgba(255, 255, 255, .07); }
+.btn:active { transform: translateY(1px); }
+.btn--amber  { border-color: var(--amber);  color: var(--amber);  }
+.btn--amber:hover  { background: var(--amber-dim); }
+.btn--teal   { border-color: var(--teal);   color: var(--teal);   }
+.btn--teal:hover   { background: var(--teal-dim); }
+.btn--coral  { border-color: var(--coral);  color: var(--coral);  }
+.btn--coral:hover  { background: var(--coral-dim); }
+.btn--violet { border-color: var(--violet); color: var(--violet); }
+.btn--violet:hover { background: var(--violet-dim); }
+.btn.is-on   { background: var(--violet-dim); border-color: var(--violet); color: var(--violet); }
+.btn[disabled] { opacity: .3; cursor: default; }
+.btn[disabled]:hover { background: transparent; }
+.btn svg { width: 22px; height: 22px; flex: none; }
+
+:where(button, [tabindex], .draggable):focus-visible { outline: 3px solid var(--amber); outline-offset: 4px; }
+
+.dots { display: flex; gap: 12px; align-items: center; }
+.dots i { width: 14px; height: 14px; border-radius: 50%; background: var(--line-strong); transition: background .2s ease, transform .2s ease; }
+.dots i.on { background: var(--amber); transform: scale(1.25); }
+
+.hint { font-size: var(--t-tag); color: var(--chalk-faint); }
+
+.step { opacity: 0; transform: translateY(14px); transition: opacity .32s ease, transform .32s ease; pointer-events: none; }
+.step.on { opacity: 1; transform: none; pointer-events: auto; }
+.step--collapse { display: none; }
+.step--collapse.on { display: block; }
+
+@keyframes pop { 0%{transform:scale(1);} 45%{transform:scale(1.14);} 100%{transform:scale(1);} }
+.pop { animation: pop .42s ease; }
+
+.slot {
+  display: flex; align-items: center; justify-content: center;
+  border: 3px dashed var(--line-strong); border-radius: var(--r-m);
+  color: var(--chalk-faint); background: rgba(255, 255, 255, .02);
+  transition: border-color .16s ease, background .16s ease, color .16s ease;
+  padding: 12px 22px; font-size: var(--t-small); font-weight: 700; min-width: 150px; text-align: center;
+}
+.slot.is-wrong { border-style: solid; border-color: var(--coral); background: var(--coral-dim); color: var(--coral); }
+
+.m { font-family: var(--f-en), var(--f-kr), serif; font-variant-numeric: tabular-nums; white-space: nowrap; line-height: 1.15; }
+.var { font-style: italic; }
+.op { margin: 0 .22em; }
+.frac { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; margin: 0 .2em; transform: translateY(-.06em); line-height: 1.02; }
+.frac > .num { padding: 0 .32em .05em; }
+.frac > .den { padding: .07em .32em 0; border-top: .07em solid currentColor; }
+.sub { display: inline-block; font-size: .60em; font-style: italic; transform: translateY(.40em); letter-spacing: .01em; }
+.sup { display: inline-block; font-size: .60em; transform: translateY(-.52em); }
+.sub.is-up { font-style: normal; }
+.comb { display: inline-flex; align-items: center; }
+.comb > .pre  { font-size: .60em; font-style: italic; transform: translateY(.40em); }
+.comb > .sym  { font-size: 1em; font-weight: 500; margin: 0 .04em; }
+.comb > .post { font-size: .60em; font-style: italic; transform: translateY(.40em); }
+.paren { display: inline-block; transform: scaleY(1.5); transform-origin: center; margin: 0 .1em; font-weight: 300; }
+.hl-amber  { color: var(--amber);  }
+.hl-coral  { color: var(--coral);  }
+.hl-teal   { color: var(--teal);   }
+.hl-violet { color: var(--violet); }
+.hl-dim    { color: var(--chalk-faint); }
+
+.row  { display: flex; align-items: center; }
+.col  { display: flex; flex-direction: column; }
+.wrap { flex-wrap: wrap; }
+.between { justify-content: space-between; }
+.center  { justify-content: center; align-items: center; }
+.grow  { flex: 1 1 auto; min-height: 0; min-width: 0; }
+.g8  { gap: 8px;  } .g12 { gap: 12px; } .g16 { gap: 16px; } .g24 { gap: 24px; } .g36 { gap: 36px; }
+.cols-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; min-height: 0; }
+.t-hero  { font-size: var(--t-hero);  font-weight: 700; letter-spacing: -.02em; }
+.t-title { font-size: var(--t-title); font-weight: 700; }
+.t-h2    { font-size: var(--t-h2);    font-weight: 600; }
+.t-body  { font-size: var(--t-body);  }
+.t-small { font-size: var(--t-small); color: var(--chalk-soft); }
+.t-tag   { font-size: var(--t-tag);   color: var(--chalk-faint); }
+.nowrap  { white-space: nowrap; }
+.m0      { margin: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .step, .btn, .dots i { transition-duration: .01ms !important; }
+  .pop { animation: none !important; }
+}
+
+/* ============================================================================
+   이 앱 전용 보강 스타일 (도형 조작 · 축소 도형 카드 · 회전 재생 등)
+   ============================================================================ */
+.figWrap { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 14px; }
+#fig { width: 100%; flex: 1; min-height: 0; touch-action: none; display: block; }
+.figTop { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex: 0 0 auto; }
+
+.slots { display: flex; gap: 12px; flex-wrap: wrap; }
+
+.thumbRow { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.thumbCard {
+  background: var(--panel-2); border: 2px solid var(--line-strong); border-radius: var(--r-m);
+  padding: 6px; cursor: pointer; transition: border-color .15s ease; line-height: 0;
+}
+.thumbCard:hover, .thumbCard.is-sel { border-color: var(--coral); }
+.thumbCard svg { width: 78px; height: 78px; display: block; }
+.playBtn {
+  font-family: inherit; font-size: var(--t-tag); font-weight: 700; color: #14202e;
+  background: var(--amber); border: none; border-radius: 999px; padding: 12px 18px;
+  cursor: pointer; margin-left: 4px; white-space: nowrap;
+}
+
+#panelB .m { font-size: 27px; }
+#panelB .step .m.t-h2, #panelB p.t-h2 { font-size: 27px; }
+
+.scrollCol { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 16px; overflow: hidden; }
+</style>
+</head>
+<body>
+
+<div class="viewport">
+  <div class="stage" id="stage">
+    <div class="sheet">
+
+      <!-- ===================== 머리말 ===================== -->
+      <header class="app-head">
+        <div>
+          <h1 class="app-title"><span class="stamp">11-14</span>정사각형 8개 점의 삼각형 확률</h1>
+          <p class="app-sub">정사각형 ABCD의 각 변의 중점 E, F, G, H — 8개 점 중 3개로 만든 삼각형</p>
+        </div>
+        <nav class="tabnav row g12">
+          <button class="btn is-active" data-tab="A">(1) 삼각형일 확률</button>
+          <button class="btn" data-tab="B">(2) 직각 or 이등변일 확률</button>
+        </nav>
+      </header>
+
+      <div class="cols-2 grow" style="min-height:0;">
+
+        <!-- ===================== 도형 패널 (탭 공통) ===================== -->
+        <div class="panel panel--raise figWrap">
+          <div class="figTop">
+            <span class="tag" id="statusTag">점 3개를 터치하거나 끌어서 연결</span>
+          </div>
+          <svg id="fig" viewBox="0 0 620 600" xmlns="http://www.w3.org/2000/svg">
+            <g id="gSquare"></g>
+            <g id="gShape"></g>
+            <g id="gPts"></g>
+          </svg>
+        </div>
+
+        <!-- ===================== 탭 A : 삼각형일 확률 ===================== -->
+        <div class="panelWrap" id="panelA">
+          <div class="scrollCol">
+
+            <p class="m t-h2 m0">
+              <span class="comb"><span class="pre">8</span><span class="sym">C</span><span class="post">3</span></span>
+              <span class="op">=</span>
+              <span class="frac"><span class="num">8 · 7 · 6</span><span class="den">3 · 2 · 1</span></span>
+              <span class="op">=</span> <b class="hl-amber">56</b>
+            </p>
+
+            <div class="step" id="stepA1">
+              <p class="t-small m0" style="margin-bottom:10px;">삼각형이 되지 <b class="hl-coral">않는</b> 경우 — 한 변 위의 세 점 <span id="findHint">(직접 찾아보기)</span></p>
+              <div class="slots">
+                <span class="slot" data-key="ABE">?</span>
+                <span class="slot" data-key="BCF">?</span>
+                <span class="slot" data-key="CDG">?</span>
+                <span class="slot" data-key="ADH">?</span>
+              </div>
+            </div>
+
+            <div class="step" id="stepA2">
+              <p class="m t-h2 m0">
+                4 <span class="op">×</span>
+                <span class="comb"><span class="pre">3</span><span class="sym">C</span><span class="post">3</span></span>
+                <span class="op">=</span> <b class="hl-coral">4</b>
+                <span class="t-tag" style="margin-left:.6em;">← 삼각형 아님</span>
+              </p>
+            </div>
+
+            <div class="step" id="stepA3">
+              <div class="result is-teal">
+                <span class="frac"><span class="num">56 − 4</span><span class="den">56</span></span>
+                <span class="op">=</span>
+                <span class="frac"><span class="num">52</span><span class="den">56</span></span>
+                <span class="op">=</span>
+                <b><span class="frac"><span class="num">13</span><span class="den">14</span></span></b>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ===================== 탭 B : 직각 or 이등변일 확률 ===================== -->
+        <div class="panelWrap" id="panelB" hidden>
+          <div class="scrollCol">
+
+            <p class="m t-h2 m0">
+              P(직각 ∪ 이등변 | 삼각형) <span class="op">=</span>
+              <span class="frac"><span class="num">n(직각 ∪ 이등변)</span><span class="den">n(삼각형)</span></span>
+              <span class="op">=</span>
+              <span class="frac"><span class="num">52 − n(직각<span class="sup">c</span> ∩ 이등변<span class="sup">c</span>)</span><span class="den">52</span></span>
+            </p>
+
+            <div class="step" id="stepB1">
+              <p class="t-small m0" style="margin-bottom:8px;">유형 ① &nbsp;대각선(AC, BD) + 중점 1개</p>
+              <div class="thumbRow" id="th1"></div>
+            </div>
+
+            <div class="step" id="stepB2">
+              <p class="t-small m0" style="margin-bottom:8px;">유형 ② &nbsp;꼭짓점 + 이웃 꼭짓점을 낀 두 중점</p>
+              <div class="thumbRow" id="th2"></div>
+            </div>
+
+            <div class="step" id="stepB3">
+              <p class="m t-h2 m0">n(직각<span class="sup">c</span> ∩ 이등변<span class="sup">c</span>) = 8 + 8 = <b class="hl-coral">16</b></p>
+              <div class="result is-teal" style="margin-top:10px;">
+                <span class="frac"><span class="num">52 − 16</span><span class="den">52</span></span>
+                <span class="op">=</span>
+                <span class="frac"><span class="num">36</span><span class="den">52</span></span>
+                <span class="op">=</span>
+                <b><span class="frac"><span class="num">9</span><span class="den">13</span></span></b>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== 발판 ===================== -->
+      <footer class="app-foot">
+        <div class="dots" id="dots"></div>
+        <div class="row g12">
+          <button class="btn" id="prevBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            이전
+          </button>
+          <button class="btn btn--amber" id="nextBtn">
+            다음
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+          <span class="tag is-coral" id="cnt" hidden>예외 0/16</span>
+          <button class="btn btn--violet" id="modeBtn" hidden>탐색</button>
+          <button class="btn" id="clearBtn">지우기</button>
+          <button class="btn btn--teal" id="fsBtn">
+            <svg id="fsIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+            <span id="fsLabel">전체화면</span>
+          </button>
+        </div>
+      </footer>
+
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+/* ---------------------------------------------------------------------------
+   1) 16:9 스케일링
+--------------------------------------------------------------------------- */
+const STAGE_W = 1600, STAGE_H = 900;
+const stage = document.getElementById('stage');
+
+function fitStage() {
+  const vv = window.visualViewport;
+  const w = vv ? vv.width  : window.innerWidth;
+  const h = vv ? vv.height : window.innerHeight;
+  const s = Math.min(w / STAGE_W, h / STAGE_H);
+  const x = Math.round((w - STAGE_W * s) / 2);
+  const y = Math.round((h - STAGE_H * s) / 2);
+  stage.style.transform = 'translate(' + x + 'px, ' + y + 'px) scale(' + s + ')';
+}
+function fitSoon() { [0, 60, 300, 700].forEach(function (t) { setTimeout(fitStage, t); }); }
+
+fitSoon();
+window.addEventListener('load', fitSoon);
+window.addEventListener('resize', fitStage);
+window.addEventListener('orientationchange', fitSoon);
+if (window.visualViewport) {
+  visualViewport.addEventListener('resize', fitStage);
+  visualViewport.addEventListener('scroll', fitStage);
+}
+document.addEventListener('fullscreenchange', fitSoon);
+
+/* ---------------------------------------------------------------------------
+   2) 전체화면
+--------------------------------------------------------------------------- */
+const fsBtn = document.getElementById('fsBtn');
+const fsLabel = document.getElementById('fsLabel');
+const fsIcon = document.getElementById('fsIcon');
+const ICON_ENTER = '<path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>';
+const ICON_EXIT  = '<path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M16 3v3a2 2 0 0 0 2 2h3"/><path d="M8 21v-3a2 2 0 0 0-2-2H3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/>';
+
+function isFullscreen() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+function syncFsButton() {
+  const on = isFullscreen();
+  fsLabel.textContent = on ? '창으로' : '전체화면';
+  fsIcon.innerHTML = on ? ICON_EXIT : ICON_ENTER;
+  fsBtn.title = on ? '전체화면 해제' : '전체화면으로 보기';
+}
+function toggleFullscreen() {
+  if (!isFullscreen()) {
+    const el = document.documentElement;
+    const req = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (req) { Promise.resolve(req.call(el)).catch(function () {}); }
+  } else {
+    const exit = document.exitFullscreen || document.webkitExitFullscreen;
+    if (exit) { Promise.resolve(exit.call(document)).catch(function () {}); }
+  }
+  setTimeout(syncFsButton, 120);
+}
+fsBtn.addEventListener('click', toggleFullscreen);
+document.addEventListener('fullscreenchange', syncFsButton);
+document.addEventListener('webkitfullscreenchange', syncFsButton);
+syncFsButton();
+
+/* ---------------------------------------------------------------------------
+   3) 기하 · 분류
+--------------------------------------------------------------------------- */
+const P = {A:[0,0],B:[2,0],C:[2,2],D:[0,2],E:[1,0],F:[2,1],G:[1,2],H:[0,1]};
+const VERT = ['A','B','C','D'], NAMES = ['A','B','C','D','E','F','G','H'];
+const SX = n => 100 + P[n][0]*210, SY = n => 520 - P[n][1]*210;
+const LAB = {A:[64,562],B:[556,562],C:[556,86],D:[64,86],E:[310,582],F:[576,322],G:[310,66],H:[44,322]};
+
+const d2 = (p,q) => (P[p][0]-P[q][0])**2 + (P[p][1]-P[q][1])**2;
+function isLine(a,b,c){ return (P[b][0]-P[a][0])*(P[c][1]-P[a][1]) - (P[b][1]-P[a][1])*(P[c][0]-P[a][0]) === 0; }
+function classify(t){
+  const [a,b,c] = t;
+  if (isLine(a,b,c)) return {line:true, label:'일직선 → 삼각형 아님', cls:'coral'};
+  const s = [d2(a,b), d2(b,c), d2(c,a)].sort((x,y)=>x-y);
+  const iso = (s[0]===s[1] || s[1]===s[2]), rt = (s[0]+s[1]===s[2]);
+  if (iso && rt) return {label:'직각이등변삼각형', cls:'teal', ex:false};
+  if (rt)        return {label:'직각삼각형',       cls:'teal', ex:false};
+  if (iso)       return {label:'이등변삼각형',     cls:'teal', ex:false};
+  return {label:'직각 ✗ · 이등변 ✗  → 예외!', cls:'amber', ex:true};
+}
+const key = t => [...t].sort().join('');
+const SIDETXT = {ABE:'A · E · B', BCF:'B · F · C', CDG:'C · G · D', ADH:'D · H · A'};
+
+const FAM1 = ['ACE','ACF','ACG','ACH','BDE','BDF','BDG','BDH'];
+const FAM2 = ['DEH','CEF','AEF','DFG','BFG','AGH','CGH','BEH'];
+
+/* ---------------------------------------------------------------------------
+   4) 도형 그리기
+--------------------------------------------------------------------------- */
+const gSq = document.getElementById('gSquare'), gSh = document.getElementById('gShape'), gPt = document.getElementById('gPts');
+const NS = 'http://www.w3.org/2000/svg';
+const el = (t,a) => { const e = document.createElementNS(NS,t); for (const k in a) e.setAttribute(k,a[k]); return e; };
+
+gSq.appendChild(el('rect', {x:100,y:100,width:420,height:420, fill:'none', stroke:'#4a5d80', 'stroke-width':5}));
+
+const COL_AMBER = '#f5b642', COL_TEAL = '#49d1c0', COL_CORAL = '#ff7d6a';
+
+const dots = {};
+NAMES.forEach(n => {
+  const isV = VERT.includes(n), col = isV ? COL_AMBER : COL_TEAL;
+  const g = el('g', {'data-pt':n, style:'cursor:pointer'});
+  g.appendChild(el('circle', {cx:SX(n), cy:SY(n), r:34, fill:'transparent'}));
+  const ring = el('circle', {cx:SX(n), cy:SY(n), r:16, fill:'none', stroke:COL_CORAL, 'stroke-width':5, opacity:0});
+  const dot = el('circle', {cx:SX(n), cy:SY(n), r:isV?11:9, fill:col});
+  g.appendChild(ring); g.appendChild(dot);
+  const t = el('text', {x:LAB[n][0], y:LAB[n][1], fill:col, 'font-size':34, 'font-weight':700,
+                        'text-anchor':'middle', 'dominant-baseline':'middle', 'font-family':'Space Grotesk, sans-serif'});
+  t.textContent = n; gSq.appendChild(t);
+  gPt.appendChild(g); dots[n] = {ring, dot, isV};
+});
+
+let sel = [], hi = null, explore = false, dragging = false, timer = null;
+const foundLine = new Set(), foundEx = new Set();
+const $ = id => document.getElementById(id);
+
+function drawShape(t, color){
+  gSh.innerHTML = '';
+  if (!t) return;
+  if (t.length===3 && isLine(t[0],t[1],t[2])){
+    let best=[t[0],t[1]], m=-1;
+    for (let i=0;i<3;i++) for (let j=i+1;j<3;j++){ const d=d2(t[i],t[j]); if (d>m){ m=d; best=[t[i],t[j]]; } }
+    gSh.appendChild(el('line',{x1:SX(best[0]),y1:SY(best[0]),x2:SX(best[1]),y2:SY(best[1]),
+      stroke:COL_CORAL,'stroke-width':11,'stroke-linecap':'round'}));
+    return;
+  }
+  if (t.length===3){
+    const pts = t.map(n=>`${SX(n)},${SY(n)}`).join(' ');
+    gSh.appendChild(el('polygon',{points:pts, fill:color+'3d', stroke:color, 'stroke-width':8, 'stroke-linejoin':'round'}));
+  } else if (t.length===2){
+    gSh.appendChild(el('line',{x1:SX(t[0]),y1:SY(t[0]),x2:SX(t[1]),y2:SY(t[1]), stroke:color,'stroke-width':7,'stroke-linecap':'round',opacity:.75}));
+  }
+}
+
+function render(){
+  const active = hi || sel;
+  NAMES.forEach(n=>{
+    const on = active.includes(n);
+    dots[n].ring.setAttribute('opacity', on?1:0);
+    dots[n].dot.setAttribute('r', on ? (dots[n].isV?14:12) : (dots[n].isV?11:9));
+  });
+  if (hi) drawShape(hi, COL_CORAL);
+  else drawShape(sel, sel.length===3 ? (classify(sel).line ? COL_CORAL : COL_TEAL) : '#8ea1c7');
+  updateStatus();
+}
+
+function updateStatus(){
+  const s = $('statusTag'); s.className = 'tag';
+  if (hi){ s.textContent = '유형 보기 : ' + hi.join(' – '); s.classList.add('is-amber'); return; }
+  if (sel.length < 3){ s.textContent = sel.length===0 ? '점 3개를 터치하거나 끌어서 연결' : `선택 ${sel.length} / 3`; return; }
+  const r = classify(sel);
+  if (curTab==='A'){ s.textContent = r.line ? '일직선 → 삼각형 아님' : '삼각형 ○'; s.classList.add(r.line?'is-coral':'is-teal'); }
+  else if (explore){ s.textContent = r.label; s.classList.add('is-'+r.cls); }
+  else { s.textContent = r.line ? '일직선 → 삼각형 아님' : '삼각형'; s.classList.add(r.line?'is-coral':'is-teal'); }
+}
+
+function add(n){
+  if (hi){ hi=null; clearTimer(); document.querySelectorAll('.thumbCard').forEach(t=>t.classList.remove('is-sel')); }
+  if (sel.length>=3){ sel=[n]; }
+  else if (sel.includes(n)){ sel=sel.filter(x=>x!==n); }
+  else sel.push(n);
+  if (sel.length===3) commit();
+  render();
+}
+
+function commit(){
+  const k = key(sel), r = classify(sel);
+  if (curTab==='A'){
+    if (idxA<1) revealA(1);
+    if (r.line && !foundLine.has(k)){
+      foundLine.add(k);
+      const slot = document.querySelector(`.slot[data-key="${k}"]`);
+      if (slot){ slot.textContent = SIDETXT[k]; slot.classList.add('is-wrong'); }
+      if (foundLine.size===4){ $('findHint').textContent='(모두 찾음!)'; revealA(3); }
+    }
+  } else {
+    if (explore && r.ex && !foundEx.has(k)){
+      foundEx.add(k); updCnt();
+      if (idxB<2) revealB(2);
+      if (foundEx.size===16) revealB(3);
+    }
+  }
+}
+function updCnt(){ $('cnt').textContent = `예외 ${foundEx.size}/16`; }
+
+const fig = $('fig');
+fig.addEventListener('pointerdown', e=>{
+  const g = e.target.closest('[data-pt]'); if (!g) return;
+  e.preventDefault(); dragging=true; fig.setPointerCapture(e.pointerId);
+  add(g.dataset.pt);
+});
+fig.addEventListener('pointermove', e=>{
+  if (!dragging || sel.length>=3) return;
+  const t = document.elementFromPoint(e.clientX, e.clientY);
+  const g = t && t.closest && t.closest('[data-pt]');
+  if (g && !sel.includes(g.dataset.pt)) add(g.dataset.pt);
+});
+addEventListener('pointerup', ()=>dragging=false);
+addEventListener('pointercancel', ()=>dragging=false);
+
+$('clearBtn').onclick = ()=>{
+  sel=[]; hi=null; clearTimer();
+  document.querySelectorAll('.thumbCard').forEach(t=>t.classList.remove('is-sel'));
+  render();
+};
+$('modeBtn').onclick = function(){
+  explore = !explore;
+  this.classList.toggle('is-on', explore);
+  $('cnt').hidden = !explore;
+  updCnt(); render();
+};
+
+/* ---------------------------------------------------------------------------
+   5) 단계 진행 (탭별로 독립적인 인덱스)
+--------------------------------------------------------------------------- */
+let curTab = 'A';
+let idxA = 0, idxB = 0;
+const LAST_A = 3, LAST_B = 3;
+const SEQ_A = ['stepA1','stepA2','stepA3'];
+const SEQ_B = ['stepB1','stepB2','stepB3'];
+
+const panelA = $('panelA'), panelB = $('panelB');
+const tabBtns = document.querySelectorAll('.tabnav .btn');
+const dotsEl = $('dots');
+const prevBtn = $('prevBtn'), nextBtn = $('nextBtn');
+
+function buildDots(last){
+  dotsEl.innerHTML = '';
+  for (let i=0; i<=last; i++) dotsEl.appendChild(document.createElement('i'));
+  return Array.prototype.slice.call(dotsEl.children);
+}
+let dotsArr = buildDots(LAST_A);
+
+function renderStep(){
+  const last = curTab==='A' ? LAST_A : LAST_B;
+  const idx  = curTab==='A' ? idxA   : idxB;
+  dotsArr.forEach((d,i)=> d.classList.toggle('on', i<=idx));
+  prevBtn.disabled = (idx===0);
+  nextBtn.disabled = (idx>=last);
+}
+
+function applyA(n){
+  n = Math.max(0, Math.min(LAST_A, n));
+  SEQ_A.forEach((id,i)=> $(id).classList.toggle('on', i<n));
+  idxA = n;
+  if (idxA>=2){
+    document.querySelectorAll('.slot').forEach(sl=>{
+      if (!sl.classList.contains('is-wrong')){
+        sl.textContent = SIDETXT[sl.dataset.key]; sl.classList.add('is-wrong'); foundLine.add(sl.dataset.key);
+      }
+    });
+    $('findHint').textContent = '';
+  }
+  renderStep();
+}
+function revealA(n){ applyA(Math.max(idxA, n)); }
+
+function applyB(n){
+  n = Math.max(0, Math.min(LAST_B, n));
+  SEQ_B.forEach((id,i)=> $(id).classList.toggle('on', i<n));
+  idxB = n;
+  renderStep();
+}
+function revealB(n){ applyB(Math.max(idxB, n)); }
+
+function showTab(tab){
+  curTab = tab;
+  panelA.hidden = (tab!=='A');
+  panelB.hidden = (tab!=='B');
+  tabBtns.forEach(b=> b.classList.toggle('is-active', b.dataset.tab===tab));
+  $('modeBtn').hidden = (tab!=='B');
+  $('cnt').hidden = !(tab==='B' && explore);
+  dotsArr = buildDots(tab==='A' ? LAST_A : LAST_B);
+  clearTimer(); sel=[]; hi=null;
+  document.querySelectorAll('.thumbCard').forEach(x=>x.classList.remove('is-sel'));
+  renderStep(); render();
+}
+
+prevBtn.onclick = ()=>{ if (curTab==='A') applyA(idxA-1); else applyB(idxB-1); };
+nextBtn.onclick = ()=>{ if (curTab==='A') applyA(idxA+1); else applyB(idxB+1); };
+
+tabBtns.forEach(b=> b.addEventListener('click', ()=> showTab(b.dataset.tab)));
+
+/* ---------------------------------------------------------------------------
+   6) 축소 도형 카드 · 회전 재생
+--------------------------------------------------------------------------- */
+function thumbSVG(t){
+  const mx = n => 18 + P[n][0]*42, my = n => 102 - P[n][1]*42;
+  let s = `<svg viewBox="0 0 120 120" xmlns="${NS}">`;
+  s += `<rect x="18" y="18" width="84" height="84" fill="none" stroke="#4a5d80" stroke-width="3"/>`;
+  s += `<polygon points="${t.map(n=>mx(n)+','+my(n)).join(' ')}" fill="${COL_CORAL}40" stroke="${COL_CORAL}" stroke-width="4" stroke-linejoin="round"/>`;
+  NAMES.forEach(n=>{ const on=t.includes(n);
+    s += `<circle cx="${mx(n)}" cy="${my(n)}" r="${on?6:4}" fill="${on?COL_CORAL:(VERT.includes(n)?COL_AMBER:COL_TEAL)}"/>`; });
+  return s+'</svg>';
+}
+const playBtns = [];
+function clearTimer(){ if (timer){ clearInterval(timer); timer=null; } playBtns.forEach(b=>b.textContent='↻ 8개 보기'); }
+
+function buildThumbs(id, list, shown, tag){
+  const box = $(id);
+  shown.forEach(t=>{
+    const b = document.createElement('div'); b.className='thumbCard'; b.innerHTML=thumbSVG([...t]);
+    b.onclick = ()=>{ clearTimer(); sel=[]; hi=[...t];
+      document.querySelectorAll('.thumbCard').forEach(x=>x.classList.remove('is-sel')); b.classList.add('is-sel'); render(); };
+    box.appendChild(b);
+  });
+  const x = document.createElement('span'); x.className='m t-h2'; x.innerHTML=tag; box.appendChild(x);
+  const p = document.createElement('button'); p.className='playBtn'; p.textContent='↻ 8개 보기';
+  p.onclick = ()=>{
+    if (timer){ clearTimer(); p.textContent='↻ 8개 보기'; return; }
+    document.querySelectorAll('.playBtn').forEach(b=>b.textContent='↻ 8개 보기');
+    sel=[]; let i=0;
+    document.querySelectorAll('.thumbCard').forEach(x=>x.classList.remove('is-sel'));
+    const step=()=>{ hi=[...list[i%8]]; render(); i++; };
+    step(); timer=setInterval(step,850); p.textContent='∎ 정지';
+  };
+  playBtns.push(p);
+  box.appendChild(p);
+}
+buildThumbs('th1', FAM1, ['ACE','ACF','ACG','ACH'], '4 × 2 = <b class="hl-coral">8</b>');
+buildThumbs('th2', FAM2, ['DEH','CEF'], '2 × 4 = <b class="hl-coral">8</b>');
+
+/* ---------------------------------------------------------------------------
+   init
+--------------------------------------------------------------------------- */
+$('modeBtn').hidden = true;
+$('cnt').hidden = true;
+renderStep();
+render();
+</script>
+</body>
+</html>
