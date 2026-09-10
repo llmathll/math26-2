@@ -2,80 +2,37 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>조건부확률 · 주머니 A, B — 확률과통계</title>
 <style>
-@charset "UTF-8";
-/* ============================================================================
-   chalk-stage.css  v2
-   고등학교 확률과통계 수업용 16:9 인터랙티브 앱 공통 스타일
-
-   설계 전제
-   - 1600 x 900 고정 스테이지를 translate + scale 로 TV 화면에 꽉 채운다
-   - 교실 뒷자리 기준 가독성: 본문 최소 32px(스테이지 좌표 기준)
-   - 화면 텍스트는 최소, 도형/도표/인터랙션이 주인공
-   - 수식은 MathJax/KaTeX 없이 CSS 로만 조판
-
-   v2 변경점 ('카드 합의 확률' 앱에서 검증한 것들을 승격)
-   - 세로 3분할 골격 확정: .app-head(고정) / 본문(가변) / .app-foot(고정)
-     → 본문이 넘쳐 아래 결과 바를 덮는 사고를 구조적으로 막는다
-   - .app-foot : 이전·다음·전체화면 등 하단 조작 버튼바
-   - .panelWrap : [hidden] 으로 전환하는 탭 본문
-   - .tabnav : 상단 탭 버튼
-   - .pcard / .pcard-sm : 숫자 카드(주사위·카드 문항용), 뒤집기 애니메이션 포함
-   - .posbars : 'n가지'를 위치 강조 막대로 보여주는 경우의 수 시각화
-   - .case-card : 경우를 나눠 세는 유형 카드
-   - .stamp : 알약형 → 제목 앞 숫자형으로 변경 (버튼으로 오인되던 문제)
-   - .result 에 is-teal / is-coral 상태 추가
-
-   사용법
-   - 단일 HTML 파일 배포가 원칙이므로, 실제 앱에서는 이 파일 내용을
-     <style> 안에 그대로 붙여넣어 사용하세요. (Google Sites 임베드 대비)
-   - 개발 중에는 <link rel="stylesheet" href="chalk-stage.css"> 로 써도 됩니다.
-   - 컴포넌트 클래스는 kebab-case 와 camelCase 양쪽을 모두 받습니다.
-     (.case-card / .caseCard 둘 다 동작 — 기존 앱 호환용)
-
-   함께 쓰는 JS (앱 쪽에 넣을 것)
-     const STAGE_W=1600, STAGE_H=900;
-     function fitStage(){
-       const vv=window.visualViewport;
-       const w=vv?vv.width:innerWidth, h=vv?vv.height:innerHeight;
-       const s=Math.min(w/STAGE_W, h/STAGE_H);
-       stage.style.transform=`translate(${Math.round((w-STAGE_W*s)/2)}px,
-                                       ${Math.round((h-STAGE_H*s)/2)}px) scale(${s})`;
-     }
-     [0,60,300,700].forEach(t=>setTimeout(fitStage,t));   // 로드/회전 후 재계산
-============================================================================ */
+/* chalk-stage.css v2 — 공통 스타일 (단일 파일 배포용 인라인 사본)
+   원본과 동일하게 유지할 것. 수정은 chalk-stage.css 쪽에서 하고 다시 붙여넣기. */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap');
 
 /* ---------------------------------------------------------------- 1. 토큰 */
 :root {
-  /* 배경 계열 (칠판) */
-  --bg-deep:      #0a1420;   /* 스테이지 바깥 레터박스 */
-  --bg:           #0e1b2b;   /* 칠판면 */
-  --panel:        #16283e;   /* 얹는 카드 */
-  --panel-2:      #1d3350;   /* 한 단계 밝은 카드 */
+  --bg-deep:      #0a1420;
+  --bg:           #0e1b2b;
+  --panel:        #16283e;
+  --panel-2:      #1d3350;
   --line:         rgba(214, 229, 245, .18);
   --line-strong:  rgba(214, 229, 245, .38);
 
-  /* 분필 계열 (글자) */
   --chalk:        #eaf1f8;
   --chalk-soft:   #b9cadd;
   --chalk-faint:  #7d94ad;
 
-  /* 포인트 컬러 */
-  --amber:        #f5b642;   /* 핵심 값, 정답, 강조 */
-  --coral:        #ff7d6a;   /* 제외/여사건/주의 */
-  --teal:         #49d1c0;   /* 조건, 성립, 확정 */
-  --violet:       #9d8cf5;   /* 보조 분기 */
+  --amber:        #f5b642;
+  --coral:        #ff7d6a;
+  --teal:         #49d1c0;
+  --violet:       #9d8cf5;
 
   --amber-dim:    rgba(245, 182,  66, .16);
   --coral-dim:    rgba(255, 125, 106, .16);
   --teal-dim:     rgba( 73, 209, 192, .16);
   --violet-dim:   rgba(157, 140, 245, .16);
 
-  /* 타이포 (스테이지 1600x900 좌표 기준 절대값) */
   --f-en: 'Space Grotesk';
   --f-kr: 'Noto Sans KR';
   --t-hero:   76px;
@@ -85,19 +42,16 @@
   --t-small:  26px;
   --t-tag:    22px;
 
-  /* 형태 */
   --r-s: 10px;
   --r-m: 18px;
   --r-l: 28px;
 
-  /* 골격 여백 — 머리말+발판을 함께 쓰는 화면 기준으로 잡은 값 */
   --sheet-pad-x: 40px;
   --sheet-pad-t: 30px;
   --sheet-pad-b: 26px;
   --sheet-gap:   18px;
-  --stage-pad:   44px;   /* 발판 없는 단순 화면용 (구버전 호환) */
+  --stage-pad:   44px;
 
-  /* 컴포넌트 치수 */
   --pcard-w:    108px;
   --pcard-h:    150px;
   --pcard-fs:    56px;
@@ -113,7 +67,7 @@ html, body {
   height: 100%;
   margin: 0;
   padding: 0;
-  overflow: hidden;                 /* TV 미러링 시 스크롤 방지 */
+  overflow: hidden;
   background: var(--bg-deep);
   overscroll-behavior: none;
   touch-action: manipulation;
@@ -129,21 +83,12 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* 레터박스 영역: 화면 전체를 덮고 여백 0 */
-.viewport {
-  position: fixed;
-  inset: 0;
-  overflow: hidden;
-  background: var(--bg-deep);
-}
+.viewport { position: fixed; inset: 0; overflow: hidden; background: var(--bg-deep); }
 
-/* 고정 스테이지: JS 가 transform: translate(x,y) scale(s) 를 넣어준다 */
 .stage {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 1600px;
-  height: 900px;
+  top: 0; left: 0;
+  width: 1600px; height: 900px;
   transform-origin: 0 0;
   will-change: transform;
   overflow: hidden;
@@ -153,31 +98,24 @@ body {
     var(--bg);
 }
 
-/* 분필 가루 질감 + 가장자리 비네팅 (아주 옅게) */
 .stage::before {
   content: "";
-  position: absolute;
-  inset: 0;
+  position: absolute; inset: 0;
   pointer-events: none;
   background:
     repeating-linear-gradient(115deg, rgba(255,255,255,.014) 0 2px, rgba(255,255,255,0) 2px 7px),
     radial-gradient(130% 110% at 50% 45%, rgba(0,0,0,0) 55%, rgba(0,0,0,.34) 100%);
 }
 
-/* 스테이지 안쪽 기본 레이아웃 (내용 여백은 여기서만 준다)
-   머리말/발판은 고정, 가운데 본문만 늘어나게 해서 넘침을 구조적으로 막는다 */
 .sheet {
   position: relative;
   z-index: 1;
-  width: 100%;
-  height: 100%;
+  width: 100%; height: 100%;
   padding: var(--sheet-pad-t) var(--sheet-pad-x) var(--sheet-pad-b);
   display: flex;
   flex-direction: column;
   gap: var(--sheet-gap);
 }
-
-/* 발판 없이 본문만 쓰는 단순 화면 */
 .sheet--loose { padding: var(--stage-pad); gap: 26px; }
 
 /* ------------------------------------------------------------ 3. 머리말 */
@@ -190,57 +128,29 @@ body {
   padding-bottom: 14px;
   border-bottom: 2px solid var(--line);
 }
+.app-title { margin: 0; font-size: var(--t-title); font-weight: 700; letter-spacing: -.02em; line-height: 1.1; }
+.app-sub { margin: 6px 0 0; font-size: var(--t-small); font-weight: 400; color: var(--chalk-soft); }
 
-.app-title {
-  margin: 0;
-  font-size: var(--t-title);
-  font-weight: 700;
-  letter-spacing: -.02em;
-  line-height: 1.1;
-}
-
-.app-sub {
-  margin: 6px 0 0;
-  font-size: var(--t-small);
-  font-weight: 400;
-  color: var(--chalk-soft);
-}
-
-/* 문항 번호 등 식별자 — 제목 앞에 붙는 숫자.
-   조작 대상이 아니므로 버튼처럼 보이지 않게 테두리를 두지 않는다. */
 .stamp {
   display: inline-block;
   margin-right: 14px;
   color: var(--amber);
-  font-size: 1em;
-  font-weight: 700;
+  font-size: 1em; font-weight: 700;
   letter-spacing: -.02em;
   vertical-align: baseline;
 }
-
-/* 구버전 알약형 배지가 필요할 때 */
 .stamp--pill {
-  margin-right: 0;
-  padding: 8px 20px;
-  border: 2px solid var(--amber);
-  border-radius: 999px;
-  font-size: var(--t-small);
-  font-weight: 600;
-  letter-spacing: .04em;
-  white-space: nowrap;
+  margin-right: 0; padding: 8px 20px;
+  border: 2px solid var(--amber); border-radius: 999px;
+  font-size: var(--t-small); font-weight: 600;
+  letter-spacing: .04em; white-space: nowrap;
 }
 
-/* 상단 탭 */
 .tabnav { display: flex; align-items: center; gap: 12px; }
 .tabnav .btn { padding: 11px 24px; font-size: var(--t-tag); }
-.tabnav .btn.is-active {
-  background: var(--amber-dim);
-  border-color: var(--amber);
-  color: var(--amber);
-}
+.tabnav .btn.is-active { background: var(--amber-dim); border-color: var(--amber); color: var(--amber); }
 
 /* ------------------------------------------------------------- 4. 발판 */
-/* 하단 조작 버튼바. 왼쪽에 .dots, 오른쪽에 버튼 묶음이 기본 배치. */
 .app-foot {
   flex: 0 0 auto;
   display: flex;
@@ -251,17 +161,12 @@ body {
   border-top: 2px solid var(--line);
 }
 
-/* 탭으로 전환되는 본문 한 장 */
-.panelWrap,
-.panel-wrap {
-  display: flex;
-  flex-direction: column;
+.panelWrap, .panel-wrap {
+  display: flex; flex-direction: column;
   gap: var(--sheet-gap);
-  flex: 1 1 auto;
-  min-height: 0;
+  flex: 1 1 auto; min-height: 0;
 }
-.panelWrap[hidden],
-.panel-wrap[hidden] { display: none; }
+.panelWrap[hidden], .panel-wrap[hidden] { display: none; }
 
 /* -------------------------------------------------------- 5. 면 / 카드류 */
 .panel {
@@ -271,22 +176,19 @@ body {
   border-radius: var(--r-l);
   background: var(--panel);
 }
-
 .panel--flat  { background: transparent; }
 .panel--raise { background: var(--panel-2); border-color: var(--line-strong); }
 .panel--tight { padding: 18px 20px; border-radius: var(--r-m); }
 
-/* 문제 원문처럼 '인용'되는 블록 */
 .quote {
-  padding: 24px 30px 24px 34px;
+  padding: 16px 26px 16px 30px;
   border-left: 8px solid var(--amber);
   border-radius: 0 var(--r-m) var(--r-m) 0;
   background: rgba(245, 182, 66, .07);
   font-size: var(--t-body);
-  line-height: 1.55;
+  line-height: 1.5;
 }
 
-/* 결론/정답 강조 면. 판정 결과에 따라 색을 바꾼다. */
 .result {
   padding: 18px 30px;
   border: 3px solid var(--amber);
@@ -300,243 +202,53 @@ body {
 .result.is-coral { border-color: var(--coral); background: var(--coral-dim); }
 .result.is-off   { border-color: var(--line);  background: transparent; }
 
-/* 작은 라벨 조각 */
 .tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 16px;
+  display: inline-flex; align-items: center;
+  gap: 8px; padding: 6px 16px;
   border: 2px solid var(--line-strong);
   border-radius: 999px;
-  font-size: var(--t-tag);
-  font-weight: 500;
-  color: var(--chalk-soft);
-  white-space: nowrap;
+  font-size: var(--t-tag); font-weight: 500;
+  color: var(--chalk-soft); white-space: nowrap;
 }
-
 .tag.is-amber  { border-color: var(--amber);  color: var(--amber);  background: var(--amber-dim); }
 .tag.is-coral  { border-color: var(--coral);  color: var(--coral);  background: var(--coral-dim); }
 .tag.is-teal   { border-color: var(--teal);   color: var(--teal);   background: var(--teal-dim); }
 .tag.is-violet { border-color: var(--violet); color: var(--violet); background: var(--violet-dim); }
 .tag--lg { padding: 10px 22px; font-size: var(--t-small); }
 
-/* 나무그림·벤다이어그램 등에서 재사용하는 원형 노드 */
 .node {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 84px;
-  height: 84px;
-  border: 3px solid var(--line-strong);
-  border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 84px; height: 84px;
+  border: 3px solid var(--line-strong); border-radius: 50%;
   background: var(--panel-2);
-  font-size: var(--t-h2);
-  font-weight: 600;
+  font-size: var(--t-h2); font-weight: 600;
   user-select: none;
 }
-
 .node.is-amber  { border-color: var(--amber);  color: var(--amber);  }
 .node.is-coral  { border-color: var(--coral);  color: var(--coral);  }
 .node.is-teal   { border-color: var(--teal);   color: var(--teal);   }
 .node.is-violet { border-color: var(--violet); color: var(--violet); }
 .node.is-off    { border-color: var(--line); color: var(--chalk-faint); background: transparent; }
 
-/* --------------------------------------------------------- 6. 숫자 카드 */
-/* 카드·주사위 문항에서 '윗면의 수'를 보여주는 카드.
-   .pcard 는 클릭해 뒤집는 큰 카드, .pcard-sm 은 경우를 나열하는 작은 카드. */
-.pcardsRow,
-.pcards-row { display: flex; gap: 16px; }
-.pcardsRow--sm,
-.pcards-row--sm { gap: 8px; }
-
-.pcard {
-  width: var(--pcard-w);
-  height: var(--pcard-h);
-  border-radius: var(--r-m);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--f-en);
-  font-weight: 700;
-  font-size: var(--pcard-fs);
-  line-height: 1;
-  border: 3px solid var(--line-strong);
-  background: var(--panel);
-  cursor: pointer;
-  user-select: none;
-  transition: box-shadow .15s ease;
-}
-.pcard:hover { box-shadow: 0 0 0 4px rgba(255, 255, 255, .14); }
-
-.pcard-sm {
-  width: var(--pcard-sm-w);
-  height: var(--pcard-sm-h);
-  border-radius: var(--r-s);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--f-en);
-  font-weight: 700;
-  font-size: var(--pcard-sm-fs);
-  line-height: 1;
-  border: 2px solid var(--line-strong);
-}
-
-/* 카드 종류(색) — 문항에서 '파란 카드/노란 카드'처럼 구분할 때 */
-.pcard.suit-amber,  .pcard-sm.suit-amber  { border-color: var(--amber);  color: var(--amber);  background: var(--amber-dim); }
-.pcard.suit-coral,  .pcard-sm.suit-coral  { border-color: var(--coral);  color: var(--coral);  background: var(--coral-dim); }
-.pcard.suit-teal,   .pcard-sm.suit-teal   { border-color: var(--teal);   color: var(--teal);   background: var(--teal-dim); }
-.pcard.suit-violet, .pcard-sm.suit-violet { border-color: var(--violet); color: var(--violet); background: var(--violet-dim); }
-
-/* 지금 주목해야 할 카드 */
-.pcard.hi, .pcard-sm.hi { box-shadow: 0 0 0 4px var(--coral); }
-
-/* 뒤집기: JS 에서 클래스를 뗐다 붙이면 재생된다 */
-@keyframes pcardFlip {
-  0%   { transform: rotateY(0); }
-  50%  { transform: rotateY(90deg); }
-  100% { transform: rotateY(0); }
-}
-.pcard.flip, .pcard-sm.flip { animation: pcardFlip .46s ease; }
-
-/* ------------------------------------------------- 7. 경우의 수 시각화 */
-/* 'C(4,1)=4가지'를 말로만 하지 않고, 자리 하나씩 강조한 막대 4개로 보여준다.
-   막대마다 .show 를 시차를 두고 붙이면 세는 과정이 눈에 보인다. */
-.posbars {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
-  height: 24px;
-}
-.posbar {
-  display: flex;
-  gap: 3px;
-  opacity: 0;
-  transform: scale(.6);
-  transition: opacity .22s ease, transform .22s ease;
-}
-.posbar.show { opacity: 1; transform: scale(1); }
-.possq {
-  width: 11px;
-  height: 20px;
-  border-radius: 3px;
-  background: rgba(255, 255, 255, .16);
-}
-.possq.hi       { background: var(--coral); }
-.possq.hi-amber { background: var(--amber); }
-.possq.hi-teal  { background: var(--teal);  }
-
-/* --------------------------------------------------- 8. 경우 분류 카드 */
-/* 경우를 몇 가지 유형으로 나눠 각각 세는 구조.
-   위에 .tag 로 유형 이름을 얹고, 카드 아래쪽에 경우의 수를 고정 배치한다. */
-.case-col, .caseCol {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  min-height: 0;
-}
-
-.case-card, .caseCard {
-  width: 100%;
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  cursor: pointer;
-  transition: border-color .15s ease, box-shadow .15s ease;
-}
-.case-card:hover, .caseCard:hover { border-color: var(--amber); }
-
-/* 지금 조작 결과가 이 유형에 해당한다 */
-.case-card.is-live, .caseCard.is-live {
-  border-color: var(--amber);
-  box-shadow: 0 0 0 5px var(--amber-dim);
-}
-/* 이미 세어 공개한 유형 */
-.case-card.is-revealed, .caseCard.is-revealed { border-color: var(--coral); }
-
-/* 카드 바닥에 붙는 '경우의 수' 구역 — 카드 높이가 달라도 줄이 맞는다 */
-.case-foot, .caseFoot {
-  width: 100%;
-  margin-top: auto;
-  padding-top: 14px;
-  border-top: 1px dashed var(--line);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-
-.case-count, .caseCountVal {
-  font-family: var(--f-en);
-  font-weight: 700;
-  font-size: 46px;
-  line-height: 1.1;
-  color: var(--chalk-faint);
-}
-.case-card.is-revealed .case-count,
-.caseCard.is-revealed .caseCountVal { color: var(--coral); }
-
-/* 근거 한 줄. 높이를 고정해 공개 전후로 레이아웃이 흔들리지 않게 한다. */
-.case-formula, .caseFormula {
-  margin: 0;
-  height: 30px;
-  font-size: var(--t-tag);
-  color: var(--chalk-soft);
-  text-align: center;
-}
-
 /* ------------------------------------------------------------- 9. 표 */
-.tbl {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--t-body);
-  font-variant-numeric: tabular-nums;
-}
-
-.tbl th,
-.tbl td {
-  padding: 14px 18px;
-  border: 2px solid var(--line);
-  text-align: center;
-}
-
-.tbl th {
-  background: rgba(255, 255, 255, .05);
-  font-weight: 600;
-  color: var(--chalk-soft);
-}
-
+.tbl { width: 100%; border-collapse: collapse; font-size: var(--t-body); font-variant-numeric: tabular-nums; }
+.tbl th, .tbl td { padding: 14px 18px; border: 2px solid var(--line); text-align: center; }
+.tbl th { background: rgba(255, 255, 255, .05); font-weight: 600; color: var(--chalk-soft); }
 .tbl td.is-hit { background: var(--amber-dim); color: var(--amber); font-weight: 600; }
 .tbl td.is-out { color: var(--chalk-faint); text-decoration: line-through; }
 
 /* -------------------------------------------------------- 10. 조작 버튼 */
 .btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 13px 28px;
-  border: 2px solid var(--line-strong);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--chalk);
-  font-family: inherit;
-  font-size: var(--t-small);
-  font-weight: 600;
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 10px; padding: 13px 28px;
+  border: 2px solid var(--line-strong); border-radius: 999px;
+  background: transparent; color: var(--chalk);
+  font-family: inherit; font-size: var(--t-small); font-weight: 600;
   cursor: pointer;
   transition: background .18s ease, border-color .18s ease, color .18s ease, opacity .18s ease;
 }
-
 .btn:hover  { background: rgba(255, 255, 255, .07); }
 .btn:active { transform: translateY(1px); }
-
 .btn--amber  { border-color: var(--amber);  color: var(--amber);  }
 .btn--amber:hover  { background: var(--amber-dim); }
 .btn--teal   { border-color: var(--teal);   color: var(--teal);   }
@@ -545,67 +257,35 @@ body {
 .btn--coral:hover  { background: var(--coral-dim); }
 .btn--violet { border-color: var(--violet); color: var(--violet); }
 .btn--violet:hover { background: var(--violet-dim); }
-
 .btn[disabled] { opacity: .3; cursor: default; }
 .btn[disabled]:hover { background: transparent; }
-
-/* 버튼 안 아이콘 (선 아이콘 기준) */
 .btn svg { width: 22px; height: 22px; flex: none; }
 
-:where(button, [tabindex], .draggable):focus-visible {
-  outline: 3px solid var(--amber);
-  outline-offset: 4px;
-}
+:where(button, [tabindex], .draggable):focus-visible { outline: 3px solid var(--amber); outline-offset: 4px; }
 
-/* 진행 표시 점 */
 .dots { display: flex; gap: 12px; align-items: center; }
 .dots i {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
+  width: 14px; height: 14px; border-radius: 50%;
   background: var(--line-strong);
   transition: background .2s ease, transform .2s ease;
 }
 .dots i.on { background: var(--amber); transform: scale(1.25); }
 
-/* 리모컨/키보드 안내 (키보드를 병행할 때만) */
-.hint {
-  font-size: var(--t-tag);
-  color: var(--chalk-faint);
-}
-.key {
-  display: inline-block;
-  padding: 2px 10px;
-  border: 2px solid var(--line-strong);
-  border-radius: 8px;
-  font-size: .9em;
-}
+.hint { font-size: var(--t-tag); color: var(--chalk-faint); }
+.key { display: inline-block; padding: 2px 10px; border: 2px solid var(--line-strong); border-radius: 8px; font-size: .9em; }
 
 /* ------------------------------------------------ 11. 단계별 설명 노출 */
-/* 원칙: 조작(드래그 완료, 케이스 클릭 등)의 '결과로' .on 이 붙는다.
-   구조 전환이 아니면 이전 단계를 지우지 말고 아래로 누적한다. */
 .step {
   opacity: 0;
   transform: translateY(14px);
   transition: opacity .32s ease, transform .32s ease;
   pointer-events: none;
 }
-.step.on {
-  opacity: 1;
-  transform: none;
-  pointer-events: auto;
-}
-
-/* 자리를 차지하지 않고 사라져야 할 때 */
+.step.on { opacity: 1; transform: none; pointer-events: auto; }
 .step--collapse { display: none; }
 .step--collapse.on { display: block; }
 
-/* 시선을 한 번 끌어야 하는 값 */
-@keyframes pop {
-  0%   { transform: scale(1); }
-  45%  { transform: scale(1.14); }
-  100% { transform: scale(1); }
-}
+@keyframes pop { 0% { transform: scale(1); } 45% { transform: scale(1.14); } 100% { transform: scale(1); } }
 .pop { animation: pop .42s ease; }
 
 @keyframes glow {
@@ -614,119 +294,19 @@ body {
 }
 .glow { animation: glow 1.1s ease 2; }
 
-/* -------------------------------------------- 12. 드래그 / 드롭 인터랙션 */
-.draggable {
-  cursor: grab;
-  user-select: none;
-  touch-action: none;              /* 모바일/터치 TV 에서 스크롤 가로채기 방지 */
-  transition: box-shadow .16s ease, transform .16s ease;
-}
-.draggable:active { cursor: grabbing; }
-
-.draggable.is-dragging {
-  z-index: 50;
-  transform: scale(1.06);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, .45);
-}
-
-.slot {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 3px dashed var(--line-strong);
-  border-radius: var(--r-m);
-  color: var(--chalk-faint);
-  background: rgba(255, 255, 255, .02);
-  transition: border-color .16s ease, background .16s ease, color .16s ease;
-}
-
-.slot.is-over {
-  border-color: var(--amber);
-  background: var(--amber-dim);
-  color: var(--amber);
-}
-
-.slot.is-filled {
-  border-style: solid;
-  border-color: var(--teal);
-  background: var(--teal-dim);
-  color: var(--teal);
-}
-
-.slot.is-wrong {
-  border-color: var(--coral);
-  background: var(--coral-dim);
-  color: var(--coral);
-}
-
-/* -------------------------------------------------- 13. 화살표 연결 레이어 */
-/* .stage 안에 position:absolute; inset:0 인 SVG 를 깔고 그 위에 노드를 둔다 */
-.arrow-layer {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 5;
-  overflow: visible;
-}
-
-.arrow {
-  fill: none;
-  stroke: var(--chalk-soft);
-  stroke-width: 4;
-  stroke-linecap: round;
-}
-
-.arrow.is-amber { stroke: var(--amber); }
-.arrow.is-coral { stroke: var(--coral); }
-.arrow.is-teal  { stroke: var(--teal);  }
-.arrow.is-ghost { stroke: var(--line-strong); stroke-dasharray: 10 12; }
-
-/* 그어지는 과정을 보여줄 때: JS 에서 pathLength 를 잡고 클래스만 토글 */
-@keyframes draw { to { stroke-dashoffset: 0; } }
-.arrow.is-draw {
-  stroke-dasharray: 1000;
-  stroke-dashoffset: 1000;
-  animation: draw .55s ease forwards;
-}
-
-/* 화살촉 색은 marker 정의에서 currentColor 대신 fill 을 직접 지정 */
-.arrow-head        { fill: var(--chalk-soft); }
-.arrow-head--amber { fill: var(--amber); }
-.arrow-head--coral { fill: var(--coral); }
-.arrow-head--teal  { fill: var(--teal);  }
-
-/* SVG 안에서 쓰는 글자 */
-.svg-label {
-  font-family: var(--f-en), var(--f-kr), sans-serif;
-  font-size: 28px;
-  font-weight: 600;
-  fill: var(--chalk-soft);
-}
-.svg-label.is-amber { fill: var(--amber); }
-.svg-label.is-teal  { fill: var(--teal);  }
-.svg-label.is-coral { fill: var(--coral); }
-
 /* ------------------------------------------------------------ 14. 수식 */
 /* 마이너스는 반드시 유니코드 마이너스(−, U+2212)를 쓸 것. 하이픈 금지. */
-
 .m {
   font-family: var(--f-en), var(--f-kr), serif;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
-  line-height: 1.15;               /* 분수가 들어가도 줄 높이가 뛰지 않게 */
+  line-height: 1.15;
 }
-
-/* 변수는 이탤릭 */
 .var { font-style: italic; }
-
-/* 연산자 좌우 여백 */
 .op { margin: 0 .22em; }
 
-/* 스택형 분수: 가로 분수선 (슬래시 금지) */
 .frac {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
+  display: inline-flex; flex-direction: column; align-items: center;
   vertical-align: middle;
   margin: 0 .2em;
   transform: translateY(-.06em);
@@ -735,71 +315,27 @@ body {
 .frac > .num { padding: 0 .32em .05em; }
 .frac > .den { padding: .07em .32em 0; border-top: .07em solid currentColor; }
 
-/* 첨자: <sub>/<sup> 대신 translateY 로 위치 제어 (앱 간 시각 일관성) */
 .sub {
   display: inline-block;
-  font-size: .60em;
-  font-style: italic;
+  font-size: .60em; font-style: italic;
   transform: translateY(.40em);
   letter-spacing: .01em;
 }
-.sup {
-  display: inline-block;
-  font-size: .60em;
-  transform: translateY(-.52em);
-}
-.sub.is-up { font-style: normal; }   /* 숫자 첨자는 정체로 */
+.sup { display: inline-block; font-size: .60em; transform: translateY(-.52em); }
+.sub.is-up { font-style: normal; }
 
-/* 조합 nCr / 순열 nPr / 중복조합 nHr */
 .comb { display: inline-flex; align-items: center; }
 .comb > .pre  { font-size: .60em; font-style: italic; transform: translateY(.40em); }
 .comb > .sym  { font-size: 1em; font-weight: 500; margin: 0 .04em; }
 .comb > .post { font-size: .60em; font-style: italic; transform: translateY(.40em); }
 
-/* 시그마: 위/아래 범위 */
-.sum {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  vertical-align: middle;
-  margin: 0 .16em;
-  line-height: 1;
-}
-.sum > .top { font-size: .46em; margin-bottom: .12em; }
-.sum > .sym { font-size: 1.45em; line-height: .92; }
-.sum > .bot { font-size: .46em; margin-top: .12em; }
+.paren { display: inline-block; transform: scaleY(1.5); transform-origin: center; margin: 0 .1em; font-weight: 300; }
 
-/* 늘어나는 괄호 */
-.paren {
-  display: inline-block;
-  transform: scaleY(1.5);
-  transform-origin: center;
-  margin: 0 .1em;
-  font-weight: 300;
-}
-
-/* 강조 색 (수식 안에서) */
 .hl-amber  { color: var(--amber);  }
 .hl-coral  { color: var(--coral);  }
 .hl-teal   { color: var(--teal);   }
 .hl-violet { color: var(--violet); }
 .hl-dim    { color: var(--chalk-faint); }
-
-/* 취소선 (여사건, 제외되는 경우) */
-.strike {
-  position: relative;
-  color: var(--chalk-faint);
-}
-.strike::after {
-  content: "";
-  position: absolute;
-  left: -.08em;
-  right: -.08em;
-  top: 52%;
-  height: 3px;
-  background: var(--coral);
-  transform: rotate(-6deg);
-}
 
 /* -------------------------------------------------------- 15. 배치 유틸 */
 .row  { display: flex; align-items: center; }
@@ -815,7 +351,6 @@ body {
 .g36 { gap: 36px; }
 .g48 { gap: 48px; }
 
-/* 그리드는 min-height:0 이 없으면 자식이 넘쳐도 줄어들지 않는다 */
 .cols-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; min-height: 0; }
 .cols-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; min-height: 0; }
 .cols-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; min-height: 0; }
@@ -830,168 +365,137 @@ body {
 .nowrap  { white-space: nowrap; }
 .m0      { margin: 0; }
 
-.hr {
-  height: 2px;
-  background: var(--line);
-  border: 0;
-  margin: 0;
-}
+.hr { height: 2px; background: var(--line); border: 0; margin: 0; }
 
 /* -------------------------------------------------------- 16. 접근성 */
 @media (prefers-reduced-motion: reduce) {
-  .step, .btn, .draggable, .slot, .dots i, .posbar {
-    transition-duration: .01ms !important;
-  }
-  .pop, .glow, .arrow.is-draw, .pcard.flip, .pcard-sm.flip {
-    animation: none !important;
-  }
-  .arrow.is-draw { stroke-dashoffset: 0; }
-  .posbar { opacity: 1; transform: none; }
+  .step, .btn, .dots i { transition-duration: .01ms !important; }
+  .pop, .glow { animation: none !important; }
 }
-
 
 /* ============================================================================
-   앱 전용 추가 스타일 (chalk-stage.css 위에 얹는 부분)
-   - 주머니(구슬) 표현, 표(격자) 인터랙션 상태, 세부 여백만 추가한다.
+   앱 전용 추가 스타일
+   원칙 : 공통 토큰(글자 크기)은 절대 줄이지 않는다.
+          한 화면에 넣는 정보량을 줄여서 공간을 확보한다.
 ============================================================================ */
 
-/* ---- 밀도 높은 화면용 축소 스케일 (기본 토큰을 이 앱 전용으로 재정의) ---- */
-:root {
-  --t-title:  30px;
-  --t-h2:     23px;
-  --t-body:   19px;
-  --t-small:  16px;
-  --t-tag:    14px;
-
-  --r-s: 8px;
-  --r-m: 13px;
-  --r-l: 20px;
-
-  --sheet-pad-x: 26px;
-  --sheet-pad-t: 14px;
-  --sheet-pad-b: 12px;
-  --sheet-gap:   10px;
-}
-.app-head { padding-bottom: 8px; }
-.app-foot { padding-top: 8px; }
-.app-title { font-size: var(--t-title); }
-.app-sub { font-size: var(--t-tag); margin-top: 3px; }
-.stamp { font-size: .78em; margin-right: 8px; }
-.tabnav .btn { padding: 7px 15px; font-size: 14px; white-space: nowrap; }
-.btn { padding: 8px 16px; font-size: var(--t-small); gap: 6px; }
-.btn svg { width: 16px; height: 16px; }
-.panel { padding: 12px 16px; border-radius: var(--r-m); }
-.panel--tight { padding: 10px 14px; border-radius: var(--r-s); }
-.tag { padding: 3px 11px; font-size: 13px; gap: 5px; }
-.result { padding: 10px 18px; border-radius: var(--r-m); }
-.dots i { width: 8px; height: 8px; }
-
 /* ---- 주머니 ---- */
-.bagRow { display: flex; gap: 26px; justify-content: center; align-items: flex-start; }
+.bagRow { display: flex; gap: 30px; justify-content: center; align-items: flex-start; }
 .bag { text-align: center; }
 .bagName {
   font-size: var(--t-body); font-weight: 700; letter-spacing: .02em;
-  color: var(--chalk-soft); margin-bottom: 1px;
+  margin-bottom: 4px;
 }
-.bagSvg { display: block; margin: 0 auto; }
-.ballLabel {
-  font-family: var(--f-en); font-weight: 700; fill: #10192a;
-}
+.bagName.a { color: var(--amber); }
+.bagName.b { color: var(--violet); }
+.ballLabel { font-family: var(--f-en); font-weight: 700; fill: #10192a; }
 
-/* 구슬(작은 원형 칩) — .node 를 재사용하기엔 너무 커서 전용 크기 추가 */
-.ballRow { display: flex; gap: 7px; justify-content: center; flex-wrap: wrap; }
+/* ---- 공 칩 ---- */
+.ballRow { display: flex; gap: 10px; flex-wrap: wrap; }
 .ball {
-  width: 34px; height: 34px; border-radius: 50%;
+  width: 46px; height: 46px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  font-family: var(--f-en); font-weight: 700; font-size: 16px;
+  font-family: var(--f-en); font-weight: 700; font-size: 25px;
   background: #eef2fb; color: #10192a;
-  border: 2px solid var(--line-strong);
-  box-shadow: 0 2px 0 rgba(0,0,0,.25);
+  border: 3px solid var(--line-strong);
+  box-shadow: 0 3px 0 rgba(0,0,0,.28);
+  flex: none;
 }
-.ball.is-off  { background: #253550; color: var(--chalk-faint); border-color: var(--line); box-shadow: none; }
-.ball.is-amber{ background: var(--amber); border-color: #ffd98a; color: #2a1c05; }
+.ball.is-off   { background: #253550; color: var(--chalk-faint); border-color: var(--line); box-shadow: none; }
+.ball.is-amber { background: var(--amber); border-color: #ffd98a; color: #2a1c05; }
+.ball.is-violet{ background: var(--violet); border-color: #cfc6ff; color: #1a1230; }
 
-/* ---- 정의 줄 (주머니 A → a1,a2 ...) ---- */
-.defLine { display: flex; align-items: center; gap: 10px; font-size: var(--t-body); font-weight: 600; }
-.defLine .tag { width: 26px; height: 26px; padding: 0; border-radius: 50%; justify-content: center; }
+/* ---- a₁ / b₁ 선택 버튼 ---- */
+.pick { display: flex; gap: 14px; }
+.pickBtn {
+  width: 66px; height: 66px; border-radius: 50%;
+  border: 3px solid var(--line-strong);
+  background: var(--panel-2); color: var(--chalk-soft);
+  font-family: var(--f-en); font-weight: 700; font-size: 34px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex: none;
+  transition: background .15s ease, border-color .15s ease, color .15s ease, transform .15s ease;
+}
+.pickBtn:hover { transform: translateY(-2px); }
+.pickBtn.on.a { border-color: var(--amber);  background: var(--amber);  color: #2a1c05; }
+.pickBtn.on.b { border-color: var(--violet); background: var(--violet); color: #1a1230; }
 
-/* ---- 격자 표 (조건부확률 칸 세기) ---- */
-.gridTbl { width: 100%; table-layout: fixed; border-collapse: collapse; }
+/* ---- 4x4 격자 ---- */
+.gridWrap { flex: 1 1 auto; min-height: 0; }
+.gridTbl {
+  width: 100%; height: 100%;
+  table-layout: fixed; border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
 .gridTbl th, .gridTbl td {
-  padding: 4px; font-size: 17px; font-weight: 700; border: 1.5px solid var(--line);
+  border: 2px solid var(--line);
+  text-align: center;
+  font-family: var(--f-en); font-weight: 700;
 }
-.gridTbl th { font-size: 15px; }
-.gridTbl th.rowh { color: var(--amber); background: var(--amber-dim); }
+.gridTbl td { font-size: 44px; }
+.gridTbl th { font-size: 34px; }
+.gridTbl th.rowh { color: var(--amber);  background: var(--amber-dim);  width: 118px; }
 .gridTbl th.colh { color: var(--violet); background: var(--violet-dim); }
-.gridTbl th.corner { background: transparent; border-color: transparent; }
-.gridTbl td.is-cell {
-  cursor: pointer; background: var(--panel-2); color: var(--chalk-soft);
-  transition: background .13s ease, color .13s ease, transform .13s ease;
+.gridTbl th.corner {
+  background: transparent; border-color: transparent;
+  font-family: var(--f-en), var(--f-kr), sans-serif;
+  font-size: 22px; font-weight: 500; color: var(--chalk-faint);
 }
-.gridTbl td.is-cell:hover { background: #24406030; box-shadow: inset 0 0 0 2px var(--line-strong); }
-.gridTbl td.is-correct {
+.gridTbl td.cell {
+  cursor: pointer; background: var(--panel); color: var(--chalk-soft);
+  transition: background .13s ease, color .13s ease;
+}
+.gridTbl td.cell:hover { background: #274566; color: var(--chalk); }
+.gridTbl td.cell.ok {
   background: var(--teal-dim); color: var(--teal);
-  box-shadow: inset 0 0 0 2px var(--teal);
-  animation: pop .3s ease;
+  box-shadow: inset 0 0 0 4px var(--teal);
+  animation: pop .32s ease;
 }
-.gridTbl td.is-wrong {
+.gridTbl td.cell.no {
   background: var(--coral-dim); color: var(--coral);
-  box-shadow: inset 0 0 0 2px var(--coral);
-  animation: shakeCell .3s ease;
+  animation: shakeCell .32s ease;
 }
 @keyframes shakeCell {
   0%,100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
 }
-
-/* ---- 케이스 페이지 보조 ---- */
-.branchHead { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.branchNum {
-  width: 34px; height: 34px; border-radius: 9px; flex: none;
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 700; font-size: 18px;
-  background: var(--violet-dim); color: var(--violet);
+@keyframes shakeBtn {
+  0%,100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
 }
-.progLine { font-size: var(--t-small); color: var(--chalk-soft); }
-.axisNote { font-size: var(--t-tag); color: var(--chalk-faint); }
+.shake { animation: shakeBtn .34s ease; }
 
-/* 케이스 최종 식 — 두 분기가 완성되기 전에는 흐리게 대기 */
-.caseFootWait {
-  font-size: var(--t-small); color: var(--chalk-faint); font-weight: 500;
+/* ---- 경우별 칸 수 요약표 ---- */
+.sumTbl { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.sumTbl th, .sumTbl td { border: 2px solid var(--line); text-align: center; padding: 10px 6px; }
+.sumTbl th { font-size: var(--t-tag); font-weight: 600; color: var(--chalk-soft); background: rgba(255,255,255,.05); }
+.sumTbl th.rowh { color: var(--amber); background: var(--amber-dim); font-size: var(--t-small); }
+.sumTbl th.colh { color: var(--violet); background: var(--violet-dim); }
+.sumTbl th.corner { background: transparent; border-color: transparent; }
+.sumTbl td.cnt {
+  font-family: var(--f-en); font-weight: 700; font-size: 40px;
+  color: var(--chalk-faint); cursor: pointer;
+  transition: background .15s ease, color .15s ease;
 }
-.caseFootFormula {
-  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
-  opacity: 0; transform: translateY(8px); transition: .4s ease;
-}
-.result.is-ready .caseFootFormula { opacity: 1; transform: none; }
-.result.is-ready .caseFootWait { display: none; }
-.result:not(.is-ready) .caseFootFormula { display: none; }
+.sumTbl td.cnt:hover { background: rgba(255,255,255,.06); }
+.sumTbl td.cnt.done { color: var(--teal); background: var(--teal-dim); }
+.sumTbl td.cnt.live { box-shadow: inset 0 0 0 4px var(--amber); }
 
-/* leftCol 고정폭 */
-.leftCol { width: 300px; flex: none; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
-.branchesRow { display: flex; gap: 14px; flex: 1; min-height: 0; align-items: flex-start; }
-.branchPanel { flex: 1; display: flex; flex-direction: column; gap: 9px; min-height: 0; align-self: stretch; justify-content: flex-start; }
-.branchPanel .progLine { margin-top: 2px; }
-.branchNum { width: 22px; height: 22px; font-size: 12px; border-radius: 6px; }
+/* ---- 정리 화면 ---- */
+.finTbl { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.finTbl th, .finTbl td { border: 2px solid var(--line); text-align: center; padding: 12px 8px; }
+.finTbl th { font-size: var(--t-small); font-weight: 600; color: var(--chalk-soft); background: rgba(255,255,255,.05); }
+.finTbl th.rowh { color: var(--amber); background: var(--amber-dim); }
+.finTbl th.colh { color: var(--violet); background: var(--violet-dim); }
+.finTbl th.corner { background: transparent; border-color: transparent; }
+.finTbl td { font-size: var(--t-h2); font-weight: 700; color: var(--teal); }
+.finTbl td.rowsum { color: var(--amber); }
+.finTbl .sumcol { opacity: 0; transition: opacity .4s ease; }
+.finTbl .sumcol.on { opacity: 1; }
 
-/* 정리 페이지 요약줄 */
-.sumLine {
-  display: flex; align-items: center; gap: 18px; font-size: var(--t-body);
-  padding: 8px 22px;
-}
-.sumLine .lbl { width: 110px; color: var(--amber); font-weight: 700; flex: none; }
-.sumLine .det { margin-left: auto; color: var(--chalk-faint); font-size: var(--t-tag); }
-
-/* 문제·설계 탭 좌측 카드 */
-.briefPanel { width: 420px; flex: none; display: flex; flex-direction: column; gap: 10px; }
-.qResult { margin-top: auto; }
-.qResult .line1 { font-size: var(--t-body); font-weight: 600; text-align: center; line-height: 1.5; }
-.qResult .line2 {
-  font-size: var(--t-h2); font-weight: 700; text-align: center; color: var(--amber);
-  margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line-strong);
-}
-
+.fx { display: flex; align-items: center; justify-content: center; gap: 10px; }
 </style>
 </head>
 <body>
@@ -1000,288 +504,236 @@ body {
   <div class="stage" id="stage">
     <div class="sheet">
 
+      <!-- ===================== 머리말 ===================== -->
       <header class="app-head">
         <div>
           <h1 class="app-title"><span class="stamp">확통</span>조건부확률 · 주머니 A, B</h1>
-          <p class="app-sub">사건 C : <span class="var">a<span class="sub">1</span></span> ≥ 3 &nbsp;·&nbsp; 사건 D : <span class="var">a<span class="sub">1</span></span><span class="var">b<span class="sub">1</span></span> &lt; <span class="var">a<span class="sub">2</span></span><span class="var">b<span class="sub">2</span></span> &nbsp;·&nbsp; P(D|C) 구하기</p>
+          <p class="app-sub">
+            사건 C : <span class="var">a<span class="sub is-up">1</span></span> ≥ 3
+            &nbsp;·&nbsp;
+            사건 D : <span class="var">a<span class="sub is-up">1</span></span><span class="var">b<span class="sub is-up">1</span></span>
+            &lt; <span class="var">a<span class="sub is-up">2</span></span><span class="var">b<span class="sub is-up">2</span></span>
+            &nbsp;·&nbsp; P(D | C) 구하기
+          </p>
         </div>
-        <nav class="tabnav row g12" id="tabnav">
-          <button class="btn is-active" data-tab="0">문제·설계</button>
-          <button class="btn" data-tab="1">Case ①</button>
-          <button class="btn" data-tab="2">Case ②</button>
-          <button class="btn" data-tab="3">Case ③</button>
-          <button class="btn" data-tab="4">정리</button>
+        <nav class="tabnav" id="tabnav">
+          <button class="btn is-active" data-tab="0">① 문제 · 설계</button>
+          <button class="btn" data-tab="1">② 칸 세기</button>
+          <button class="btn" data-tab="2">③ 정리</button>
         </nav>
       </header>
 
+      <!-- ===================== ① 문제 · 설계 ===================== -->
       <div class="panelWrap" id="panel0">
-    <div class="row g24 grow" style="min-height:0;align-items:stretch;">
-      <div class="panel panel--raise briefPanel">
-        <div class="bagRow"><div class="bag"><div class="bagName">A</div><svg class="bagSvg" viewBox="0 0 200 205" width="150" height="154"><path d="M64 56 Q40 74 36 118 Q32 186 100 188 Q168 186 164 118 Q160 74 136 56 Z" fill="#1d3350" stroke="#5a71a3" stroke-width="3.5"/><path d="M64 56 Q100 44 136 56 L136 40 Q100 30 64 40 Z" fill="#5a71a3" opacity=".85"/><rect x="58" y="36" width="84" height="15" rx="7.5" fill="#5a71a3"/><circle cx="74" cy="104" r="19" fill="#eef2fb" stroke="#4a5f8f" stroke-width="2.5"/><text x="74" y="112" text-anchor="middle" class="ballLabel" font-size="22">1</text><circle cx="126" cy="104" r="19" fill="#eef2fb" stroke="#4a5f8f" stroke-width="2.5"/><text x="126" y="112" text-anchor="middle" class="ballLabel" font-size="22">2</text><circle cx="62" cy="150" r="19" fill="#eef2fb" stroke="#4a5f8f" stroke-width="2.5"/><text x="62" y="158" text-anchor="middle" class="ballLabel" font-size="22">3</text><circle cx="100" cy="156" r="19" fill="#eef2fb" stroke="#4a5f8f" stroke-width="2.5"/><text x="100" y="164" text-anchor="middle" class="ballLabel" font-size="22">4</text><circle cx="138" cy="150" r="19" fill="#eef2fb" stroke="#4a5f8f" stroke-width="2.5"/><text x="138" y="158" text-anchor="middle" class="ballLabel" font-size="22">5</text></svg></div><div class="bag"><div class="bagName">B</div><svg class="bagSvg" viewBox="0 0 200 205" width="150" height="154"><path d="M64 56 Q40 74 36 118 Q32 186 100 188 Q168 186 164 118 Q160 74 136 56 Z" fill="#1d3350" stroke="#5a71a3" stroke-width="3.5"/><path d="M64 56 Q100 44 136 56 L136 40 Q100 30 64 40 Z" fill="#5a71a3" opacity=".85"/><rect x="58" y="36" width="84" height="15" rx="7.5" fill="#5a71a3"/><circle cx="74" cy="104" r="19" fill="#eef2fb" stroke="#4a5f8f" stroke-width="2.5"/><text x="74" y="112" text-anchor="middle" class="ballLabel" font-size="22">1</text><circle cx="126" cy="104" r="19" fill="#eef2fb" stroke="#4a5f8f" stroke-width="2.5"/><text x="126" y="112" text-anchor="middle" class="ballLabel" font-size="22">1</text><circle cx="62" cy="150" r="19" fill="#eef2fb" stroke="#4a5f8f" stroke-width="2.5"/><text x="62" y="158" text-anchor="middle" class="ballLabel" font-size="22">2</text><circle cx="100" cy="156" r="19" fill="#eef2fb" stroke="#4a5f8f" stroke-width="2.5"/><text x="100" y="164" text-anchor="middle" class="ballLabel" font-size="22">2</text><circle cx="138" cy="150" r="19" fill="#eef2fb" stroke="#4a5f8f" stroke-width="2.5"/><text x="138" y="158" text-anchor="middle" class="ballLabel" font-size="22">2</text></svg></div></div>
-        <div class="defLine"><span class="tag is-teal">A</span><span class="m">두 번 꺼냄 → <span class="var">a<span class="sub">1</span></span>, <span class="var">a<span class="sub">2</span></span></span></div>
-        <div class="defLine"><span class="tag is-violet">B</span><span class="m">두 번 꺼냄 → <span class="var">b<span class="sub">1</span></span>, <span class="var">b<span class="sub">2</span></span></span></div>
-        <p class="t-tag" style="margin:0;">꺼낸 공은 다시 넣지 않는다 · <span class="var">p</span>, <span class="var">q</span> 는 서로소</p>
-        <div class="result qResult">
-          <div class="line1"><span class="hl-teal"><span class="var">a<span class="sub">1</span></span> ≥ 3</span> 일 때,
-            P(<span class="var">a<span class="sub">1</span></span><span class="var">b<span class="sub">1</span></span> &lt; <span class="var">a<span class="sub">2</span></span><span class="var">b<span class="sub">2</span></span>) = <span class="frac"><span class="num"><span class="var">q</span></span><span class="den"><span class="var">p</span></span></span></div>
-          <div class="line2"><span class="var">p</span> + <span class="var">q</span> = ?</div>
+        <div class="row g24 grow" style="min-height:0;align-items:stretch;">
+
+          <div class="col g16" style="width:640px;flex:none;min-height:0;">
+            <div class="panel panel--raise panel--tight grow center" style="min-height:0;">
+              <div class="bagRow">
+                <div class="bag">
+                  <div class="bagName a">주머니 A</div>
+                  <svg viewBox="0 0 200 205" width="184" height="189">
+                    <path d="M64 56 Q40 74 36 118 Q32 186 100 188 Q168 186 164 118 Q160 74 136 56 Z" fill="#1d3350" stroke="#5a71a3" stroke-width="3.5"/>
+                    <path d="M64 56 Q100 44 136 56 L136 40 Q100 30 64 40 Z" fill="#5a71a3" opacity=".85"/>
+                    <rect x="58" y="36" width="84" height="15" rx="7.5" fill="#5a71a3"/>
+                    <circle cx="74" cy="104" r="19" fill="#eef2fb" stroke="#4a5f8f" stroke-width="2.5"/><text x="74" y="113" text-anchor="middle" class="ballLabel" font-size="24">1</text>
+                    <circle cx="126" cy="104" r="19" fill="#eef2fb" stroke="#4a5f8f" stroke-width="2.5"/><text x="126" y="113" text-anchor="middle" class="ballLabel" font-size="24">2</text>
+                    <circle cx="62" cy="150" r="19" fill="#eef2fb" stroke="#4a5f8f" stroke-width="2.5"/><text x="62" y="159" text-anchor="middle" class="ballLabel" font-size="24">3</text>
+                    <circle cx="100" cy="156" r="19" fill="#eef2fb" stroke="#4a5f8f" stroke-width="2.5"/><text x="100" y="165" text-anchor="middle" class="ballLabel" font-size="24">4</text>
+                    <circle cx="138" cy="150" r="19" fill="#eef2fb" stroke="#4a5f8f" stroke-width="2.5"/><text x="138" y="159" text-anchor="middle" class="ballLabel" font-size="24">5</text>
+                  </svg>
+                </div>
+                <div class="bag">
+                  <div class="bagName b">주머니 B</div>
+                  <svg viewBox="0 0 200 205" width="184" height="189">
+                    <path d="M64 56 Q40 74 36 118 Q32 186 100 188 Q168 186 164 118 Q160 74 136 56 Z" fill="#1d3350" stroke="#5a71a3" stroke-width="3.5"/>
+                    <path d="M64 56 Q100 44 136 56 L136 40 Q100 30 64 40 Z" fill="#5a71a3" opacity=".85"/>
+                    <rect x="58" y="36" width="84" height="15" rx="7.5" fill="#5a71a3"/>
+                    <circle cx="74" cy="104" r="19" fill="#eef2fb" stroke="#4a5f8f" stroke-width="2.5"/><text x="74" y="113" text-anchor="middle" class="ballLabel" font-size="24">1</text>
+                    <circle cx="126" cy="104" r="19" fill="#eef2fb" stroke="#4a5f8f" stroke-width="2.5"/><text x="126" y="113" text-anchor="middle" class="ballLabel" font-size="24">1</text>
+                    <circle cx="62" cy="150" r="19" fill="#eef2fb" stroke="#4a5f8f" stroke-width="2.5"/><text x="62" y="159" text-anchor="middle" class="ballLabel" font-size="24">2</text>
+                    <circle cx="100" cy="156" r="19" fill="#eef2fb" stroke="#4a5f8f" stroke-width="2.5"/><text x="100" y="165" text-anchor="middle" class="ballLabel" font-size="24">2</text>
+                    <circle cx="138" cy="150" r="19" fill="#eef2fb" stroke="#4a5f8f" stroke-width="2.5"/><text x="138" y="159" text-anchor="middle" class="ballLabel" font-size="24">2</text>
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <div class="quote" style="flex:0 0 auto;">
+              <span style="line-height:1.6;">
+                A에서 2개, B에서 2개를 차례로 꺼낸다 <span class="t-small">(다시 넣지 않음)</span><br>
+                A → <span class="var">a<span class="sub is-up">1</span></span>,
+                <span class="var">a<span class="sub is-up">2</span></span> &nbsp;·&nbsp;
+                B → <span class="var">b<span class="sub is-up">1</span></span>,
+                <span class="var">b<span class="sub is-up">2</span></span><br>
+                <span class="hl-amber"><span class="var">a<span class="sub is-up">1</span></span> ≥ 3</span> 일 때
+                <span class="hl-teal"><span class="var">a<span class="sub is-up">1</span></span><span class="var">b<span class="sub is-up">1</span></span> &lt; <span class="var">a<span class="sub is-up">2</span></span><span class="var">b<span class="sub is-up">2</span></span></span>
+                일 확률 =
+                <span class="frac"><span class="num"><span class="var">q</span></span><span class="den"><span class="var">p</span></span></span>
+                &nbsp;→&nbsp; <span class="var">p</span> + <span class="var">q</span> = ?
+              </span>
+            </div>
+          </div>
+
+          <div class="col g16 grow" style="min-height:0;">
+            <div class="panel panel--tight row g16 step grow" id="d1" style="min-height:0;">
+              <span class="tag is-amber tag--lg">사건 C</span>
+              <p class="m t-h2 m0">
+                <span class="var">a<span class="sub is-up">1</span></span> ≥ 3 &nbsp;→&nbsp;
+                <span class="var">a<span class="sub is-up">1</span></span> ∈ &#123;3, 4, 5&#125;
+              </p>
+              <p class="m t-h2 m0" style="margin-left:auto;">
+                P(C) = <span class="frac hl-amber"><span class="num">3</span><span class="den">5</span></span>
+              </p>
+            </div>
+
+            <div class="panel panel--tight row g16 step grow" id="d2" style="min-height:0;">
+              <span class="tag tag--lg">공식</span>
+              <p class="m t-h2 m0">
+                P(D | C) =
+                <span class="frac"><span class="num">P(C ∩ D)</span><span class="den">P(C)</span></span>
+              </p>
+              <p class="m t-small hl-teal m0" style="margin-left:auto;">→ P(C ∩ D) 만 구하면 된다</p>
+            </div>
+
+            <div class="panel panel--tight row g16 step grow" id="d3"
+                 style="min-height:0;background:var(--amber-dim);border-color:var(--amber);">
+              <span class="tag is-amber tag--lg">핵심</span>
+              <p class="m t-body m0" style="line-height:1.5;white-space:normal;">
+                <span class="var">a<span class="sub is-up">1</span></span>,
+                <span class="var">b<span class="sub is-up">1</span></span> 을 뽑고 나면
+                남은 A 4개 × 남은 B 4개 =
+                <span class="hl-amber nowrap" style="font-weight:700;">16칸</span>, 모두 같은 확률<br>
+                <span class="t-small">→ 조건을 만족하는 <b>칸의 개수</b>만 세면 된다</span>
+              </p>
+            </div>
+
+            <div class="panel panel--tight row g16 step grow wrap" id="d4" style="min-height:0;">
+              <span class="tag is-violet tag--lg">경우 나누기</span>
+              <p class="m t-h2 m0">
+                <span class="var">a<span class="sub is-up">1</span></span> 3가지 ×
+                <span class="var">b<span class="sub is-up">1</span></span> 2가지 =
+                <span class="hl-violet" style="font-weight:700;">6가지 경우</span>
+              </p>
+            </div>
+          </div>
+
         </div>
       </div>
-      <div class="col g12 grow" style="min-height:0;">
-        <div class="panel panel--tight row g16 step" id="d1" style="align-items:center;">
-          <span class="tag is-teal">사건 C</span>
-          <p class="m t-h2" style="margin:0;"><span class="var">a<span class="sub">1</span></span> ≥ 3 → <span class="var">a<span class="sub">1</span></span> ∈ &#123;3,4,5&#125;</p>
-          <p class="m t-h2" style="margin:0 0 0 8px;">P(C) = <span class="frac hl-amber"><span class="num">3</span><span class="den">5</span></span></p>
-          <div class="ballRow" style="margin-left:auto;"><div class="ballRow"><div class="ball">1</div><div class="ball">2</div><div class="ball is-amber">3</div><div class="ball is-amber">4</div><div class="ball is-amber">5</div></div></div>
-        </div>
-        <div class="panel panel--tight row g16 step" id="d2" style="align-items:center;">
-          <span class="tag is-violet">사건 D</span>
-          <p class="m t-h2" style="margin:0;"><span class="var">a<span class="sub">1</span></span><span class="var">b<span class="sub">1</span></span> &lt; <span class="var">a<span class="sub">2</span></span><span class="var">b<span class="sub">2</span></span></p>
-        </div>
-        <div class="panel panel--tight row g16 step" id="d3" style="align-items:center;">
-          <span class="tag">공식</span>
-          <p class="m t-h2" style="margin:0;">P(D|C) = <span class="frac"><span class="num">P(C∩D)</span><span class="den">P(C)</span></span></p>
-          <p class="m t-small hl-teal" style="margin-left:auto;">→ P(C∩D) 만 구하면 된다</p>
-        </div>
-        <div class="panel panel--tight row g16 step" id="d4" style="align-items:center;background:var(--amber-dim);border-color:var(--amber);">
-          <span class="tag is-amber">핵심</span>
-          <p class="m t-body" style="margin:0;line-height:1.5;">
-            <span class="var">a<span class="sub">1</span></span>, <span class="var">b<span class="sub">1</span></span> 을 뽑으면 → 남은 A 4개 × B 4개 = <span class="hl-amber" style="font-weight:700;">16칸</span> (모두 같은 확률)<br>
-            <span class="t-small">→ 조건을 만족하는 칸 수만 세면 된다</span></p>
-        </div>
-        <div class="panel panel--tight row g16 step" id="d5" style="align-items:center;flex-wrap:wrap;">
-          <span class="tag">경우</span>
-          <p class="m t-h2" style="margin:0;"><span class="var">a<span class="sub">1</span></span> 로 나눈다 →</p>
-          <span class="tag is-amber"><span class="var">a<span class="sub">1</span></span>=5</span>
-          <span class="tag is-amber"><span class="var">a<span class="sub">1</span></span>=4</span>
-          <span class="tag is-amber"><span class="var">a<span class="sub">1</span></span>=3</span>
-          <p class="m t-h2 hl-dim" style="margin:0;">각각 <span class="frac"><span class="num">1</span><span class="den">5</span></span></p>
-        </div>
-      </div>
-    </div></div>
+
+      <!-- ===================== ② 칸 세기 ===================== -->
       <div class="panelWrap" id="panel1" hidden>
-    <div class="row between" style="align-items:center;flex:0 0 auto;">
-      <span class="tag is-amber" style="font-size:var(--t-h2);padding:10px 26px;">Case ①&nbsp; <span class="var">a<span class="sub">1</span></span> = 5</span>
-      <span class="t-body hl-dim">확률 <span class="frac hl-amber"><span class="num">1</span><span class="den">5</span></span></span>
-      <span class="t-tag" style="margin-left:auto;">칸을 눌러 조건을 만족하는 (<span class="var">a<span class="sub">2</span></span>, <span class="var">b<span class="sub">2</span></span>)를 찾으세요</span>
-    </div>
-    <div class="row g24 grow" style="min-height:0;align-items:stretch;">
-      <div class="leftCol">
-        <div class="panel panel--tight">
-          <p class="t-tag" style="margin:0 0 8px;">주머니 A — <span class="var">a<span class="sub">1</span></span> 뽑음</p>
-          <div class="ballRow"><div class="ball">1</div><div class="ball">2</div><div class="ball">3</div><div class="ball">4</div><div class="ball is-amber">5</div></div>
-          <p class="t-tag" style="margin:10px 0 6px;">남은 <span class="var">a<span class="sub">2</span></span> 후보</p>
-          <div class="ballRow"><div class="ball">1</div><div class="ball">2</div><div class="ball">3</div><div class="ball">4</div></div>
+        <div class="row g24 grow" style="min-height:0;align-items:stretch;">
+
+          <!-- 좌 : 선택 + 남은 공 + 버튼 -->
+          <div class="col g12" style="width:392px;flex:none;min-height:0;">
+            <div class="panel panel--tight col g12" style="flex:none;">
+              <p class="t-tag m0">경우 고르기 — 6가지</p>
+              <div class="row g16">
+                <span class="tag is-amber" style="width:86px;justify-content:center;font-size:var(--t-small);">
+                  <span class="m"><span class="var">a<span class="sub is-up">1</span></span></span></span>
+                <div class="pick" id="pickA"></div>
+              </div>
+              <div class="row g16">
+                <span class="tag is-violet" style="width:86px;justify-content:center;font-size:var(--t-small);">
+                  <span class="m"><span class="var">b<span class="sub is-up">1</span></span></span></span>
+                <div class="pick" id="pickB"></div>
+              </div>
+            </div>
+            <div class="panel panel--tight col g8 grow" style="min-height:0;justify-content:center;">
+              <p class="t-tag m0">남은 A — <span class="var">a<span class="sub is-up">2</span></span> 후보</p>
+              <div class="ballRow" id="remA"></div>
+              <p class="t-tag m0" style="margin-top:4px;">남은 B — <span class="var">b<span class="sub is-up">2</span></span> 후보</p>
+              <div class="ballRow" id="remB"></div>
+            </div>
+            <button class="btn btn--coral" id="noneBtn" style="flex:none;">만족하는 칸이 없다</button>
+            <button class="btn btn--teal" id="allBtn" style="flex:none;">정답 모두 보기</button>
+          </div>
+
+          <!-- 중 : 조건 + 격자 -->
+          <div class="col g12 grow" style="min-height:0;">
+            <div class="panel panel--tight center" id="condPanel" style="flex:none;">
+              <p class="m t-h2 m0" id="condLine"></p>
+            </div>
+            <div class="gridWrap"><table class="gridTbl" id="grid"></table></div>
+            <p class="m t-body m0" id="progLine" style="text-align:center;flex:none;"></p>
+          </div>
+
+          <!-- 우 : 경우별 칸 수 -->
+          <div class="col g12" style="width:372px;flex:none;min-height:0;">
+            <span class="tag">경우별 칸 수 &nbsp;<span class="hl-dim">( / 16 )</span></span>
+            <table class="sumTbl grow" id="sumTbl"></table>
+            <p class="t-tag m0" style="text-align:center;">칸을 눌러 그 경우로 이동</p>
+          </div>
+
         </div>
-        <div class="panel panel--tight">
-          <p class="t-tag" style="margin:0 0 8px;">주머니 B &#123;1,1,2,2,2&#125;</p>
-          <div class="ballRow"><div class="ball">1</div><div class="ball">1</div><div class="ball">2</div><div class="ball">2</div><div class="ball">2</div></div>
-          <p class="t-tag" style="margin-top:10px;"><span class="var">b<span class="sub">1</span></span>=1 → <span class="frac"><span class="num">2</span><span class="den">5</span></span> &nbsp;|&nbsp; <span class="var">b<span class="sub">1</span></span>=2 → <span class="frac"><span class="num">3</span><span class="den">5</span></span></p>
-        </div>
-        <button class="btn btn--teal" data-all="0">정답 모두 보기</button>
       </div>
-      <div class="branchesRow">
-        <div class="branchPanel panel panel--tight" id="br00">
-          <div class="branchHead">
-            <div class="branchNum">ⅰ</div>
-            <span class="t-h2" style="font-weight:700;"><span class="var">b<span class="sub">1</span></span> = 1</span>
-            <span class="frac hl-violet"><span class="num">2</span><span class="den">5</span></span>
-            <span class="t-tag">남은 B &#123; 1, 2, 2, 2 &#125;</span>
-          </div>
-          <div class="row g12" style="align-items:center;flex-wrap:wrap;">
-            <span class="tag is-coral">조건 &nbsp;<b>5</b> &lt; <span class="var">a<span class="sub">2</span></span><span class="var">b<span class="sub">2</span></span></span>
-            <span class="axisNote">행 <span class="hl-amber">a₂</span> · 열 <span class="hl-violet">b₂</span></span>
-          </div>
-          <table class="tbl gridTbl">
-            <thead><tr><th class="corner"></th><th class="colh">1</th><th class="colh">2</th><th class="colh">2</th><th class="colh">2</th></tr></thead>
-            <tbody><tr><th class="rowh">1</th><td class="is-cell" data-c="0" data-b="0" data-hit="0">1</td><td class="is-cell" data-c="0" data-b="0" data-hit="0">2</td><td class="is-cell" data-c="0" data-b="0" data-hit="0">2</td><td class="is-cell" data-c="0" data-b="0" data-hit="0">2</td></tr><tr><th class="rowh">2</th><td class="is-cell" data-c="0" data-b="0" data-hit="0">2</td><td class="is-cell" data-c="0" data-b="0" data-hit="0">4</td><td class="is-cell" data-c="0" data-b="0" data-hit="0">4</td><td class="is-cell" data-c="0" data-b="0" data-hit="0">4</td></tr><tr><th class="rowh">3</th><td class="is-cell" data-c="0" data-b="0" data-hit="0">3</td><td class="is-cell" data-c="0" data-b="0" data-hit="1">6</td><td class="is-cell" data-c="0" data-b="0" data-hit="1">6</td><td class="is-cell" data-c="0" data-b="0" data-hit="1">6</td></tr><tr><th class="rowh">4</th><td class="is-cell" data-c="0" data-b="0" data-hit="0">4</td><td class="is-cell" data-c="0" data-b="0" data-hit="1">8</td><td class="is-cell" data-c="0" data-b="0" data-hit="1">8</td><td class="is-cell" data-c="0" data-b="0" data-hit="1">8</td></tr></tbody>
-          </table>
-          <div class="progLine" id="pg00">찾은 칸 0 / 6</div>
-          <div class="axisNote" id="im00" style="display:none;color:var(--coral);font-weight:700;">
-            불가능 <span style="color:var(--chalk-faint);font-weight:500;">(최댓값 8 ≤ 5)</span></div>
-          <div class="row" style="justify-content:flex-end;"></div>
-        </div>
-        <div class="branchPanel panel panel--tight" id="br01">
-          <div class="branchHead">
-            <div class="branchNum">ⅱ</div>
-            <span class="t-h2" style="font-weight:700;"><span class="var">b<span class="sub">1</span></span> = 2</span>
-            <span class="frac hl-violet"><span class="num">3</span><span class="den">5</span></span>
-            <span class="t-tag">남은 B &#123; 1, 1, 2, 2 &#125;</span>
-          </div>
-          <div class="row g12" style="align-items:center;flex-wrap:wrap;">
-            <span class="tag is-coral">조건 &nbsp;<b>10</b> &lt; <span class="var">a<span class="sub">2</span></span><span class="var">b<span class="sub">2</span></span></span>
-            <span class="axisNote">행 <span class="hl-amber">a₂</span> · 열 <span class="hl-violet">b₂</span></span>
-          </div>
-          <table class="tbl gridTbl">
-            <thead><tr><th class="corner"></th><th class="colh">1</th><th class="colh">1</th><th class="colh">2</th><th class="colh">2</th></tr></thead>
-            <tbody><tr><th class="rowh">1</th><td class="is-cell" data-c="0" data-b="1" data-hit="0">1</td><td class="is-cell" data-c="0" data-b="1" data-hit="0">1</td><td class="is-cell" data-c="0" data-b="1" data-hit="0">2</td><td class="is-cell" data-c="0" data-b="1" data-hit="0">2</td></tr><tr><th class="rowh">2</th><td class="is-cell" data-c="0" data-b="1" data-hit="0">2</td><td class="is-cell" data-c="0" data-b="1" data-hit="0">2</td><td class="is-cell" data-c="0" data-b="1" data-hit="0">4</td><td class="is-cell" data-c="0" data-b="1" data-hit="0">4</td></tr><tr><th class="rowh">3</th><td class="is-cell" data-c="0" data-b="1" data-hit="0">3</td><td class="is-cell" data-c="0" data-b="1" data-hit="0">3</td><td class="is-cell" data-c="0" data-b="1" data-hit="0">6</td><td class="is-cell" data-c="0" data-b="1" data-hit="0">6</td></tr><tr><th class="rowh">4</th><td class="is-cell" data-c="0" data-b="1" data-hit="0">4</td><td class="is-cell" data-c="0" data-b="1" data-hit="0">4</td><td class="is-cell" data-c="0" data-b="1" data-hit="0">8</td><td class="is-cell" data-c="0" data-b="1" data-hit="0">8</td></tr></tbody>
-          </table>
-          <div class="progLine" id="pg01">조건을 만족하는 칸이 있을까?</div>
-          <div class="axisNote" id="im01" style="display:none;color:var(--coral);font-weight:700;">
-            불가능 <span style="color:var(--chalk-faint);font-weight:500;">(최댓값 8 ≤ 10)</span></div>
-          <div class="row" style="justify-content:flex-end;"><button class="btn btn--coral" style="margin-left:auto;padding:8px 16px;font-size:20px;" data-imp="01">확인</button></div>
-        </div></div>
-    </div>
-    <div class="result" id="cf0">
-      <div class="caseFootWait">두 경우 ⅰ, ⅱ 를 모두 찾으면 식이 나타납니다</div>
-      <div class="caseFootFormula" id="cfFormula0"></div>
-    </div></div>
+
+      <!-- ===================== ③ 정리 ===================== -->
       <div class="panelWrap" id="panel2" hidden>
-    <div class="row between" style="align-items:center;flex:0 0 auto;">
-      <span class="tag is-amber" style="font-size:var(--t-h2);padding:10px 26px;">Case ②&nbsp; <span class="var">a<span class="sub">1</span></span> = 4</span>
-      <span class="t-body hl-dim">확률 <span class="frac hl-amber"><span class="num">1</span><span class="den">5</span></span></span>
-      <span class="t-tag" style="margin-left:auto;">칸을 눌러 조건을 만족하는 (<span class="var">a<span class="sub">2</span></span>, <span class="var">b<span class="sub">2</span></span>)를 찾으세요</span>
-    </div>
-    <div class="row g24 grow" style="min-height:0;align-items:stretch;">
-      <div class="leftCol">
-        <div class="panel panel--tight">
-          <p class="t-tag" style="margin:0 0 8px;">주머니 A — <span class="var">a<span class="sub">1</span></span> 뽑음</p>
-          <div class="ballRow"><div class="ball">1</div><div class="ball">2</div><div class="ball">3</div><div class="ball is-amber">4</div><div class="ball">5</div></div>
-          <p class="t-tag" style="margin:10px 0 6px;">남은 <span class="var">a<span class="sub">2</span></span> 후보</p>
-          <div class="ballRow"><div class="ball">1</div><div class="ball">2</div><div class="ball">3</div><div class="ball">5</div></div>
-        </div>
-        <div class="panel panel--tight">
-          <p class="t-tag" style="margin:0 0 8px;">주머니 B &#123;1,1,2,2,2&#125;</p>
-          <div class="ballRow"><div class="ball">1</div><div class="ball">1</div><div class="ball">2</div><div class="ball">2</div><div class="ball">2</div></div>
-          <p class="t-tag" style="margin-top:10px;"><span class="var">b<span class="sub">1</span></span>=1 → <span class="frac"><span class="num">2</span><span class="den">5</span></span> &nbsp;|&nbsp; <span class="var">b<span class="sub">1</span></span>=2 → <span class="frac"><span class="num">3</span><span class="den">5</span></span></p>
-        </div>
-        <button class="btn btn--teal" data-all="1">정답 모두 보기</button>
-      </div>
-      <div class="branchesRow">
-        <div class="branchPanel panel panel--tight" id="br10">
-          <div class="branchHead">
-            <div class="branchNum">ⅰ</div>
-            <span class="t-h2" style="font-weight:700;"><span class="var">b<span class="sub">1</span></span> = 1</span>
-            <span class="frac hl-violet"><span class="num">2</span><span class="den">5</span></span>
-            <span class="t-tag">남은 B &#123; 1, 2, 2, 2 &#125;</span>
-          </div>
-          <div class="row g12" style="align-items:center;flex-wrap:wrap;">
-            <span class="tag is-coral">조건 &nbsp;<b>4</b> &lt; <span class="var">a<span class="sub">2</span></span><span class="var">b<span class="sub">2</span></span></span>
-            <span class="axisNote">행 <span class="hl-amber">a₂</span> · 열 <span class="hl-violet">b₂</span></span>
-          </div>
-          <table class="tbl gridTbl">
-            <thead><tr><th class="corner"></th><th class="colh">1</th><th class="colh">2</th><th class="colh">2</th><th class="colh">2</th></tr></thead>
-            <tbody><tr><th class="rowh">1</th><td class="is-cell" data-c="1" data-b="0" data-hit="0">1</td><td class="is-cell" data-c="1" data-b="0" data-hit="0">2</td><td class="is-cell" data-c="1" data-b="0" data-hit="0">2</td><td class="is-cell" data-c="1" data-b="0" data-hit="0">2</td></tr><tr><th class="rowh">2</th><td class="is-cell" data-c="1" data-b="0" data-hit="0">2</td><td class="is-cell" data-c="1" data-b="0" data-hit="0">4</td><td class="is-cell" data-c="1" data-b="0" data-hit="0">4</td><td class="is-cell" data-c="1" data-b="0" data-hit="0">4</td></tr><tr><th class="rowh">3</th><td class="is-cell" data-c="1" data-b="0" data-hit="0">3</td><td class="is-cell" data-c="1" data-b="0" data-hit="1">6</td><td class="is-cell" data-c="1" data-b="0" data-hit="1">6</td><td class="is-cell" data-c="1" data-b="0" data-hit="1">6</td></tr><tr><th class="rowh">5</th><td class="is-cell" data-c="1" data-b="0" data-hit="1">5</td><td class="is-cell" data-c="1" data-b="0" data-hit="1">10</td><td class="is-cell" data-c="1" data-b="0" data-hit="1">10</td><td class="is-cell" data-c="1" data-b="0" data-hit="1">10</td></tr></tbody>
-          </table>
-          <div class="progLine" id="pg10">찾은 칸 0 / 7</div>
-          <div class="axisNote" id="im10" style="display:none;color:var(--coral);font-weight:700;">
-            불가능 <span style="color:var(--chalk-faint);font-weight:500;">(최댓값 10 ≤ 4)</span></div>
-          <div class="row" style="justify-content:flex-end;"></div>
-        </div>
-        <div class="branchPanel panel panel--tight" id="br11">
-          <div class="branchHead">
-            <div class="branchNum">ⅱ</div>
-            <span class="t-h2" style="font-weight:700;"><span class="var">b<span class="sub">1</span></span> = 2</span>
-            <span class="frac hl-violet"><span class="num">3</span><span class="den">5</span></span>
-            <span class="t-tag">남은 B &#123; 1, 1, 2, 2 &#125;</span>
-          </div>
-          <div class="row g12" style="align-items:center;flex-wrap:wrap;">
-            <span class="tag is-coral">조건 &nbsp;<b>8</b> &lt; <span class="var">a<span class="sub">2</span></span><span class="var">b<span class="sub">2</span></span></span>
-            <span class="axisNote">행 <span class="hl-amber">a₂</span> · 열 <span class="hl-violet">b₂</span></span>
-          </div>
-          <table class="tbl gridTbl">
-            <thead><tr><th class="corner"></th><th class="colh">1</th><th class="colh">1</th><th class="colh">2</th><th class="colh">2</th></tr></thead>
-            <tbody><tr><th class="rowh">1</th><td class="is-cell" data-c="1" data-b="1" data-hit="0">1</td><td class="is-cell" data-c="1" data-b="1" data-hit="0">1</td><td class="is-cell" data-c="1" data-b="1" data-hit="0">2</td><td class="is-cell" data-c="1" data-b="1" data-hit="0">2</td></tr><tr><th class="rowh">2</th><td class="is-cell" data-c="1" data-b="1" data-hit="0">2</td><td class="is-cell" data-c="1" data-b="1" data-hit="0">2</td><td class="is-cell" data-c="1" data-b="1" data-hit="0">4</td><td class="is-cell" data-c="1" data-b="1" data-hit="0">4</td></tr><tr><th class="rowh">3</th><td class="is-cell" data-c="1" data-b="1" data-hit="0">3</td><td class="is-cell" data-c="1" data-b="1" data-hit="0">3</td><td class="is-cell" data-c="1" data-b="1" data-hit="0">6</td><td class="is-cell" data-c="1" data-b="1" data-hit="0">6</td></tr><tr><th class="rowh">5</th><td class="is-cell" data-c="1" data-b="1" data-hit="0">5</td><td class="is-cell" data-c="1" data-b="1" data-hit="0">5</td><td class="is-cell" data-c="1" data-b="1" data-hit="1">10</td><td class="is-cell" data-c="1" data-b="1" data-hit="1">10</td></tr></tbody>
-          </table>
-          <div class="progLine" id="pg11">찾은 칸 0 / 2</div>
-          <div class="axisNote" id="im11" style="display:none;color:var(--coral);font-weight:700;">
-            불가능 <span style="color:var(--chalk-faint);font-weight:500;">(최댓값 10 ≤ 8)</span></div>
-          <div class="row" style="justify-content:flex-end;"></div>
-        </div></div>
-    </div>
-    <div class="result" id="cf1">
-      <div class="caseFootWait">두 경우 ⅰ, ⅱ 를 모두 찾으면 식이 나타납니다</div>
-      <div class="caseFootFormula" id="cfFormula1"></div>
-    </div></div>
-      <div class="panelWrap" id="panel3" hidden>
-    <div class="row between" style="align-items:center;flex:0 0 auto;">
-      <span class="tag is-amber" style="font-size:var(--t-h2);padding:10px 26px;">Case ③&nbsp; <span class="var">a<span class="sub">1</span></span> = 3</span>
-      <span class="t-body hl-dim">확률 <span class="frac hl-amber"><span class="num">1</span><span class="den">5</span></span></span>
-      <span class="t-tag" style="margin-left:auto;">칸을 눌러 조건을 만족하는 (<span class="var">a<span class="sub">2</span></span>, <span class="var">b<span class="sub">2</span></span>)를 찾으세요</span>
-    </div>
-    <div class="row g24 grow" style="min-height:0;align-items:stretch;">
-      <div class="leftCol">
-        <div class="panel panel--tight">
-          <p class="t-tag" style="margin:0 0 8px;">주머니 A — <span class="var">a<span class="sub">1</span></span> 뽑음</p>
-          <div class="ballRow"><div class="ball">1</div><div class="ball">2</div><div class="ball is-amber">3</div><div class="ball">4</div><div class="ball">5</div></div>
-          <p class="t-tag" style="margin:10px 0 6px;">남은 <span class="var">a<span class="sub">2</span></span> 후보</p>
-          <div class="ballRow"><div class="ball">1</div><div class="ball">2</div><div class="ball">4</div><div class="ball">5</div></div>
-        </div>
-        <div class="panel panel--tight">
-          <p class="t-tag" style="margin:0 0 8px;">주머니 B &#123;1,1,2,2,2&#125;</p>
-          <div class="ballRow"><div class="ball">1</div><div class="ball">1</div><div class="ball">2</div><div class="ball">2</div><div class="ball">2</div></div>
-          <p class="t-tag" style="margin-top:10px;"><span class="var">b<span class="sub">1</span></span>=1 → <span class="frac"><span class="num">2</span><span class="den">5</span></span> &nbsp;|&nbsp; <span class="var">b<span class="sub">1</span></span>=2 → <span class="frac"><span class="num">3</span><span class="den">5</span></span></p>
-        </div>
-        <button class="btn btn--teal" data-all="2">정답 모두 보기</button>
-      </div>
-      <div class="branchesRow">
-        <div class="branchPanel panel panel--tight" id="br20">
-          <div class="branchHead">
-            <div class="branchNum">ⅰ</div>
-            <span class="t-h2" style="font-weight:700;"><span class="var">b<span class="sub">1</span></span> = 1</span>
-            <span class="frac hl-violet"><span class="num">2</span><span class="den">5</span></span>
-            <span class="t-tag">남은 B &#123; 1, 2, 2, 2 &#125;</span>
-          </div>
-          <div class="row g12" style="align-items:center;flex-wrap:wrap;">
-            <span class="tag is-coral">조건 &nbsp;<b>3</b> &lt; <span class="var">a<span class="sub">2</span></span><span class="var">b<span class="sub">2</span></span></span>
-            <span class="axisNote">행 <span class="hl-amber">a₂</span> · 열 <span class="hl-violet">b₂</span></span>
-          </div>
-          <table class="tbl gridTbl">
-            <thead><tr><th class="corner"></th><th class="colh">1</th><th class="colh">2</th><th class="colh">2</th><th class="colh">2</th></tr></thead>
-            <tbody><tr><th class="rowh">1</th><td class="is-cell" data-c="2" data-b="0" data-hit="0">1</td><td class="is-cell" data-c="2" data-b="0" data-hit="0">2</td><td class="is-cell" data-c="2" data-b="0" data-hit="0">2</td><td class="is-cell" data-c="2" data-b="0" data-hit="0">2</td></tr><tr><th class="rowh">2</th><td class="is-cell" data-c="2" data-b="0" data-hit="0">2</td><td class="is-cell" data-c="2" data-b="0" data-hit="1">4</td><td class="is-cell" data-c="2" data-b="0" data-hit="1">4</td><td class="is-cell" data-c="2" data-b="0" data-hit="1">4</td></tr><tr><th class="rowh">4</th><td class="is-cell" data-c="2" data-b="0" data-hit="1">4</td><td class="is-cell" data-c="2" data-b="0" data-hit="1">8</td><td class="is-cell" data-c="2" data-b="0" data-hit="1">8</td><td class="is-cell" data-c="2" data-b="0" data-hit="1">8</td></tr><tr><th class="rowh">5</th><td class="is-cell" data-c="2" data-b="0" data-hit="1">5</td><td class="is-cell" data-c="2" data-b="0" data-hit="1">10</td><td class="is-cell" data-c="2" data-b="0" data-hit="1">10</td><td class="is-cell" data-c="2" data-b="0" data-hit="1">10</td></tr></tbody>
-          </table>
-          <div class="progLine" id="pg20">찾은 칸 0 / 11</div>
-          <div class="axisNote" id="im20" style="display:none;color:var(--coral);font-weight:700;">
-            불가능 <span style="color:var(--chalk-faint);font-weight:500;">(최댓값 10 ≤ 3)</span></div>
-          <div class="row" style="justify-content:flex-end;"></div>
-        </div>
-        <div class="branchPanel panel panel--tight" id="br21">
-          <div class="branchHead">
-            <div class="branchNum">ⅱ</div>
-            <span class="t-h2" style="font-weight:700;"><span class="var">b<span class="sub">1</span></span> = 2</span>
-            <span class="frac hl-violet"><span class="num">3</span><span class="den">5</span></span>
-            <span class="t-tag">남은 B &#123; 1, 1, 2, 2 &#125;</span>
-          </div>
-          <div class="row g12" style="align-items:center;flex-wrap:wrap;">
-            <span class="tag is-coral">조건 &nbsp;<b>6</b> &lt; <span class="var">a<span class="sub">2</span></span><span class="var">b<span class="sub">2</span></span></span>
-            <span class="axisNote">행 <span class="hl-amber">a₂</span> · 열 <span class="hl-violet">b₂</span></span>
-          </div>
-          <table class="tbl gridTbl">
-            <thead><tr><th class="corner"></th><th class="colh">1</th><th class="colh">1</th><th class="colh">2</th><th class="colh">2</th></tr></thead>
-            <tbody><tr><th class="rowh">1</th><td class="is-cell" data-c="2" data-b="1" data-hit="0">1</td><td class="is-cell" data-c="2" data-b="1" data-hit="0">1</td><td class="is-cell" data-c="2" data-b="1" data-hit="0">2</td><td class="is-cell" data-c="2" data-b="1" data-hit="0">2</td></tr><tr><th class="rowh">2</th><td class="is-cell" data-c="2" data-b="1" data-hit="0">2</td><td class="is-cell" data-c="2" data-b="1" data-hit="0">2</td><td class="is-cell" data-c="2" data-b="1" data-hit="0">4</td><td class="is-cell" data-c="2" data-b="1" data-hit="0">4</td></tr><tr><th class="rowh">4</th><td class="is-cell" data-c="2" data-b="1" data-hit="0">4</td><td class="is-cell" data-c="2" data-b="1" data-hit="0">4</td><td class="is-cell" data-c="2" data-b="1" data-hit="1">8</td><td class="is-cell" data-c="2" data-b="1" data-hit="1">8</td></tr><tr><th class="rowh">5</th><td class="is-cell" data-c="2" data-b="1" data-hit="0">5</td><td class="is-cell" data-c="2" data-b="1" data-hit="0">5</td><td class="is-cell" data-c="2" data-b="1" data-hit="1">10</td><td class="is-cell" data-c="2" data-b="1" data-hit="1">10</td></tr></tbody>
-          </table>
-          <div class="progLine" id="pg21">찾은 칸 0 / 4</div>
-          <div class="axisNote" id="im21" style="display:none;color:var(--coral);font-weight:700;">
-            불가능 <span style="color:var(--chalk-faint);font-weight:500;">(최댓값 10 ≤ 6)</span></div>
-          <div class="row" style="justify-content:flex-end;"></div>
-        </div></div>
-    </div>
-    <div class="result" id="cf2">
-      <div class="caseFootWait">두 경우 ⅰ, ⅱ 를 모두 찾으면 식이 나타납니다</div>
-      <div class="caseFootFormula" id="cfFormula2"></div>
-    </div></div>
-      <div class="panelWrap" id="panel4" hidden>
-    <p class="t-small" style="margin:0 0 4px;">세 경우를 더한다 &nbsp;(모두 분모 400)</p>
-    <div class="panel panel--tight sumLine"><span class="lbl">Case ①</span><span class="var">a<span class="sub">1</span></span> = 5
-      <span>→ <span class="frac hl-teal"><span class="num">12</span><span class="den">400</span></span></span><span class="det">2×6 + 3×0 = 12</span></div>
-    <div class="panel panel--tight sumLine"><span class="lbl">Case ②</span><span class="var">a<span class="sub">1</span></span> = 4
-      <span>→ <span class="frac hl-teal"><span class="num">20</span><span class="den">400</span></span></span><span class="det">2×7 + 3×2 = 20</span></div>
-    <div class="panel panel--tight sumLine"><span class="lbl">Case ③</span><span class="var">a<span class="sub">1</span></span> = 3
-      <span>→ <span class="frac hl-teal"><span class="num">34</span><span class="den">400</span></span></span><span class="det">2×11 + 3×4 = 34</span></div>
+        <div class="row g24 grow" style="min-height:0;align-items:stretch;">
 
-    <div class="result is-teal step" id="f1" style="text-align:left;">
-      <p class="m t-h2" style="margin:0;">P(C∩D) = <span class="frac"><span class="num">12 + 20 + 34</span><span class="den">400</span></span> = <span class="frac"><span class="num">66</span><span class="den">400</span></span> = <span class="frac hl-teal"><span class="num">33</span><span class="den">200</span></span></p>
-    </div>
-    <div class="result step" id="f2" style="text-align:left;">
-      <p class="m t-h2" style="margin:0;">P(D|C) = <span class="frac"><span class="num">33</span><span class="den">200</span></span> ÷ <span class="frac hl-amber"><span class="num">3</span><span class="den">5</span></span>
-        = <span class="frac"><span class="num">33</span><span class="den">200</span></span> × <span class="frac"><span class="num">5</span><span class="den">3</span></span> = <span class="frac hl-coral"><span class="num">11</span><span class="den">40</span></span></p>
-    </div>
-    <div class="result is-amber step" id="f3" style="text-align:center;">
-      <p class="m t-title" style="margin:0;"><span class="frac"><span class="num"><span class="var">q</span></span><span class="den"><span class="var">p</span></span></span> = <span class="frac"><span class="num">11</span><span class="den">40</span></span>
-        &nbsp;→&nbsp; <span class="var">q</span> = 11, <span class="var">p</span> = 40 &nbsp;→&nbsp; <span class="var">p</span> + <span class="var">q</span> =
-        <span class="hl-amber" style="font-size:1.15em;">51</span></p>
-    </div></div>
+          <div class="col g12" style="width:660px;flex:none;min-height:0;">
+            <div class="panel panel--tight center" style="flex:none;">
+              <p class="m t-small m0">한 경우의 확률 =
+                <span class="hl-amber"><span class="frac"><span class="num">1</span><span class="den">5</span></span></span>
+                <span class="op">×</span>
+                <span class="hl-violet"><span class="var">b<span class="sub is-up">1</span></span> 확률</span>
+                <span class="op">×</span>
+                <span class="hl-teal"><span class="frac"><span class="num">칸 수</span><span class="den">16</span></span></span>
+              </p>
+            </div>
+            <table class="finTbl grow" id="finTbl"></table>
+          </div>
 
+          <div class="col g16 grow between" style="min-height:0;">
+            <div class="panel panel--tight step center" id="f1" style="flex:none;">
+              <p class="m t-h2 m0" style="text-align:center;white-space:normal;line-height:1.5;">
+                분모를 맞추면 &nbsp;5 × 5 × 16 =
+                <span class="hl-amber" style="font-weight:700;">400</span><br>
+                <span class="t-small">→ 분자는 &nbsp;2 × (칸 수) &nbsp;또는&nbsp; 3 × (칸 수)</span>
+              </p>
+            </div>
+            <div class="panel panel--tight step center" id="f2" style="flex:none;">
+              <p class="m t-h2 m0">
+                12 <span class="op">+</span> 20 <span class="op">+</span> 34 =
+                <span class="hl-amber" style="font-weight:700;">66</span>
+              </p>
+            </div>
+            <div class="panel panel--tight step center" id="f3" style="flex:none;">
+              <p class="m t-h2 m0">
+                P(C ∩ D) =
+                <span class="frac"><span class="num">66</span><span class="den">400</span></span>
+                <span class="op">=</span>
+                <span class="frac hl-teal"><span class="num">33</span><span class="den">200</span></span>
+              </p>
+            </div>
+            <div class="panel panel--tight step center" id="f4" style="flex:none;">
+              <p class="m t-h2 m0">
+                P(D | C) =
+                <span class="frac"><span class="num">33</span><span class="den">200</span></span>
+                <span class="op">÷</span>
+                <span class="frac hl-amber"><span class="num">3</span><span class="den">5</span></span>
+                <span class="op">=</span>
+                <span class="frac hl-coral"><span class="num">11</span><span class="den">40</span></span>
+              </p>
+            </div>
+            <div class="result step" id="f5" style="flex:none;">
+              <p class="m t-title m0">
+                <span class="frac"><span class="num"><span class="var">q</span></span><span class="den"><span class="var">p</span></span></span>
+                <span class="op">=</span>
+                <span class="frac"><span class="num">11</span><span class="den">40</span></span>
+                &nbsp;→&nbsp;
+                <span class="var">p</span> + <span class="var">q</span> =
+                <span class="hl-amber" style="font-size:1.2em;font-weight:700;">51</span>
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ===================== 발판 ===================== -->
       <footer class="app-foot">
         <div class="dots" id="dots"></div>
         <div class="row g12">
@@ -1311,16 +763,19 @@ body {
 <script>
 'use strict';
 
-/* ---------- 1) 16:9 스케일링 ---------- */
-const STAGE_W = 1600, STAGE_H = 900;
-const stage = document.getElementById('stage');
+/* ---------------------------------------------------------------------------
+   1) 16:9 스케일링
+--------------------------------------------------------------------------- */
+var STAGE_W = 1600, STAGE_H = 900;
+var stage = document.getElementById('stage');
+
 function fitStage() {
-  const vv = window.visualViewport;
-  const w = vv ? vv.width : window.innerWidth;
-  const h = vv ? vv.height : window.innerHeight;
-  const s = Math.min(w / STAGE_W, h / STAGE_H);
-  const x = Math.round((w - STAGE_W * s) / 2);
-  const y = Math.round((h - STAGE_H * s) / 2);
+  var vv = window.visualViewport;
+  var w = vv ? vv.width : window.innerWidth;
+  var h = vv ? vv.height : window.innerHeight;
+  var s = Math.min(w / STAGE_W, h / STAGE_H);
+  var x = Math.round((w - STAGE_W * s) / 2);
+  var y = Math.round((h - STAGE_H * s) / 2);
   stage.style.transform = 'translate(' + x + 'px, ' + y + 'px) scale(' + s + ')';
 }
 function fitSoon() { [0, 60, 300, 700].forEach(function (t) { setTimeout(fitStage, t); }); }
@@ -1334,26 +789,28 @@ if (window.visualViewport) {
 }
 document.addEventListener('fullscreenchange', fitSoon);
 
-/* ---------- 2) 전체화면 ---------- */
-const fsBtn = document.getElementById('fsBtn');
-const fsLabel = document.getElementById('fsLabel');
-const fsIcon = document.getElementById('fsIcon');
-const ICON_ENTER = '<path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>';
-const ICON_EXIT  = '<path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M16 3v3a2 2 0 0 0 2 2h3"/><path d="M8 21v-3a2 2 0 0 0-2-2H3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/>';
+/* ---------------------------------------------------------------------------
+   2) 전체화면
+--------------------------------------------------------------------------- */
+var fsBtn = document.getElementById('fsBtn');
+var fsLabel = document.getElementById('fsLabel');
+var fsIcon = document.getElementById('fsIcon');
+var ICON_ENTER = '<path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>';
+var ICON_EXIT  = '<path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M16 3v3a2 2 0 0 0 2 2h3"/><path d="M8 21v-3a2 2 0 0 0-2-2H3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/>';
+
 function isFullscreen() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
 function syncFsButton() {
-  const on = isFullscreen();
+  var on = isFullscreen();
   fsLabel.textContent = on ? '창으로' : '전체화면';
   fsIcon.innerHTML = on ? ICON_EXIT : ICON_ENTER;
-  fsBtn.title = on ? '전체화면 해제' : '전체화면으로 보기';
 }
 function toggleFullscreen() {
   if (!isFullscreen()) {
-    const el = document.documentElement;
-    const req = el.requestFullscreen || el.webkitRequestFullscreen;
+    var el = document.documentElement;
+    var req = el.requestFullscreen || el.webkitRequestFullscreen;
     if (req) { Promise.resolve(req.call(el)).catch(function () {}); }
   } else {
-    const exit = document.exitFullscreen || document.webkitExitFullscreen;
+    var exit = document.exitFullscreen || document.webkitExitFullscreen;
     if (exit) { Promise.resolve(exit.call(document)).catch(function () {}); }
   }
   setTimeout(syncFsButton, 120);
@@ -1363,160 +820,364 @@ document.addEventListener('fullscreenchange', syncFsButton);
 document.addEventListener('webkitfullscreenchange', syncFsButton);
 syncFsButton();
 
-/* ---------- 3) 탭/스텝 네비게이션 ---------- */
-const TAB_COUNT = 5;
-const STEP_IDS = {0:['d1','d2','d3','d4','d5'], 4:['f1','f2','f3']};
-let cur = 0;
-const stepDone = {0:0, 4:0};
-const panels = [0,1,2,3,4].map(i => document.getElementById('panel'+i));
-const tabBtns = Array.from(document.querySelectorAll('.tabnav .btn'));
-const dotsWrap = document.getElementById('dots');
-for (let i=0;i<TAB_COUNT;i++) {
-  const dot = document.createElement('i');
-  dotsWrap.appendChild(dot);
+/* ---------------------------------------------------------------------------
+   3) 문제 데이터
+   주머니 A = {1,2,3,4,5}, 주머니 B = {1,1,2,2,2}
+   a1 ∈ {5,4,3}, b1 ∈ {1,2}  → 6가지 경우
+   각 경우마다 남은 A 4개 × 남은 B 4개 = 16칸, 조건은 a2*b2 > a1*b1
+--------------------------------------------------------------------------- */
+var BAG_A = [1, 2, 3, 4, 5];
+var BAG_B = [1, 1, 2, 2, 2];
+var A1_LIST = [5, 4, 3];
+var B1_LIST = [1, 2];
+var B1_NUM = { 1: 2, 2: 3 };          // b1=1 일 확률 2/5, b1=2 일 확률 3/5
+
+var COMBOS = [];
+A1_LIST.forEach(function (a1) {
+  B1_LIST.forEach(function (b1) {
+    var remA = BAG_A.filter(function (x) { return x !== a1; });
+    var remB = BAG_B.slice();
+    remB.splice(remB.indexOf(b1), 1);
+    var thr = a1 * b1;
+    var hit = [];
+    remA.forEach(function (a2) {
+      remB.forEach(function (b2) { hit.push(a2 * b2 > thr); });
+    });
+    COMBOS.push({
+      a1: a1, b1: b1, remA: remA, remB: remB, thr: thr,
+      hit: hit,
+      total: hit.filter(Boolean).length,
+      found: hit.map(function () { return false; }),
+      done: false
+    });
+  });
+});
+
+function comboIndex(a1, b1) {
+  for (var i = 0; i < COMBOS.length; i++) {
+    if (COMBOS[i].a1 === a1 && COMBOS[i].b1 === b1) return i;
+  }
+  return 0;
 }
-const dotEls = Array.from(dotsWrap.children);
-const prevBtn = document.getElementById('prevBtn');
-const nextBtn = document.getElementById('nextBtn');
+
+var cur = 0;   // 현재 보고 있는 경우
+
+/* ---------------------------------------------------------------------------
+   4) 선택 버튼 / 남은 공 / 조건줄 / 격자 렌더
+--------------------------------------------------------------------------- */
+var pickAEl = document.getElementById('pickA');
+var pickBEl = document.getElementById('pickB');
+var remAEl = document.getElementById('remA');
+var remBEl = document.getElementById('remB');
+var condLine = document.getElementById('condLine');
+var gridEl = document.getElementById('grid');
+var progLine = document.getElementById('progLine');
+var noneBtn = document.getElementById('noneBtn');
+var allBtn = document.getElementById('allBtn');
+
+A1_LIST.forEach(function (v) {
+  var b = document.createElement('button');
+  b.className = 'pickBtn a';
+  b.textContent = v;
+  b.addEventListener('click', function () { setCombo(comboIndex(v, COMBOS[cur].b1)); });
+  pickAEl.appendChild(b);
+});
+B1_LIST.forEach(function (v) {
+  var b = document.createElement('button');
+  b.className = 'pickBtn b';
+  b.textContent = v;
+  b.addEventListener('click', function () { setCombo(comboIndex(COMBOS[cur].a1, v)); });
+  pickBEl.appendChild(b);
+});
+
+function ballHTML(v, cls) { return '<div class="ball' + (cls ? ' ' + cls : '') + '">' + v + '</div>'; }
+
+function renderSide() {
+  var C = COMBOS[cur];
+  Array.prototype.forEach.call(pickAEl.children, function (b) {
+    b.classList.toggle('on', +b.textContent === C.a1);
+  });
+  Array.prototype.forEach.call(pickBEl.children, function (b) {
+    b.classList.toggle('on', +b.textContent === C.b1);
+  });
+  remAEl.innerHTML = C.remA.map(function (v) { return ballHTML(v); }).join('');
+  remBEl.innerHTML = C.remB.map(function (v) { return ballHTML(v); }).join('');
+
+  condLine.innerHTML =
+    '<span class="m hl-dim" style="font-size:.8em;">a<span class="sub is-up">1</span>b<span class="sub is-up">1</span> = </span>' +
+    '<span class="hl-amber">' + C.a1 + '</span> × ' +
+    '<span class="hl-violet">' + C.b1 + '</span> = ' +
+    '<span style="font-weight:700;">' + C.thr + '</span>' +
+    ' <span class="op">&lt;</span> ' +
+    '<span class="var hl-amber">a<span class="sub is-up">2</span></span>' +
+    '<span class="var hl-violet">b<span class="sub is-up">2</span></span>';
+}
+
+function renderGrid() {
+  var C = COMBOS[cur];
+  var html = '<thead><tr><th class="corner">a₂ ＼ b₂</th>';
+  C.remB.forEach(function (b2) { html += '<th class="colh">' + b2 + '</th>'; });
+  html += '</tr></thead><tbody>';
+  C.remA.forEach(function (a2, i) {
+    html += '<tr><th class="rowh">' + a2 + '</th>';
+    C.remB.forEach(function (b2, j) {
+      var k = i * 4 + j;
+      var cls = 'cell' + (C.found[k] ? ' ok' : '');
+      html += '<td class="' + cls + '" data-k="' + k + '">' + (a2 * b2) + '</td>';
+    });
+    html += '</tr>';
+  });
+  html += '</tbody>';
+  gridEl.innerHTML = html;
+}
+
+function foundCount() {
+  return COMBOS[cur].found.filter(Boolean).length;
+}
+
+function renderProg() {
+  var C = COMBOS[cur];
+  if (C.done) {
+    progLine.innerHTML = '<span class="hl-teal">완료 · 조건을 만족하는 칸 ' + C.total + ' / 16</span>';
+  } else if (C.total === 0) {
+    progLine.innerHTML = '<span class="hl-dim">조건을 만족하는 칸이 있을까?</span>';
+  } else {
+    progLine.innerHTML = '찾은 칸 <span class="hl-teal" style="font-weight:700;">' +
+      foundCount() + '</span> <span class="hl-dim">/ ' + C.total + '</span>';
+  }
+  noneBtn.disabled = C.done;
+  allBtn.disabled = C.done;
+}
+
+/* ---- 경우별 칸 수 요약표 ---- */
+var sumTbl = document.getElementById('sumTbl');
+function buildSumTbl() {
+  var html = '<thead><tr><th class="corner"></th>';
+  B1_LIST.forEach(function (b1) {
+    html += '<th class="colh"><span class="m">b<span class="sub is-up">1</span> = ' + b1 +
+      '</span><br><span class="m" style="font-size:20px;opacity:.85;">' +
+      '<span class="frac"><span class="num">' + B1_NUM[b1] + '</span><span class="den">5</span></span></span></th>';
+  });
+  html += '</tr></thead><tbody>';
+  A1_LIST.forEach(function (a1) {
+    html += '<tr><th class="rowh"><span class="m">a<span class="sub is-up">1</span> = ' + a1 + '</span></th>';
+    B1_LIST.forEach(function (b1) {
+      html += '<td class="cnt" data-i="' + comboIndex(a1, b1) + '">?</td>';
+    });
+    html += '</tr>';
+  });
+  html += '</tbody>';
+  sumTbl.innerHTML = html;
+  sumTbl.addEventListener('click', function (e) {
+    var td = e.target.closest ? e.target.closest('td.cnt') : null;
+    if (td) setCombo(+td.dataset.i);
+  });
+}
+function renderSumTbl() {
+  Array.prototype.forEach.call(sumTbl.querySelectorAll('td.cnt'), function (td) {
+    var i = +td.dataset.i;
+    td.textContent = COMBOS[i].done ? COMBOS[i].total : '?';
+    td.classList.toggle('done', COMBOS[i].done);
+    td.classList.toggle('live', i === cur);
+  });
+}
+
+/* ---- 정리 화면 표 ---- */
+var finTbl = document.getElementById('finTbl');
+function buildFinTbl() {
+  var html = '<thead><tr><th class="corner"></th>';
+  B1_LIST.forEach(function (b1) {
+    html += '<th class="colh"><span class="m">b<span class="sub is-up">1</span> = ' + b1 + ' &nbsp;' +
+      '<span class="frac"><span class="num">' + B1_NUM[b1] + '</span><span class="den">5</span></span></span></th>';
+  });
+  html += '<th class="colh sumcol" id="finSumHead" style="color:var(--amber);background:var(--amber-dim);">' +
+    '<span class="m">분자 합</span></th></tr></thead><tbody>';
+  A1_LIST.forEach(function (a1) {
+    var n1 = COMBOS[comboIndex(a1, 1)].total;
+    var n2 = COMBOS[comboIndex(a1, 2)].total;
+    html += '<tr><th class="rowh"><span class="m">a<span class="sub is-up">1</span> = ' + a1 + '</span></th>';
+    B1_LIST.forEach(function (b1) {
+      var n = COMBOS[comboIndex(a1, b1)].total;
+      html += '<td><span class="m"><span class="frac"><span class="num">' + n + '</span><span class="den">16</span></span></span></td>';
+    });
+    html += '<td class="rowsum sumcol"><span class="m" style="font-size:26px;">2×' + n1 + ' + 3×' + n2 +
+      ' = <span style="font-size:36px;font-weight:700;">' + (2 * n1 + 3 * n2) + '</span></span></td>';
+    html += '</tr>';
+  });
+  html += '</tbody>';
+  finTbl.innerHTML = html;
+}
+function showFinSum(on) {
+  Array.prototype.forEach.call(finTbl.querySelectorAll('.sumcol'), function (el) {
+    el.classList.toggle('on', on);
+  });
+}
+
+/* ---------------------------------------------------------------------------
+   5) 칸 클릭 인터랙션
+--------------------------------------------------------------------------- */
+gridEl.addEventListener('click', function (e) {
+  var td = e.target.closest ? e.target.closest('td.cell') : null;
+  if (!td) return;
+  var C = COMBOS[cur];
+  var k = +td.dataset.k;
+  if (C.hit[k]) {
+    if (C.found[k]) return;
+    C.found[k] = true;
+    td.classList.add('ok');
+    renderProg();
+    if (foundCount() === C.total) completeCombo();
+  } else {
+    td.classList.remove('no');
+    void td.offsetWidth;
+    td.classList.add('no');
+    setTimeout(function () { td.classList.remove('no'); }, 340);
+  }
+});
+
+noneBtn.addEventListener('click', function () {
+  var C = COMBOS[cur];
+  if (C.done) return;
+  if (C.total === 0) { completeCombo(); }
+  else {
+    noneBtn.classList.remove('shake');
+    void noneBtn.offsetWidth;
+    noneBtn.classList.add('shake');
+    setTimeout(function () { noneBtn.classList.remove('shake'); }, 360);
+  }
+});
+
+allBtn.addEventListener('click', function () { revealAll(); });
+
+function revealAll() {
+  var C = COMBOS[cur];
+  if (C.done) return;
+  C.hit.forEach(function (h, k) { if (h) C.found[k] = true; });
+  renderGrid();
+  completeCombo();
+}
+
+function completeCombo() {
+  var C = COMBOS[cur];
+  if (C.done) return;
+  C.done = true;
+  renderProg();
+  renderSumTbl();
+  var live = sumTbl.querySelector('td.cnt.live');
+  if (live) { live.classList.remove('pop'); void live.offsetWidth; live.classList.add('pop'); }
+  renderTab();
+}
+
+function setCombo(i) {
+  cur = Math.max(0, Math.min(COMBOS.length - 1, i));
+  renderSide();
+  renderGrid();
+  renderProg();
+  renderSumTbl();
+  renderTab();
+}
+
+/* ---------------------------------------------------------------------------
+   6) 탭 / 단계 네비게이션
+--------------------------------------------------------------------------- */
+var TAB_COUNT = 3;
+var STEPS = { 0: ['d1', 'd2', 'd3', 'd4'], 2: ['f1', 'f2', 'f3', 'f4', 'f5'] };
+var stepDone = { 0: 0, 2: 0 };
+var tab = 0;
+
+var panels = [0, 1, 2].map(function (i) { return document.getElementById('panel' + i); });
+var tabBtns = Array.prototype.slice.call(document.querySelectorAll('.tabnav .btn'));
+var dotsWrap = document.getElementById('dots');
+var prevBtn = document.getElementById('prevBtn');
+var nextBtn = document.getElementById('nextBtn');
+
+for (var i = 0; i < TAB_COUNT; i++) dotsWrap.appendChild(document.createElement('i'));
+var dotEls = Array.prototype.slice.call(dotsWrap.children);
+
+function allDone() { return COMBOS.every(function (c) { return c.done; }); }
 
 function renderTab() {
-  panels.forEach((p,i) => { p.hidden = (i !== cur); });
-  tabBtns.forEach((b,i) => b.classList.toggle('is-active', i === cur));
-  dotEls.forEach((d,i) => d.classList.toggle('on', i === cur));
-  prevBtn.disabled = (cur === 0 && (stepDone[0]||0) === 0);
-  const steps = STEP_IDS[cur];
-  const stepFull = steps && stepDone[cur] >= steps.length;
-  nextBtn.disabled = (cur === TAB_COUNT-1 && (stepFull || !steps));
+  panels.forEach(function (p, i) { p.hidden = (i !== tab); });
+  tabBtns.forEach(function (b, i) { b.classList.toggle('is-active', i === tab); });
+  dotEls.forEach(function (d, i) { d.classList.toggle('on', i === tab); });
+
+  var atStart = (tab === 0 && stepDone[0] === 0);
+  var atEnd = (tab === 2 && stepDone[2] >= STEPS[2].length);
+  prevBtn.disabled = atStart;
+  nextBtn.disabled = atEnd;
+
+  tabBtns[1].style.color = allDone() ? 'var(--teal)' : '';
 }
 
-function goTab(i) {
-  cur = Math.max(0, Math.min(TAB_COUNT-1, i));
+function goTab(t) {
+  tab = Math.max(0, Math.min(TAB_COUNT - 1, t));
+  if (tab === 2) showFinSum(stepDone[2] >= 2);
   renderTab();
 }
 
 function nextAction() {
-  const steps = STEP_IDS[cur];
-  if (steps && stepDone[cur] < steps.length) {
-    document.getElementById(steps[stepDone[cur]]).classList.add('on');
-    stepDone[cur]++;
-    renderTab();
+  if (tab === 0) {
+    if (stepDone[0] < STEPS[0].length) {
+      document.getElementById(STEPS[0][stepDone[0]]).classList.add('on');
+      stepDone[0]++;
+      renderTab();
+    } else { goTab(1); }
     return;
   }
-  if (cur >= 1 && cur <= 3) revealCase(cur-1);
-  if (cur < TAB_COUNT-1) goTab(cur+1);
-  else renderTab();
+  if (tab === 1) {
+    if (cur < COMBOS.length - 1) { setCombo(cur + 1); }
+    else { goTab(2); }
+    return;
+  }
+  if (stepDone[2] < STEPS[2].length) {
+    document.getElementById(STEPS[2][stepDone[2]]).classList.add('on');
+    stepDone[2]++;
+    showFinSum(stepDone[2] >= 2);
+    renderTab();
+  }
 }
+
 function prevAction() {
-  const steps = STEP_IDS[cur];
-  if (steps && stepDone[cur] > 0) {
-    stepDone[cur]--;
-    document.getElementById(steps[stepDone[cur]]).classList.remove('on');
-    renderTab();
+  if (tab === 0) {
+    if (stepDone[0] > 0) {
+      stepDone[0]--;
+      document.getElementById(STEPS[0][stepDone[0]]).classList.remove('on');
+      renderTab();
+    }
     return;
   }
-  if (cur > 0) goTab(cur-1);
+  if (tab === 1) {
+    if (cur > 0) { setCombo(cur - 1); }
+    else { goTab(0); }
+    return;
+  }
+  if (stepDone[2] > 0) {
+    stepDone[2]--;
+    document.getElementById(STEPS[2][stepDone[2]]).classList.remove('on');
+    showFinSum(stepDone[2] >= 2);
+    renderTab();
+  } else { goTab(1); }
 }
 
 nextBtn.addEventListener('click', nextAction);
 prevBtn.addEventListener('click', prevAction);
-tabBtns.forEach(b => b.addEventListener('click', () => goTab(+b.dataset.tab)));
-document.addEventListener('keydown', function(e){
-  if (e.code==='Space' || e.key==='ArrowRight') { e.preventDefault(); nextAction(); }
-  else if (e.key==='ArrowLeft') { e.preventDefault(); prevAction(); }
+tabBtns.forEach(function (b) {
+  b.addEventListener('click', function () { goTab(+b.dataset.tab); });
 });
-document.getElementById('resetBtn').addEventListener('click', function(){ location.reload(); });
-
-/* ---------- 4) 케이스 격자 인터랙션 ---------- */
-const CASES = [{'n': '①', 'a1': 5, 'remA': [1, 2, 3, 4]}, {'n': '②', 'a1': 4, 'remA': [1, 2, 3, 5]}, {'n': '③', 'a1': 3, 'remA': [1, 2, 4, 5]}];
-const BR = [{'b1': 1, 'np': 2, 'remB': [1, 2, 2, 2]}, {'b1': 2, 'np': 3, 'remB': [1, 1, 2, 2]}];
-const state = {};
-
-function fmtFrac(n,d,cls){ return '<span class="frac'+(cls?(' '+cls):'')+'"><span class="num">'+n+'</span><span class="den">'+d+'</span></span>'; }
-
-CASES.forEach(function(C, ci){
-  BR.forEach(function(B, bi){
-    const thr = C.a1 * B.b1;
-    const cnt = C.remA.reduce(function(s,a2){ return s + B.remB.filter(function(b2){return a2*b2>thr;}).length; },0);
-    state[ci+'-'+bi] = {total:cnt, found:0};
-  });
+document.addEventListener('keydown', function (e) {
+  if (e.code === 'Space' || e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); nextAction(); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); prevAction(); }
 });
+document.getElementById('resetBtn').addEventListener('click', function () { location.reload(); });
 
-function checkBranch(ci,bi){
-  const s = state[ci+'-'+bi];
-  if (s.found < s.total) return;
-  document.getElementById('br'+ci+bi).style.borderColor = 'var(--teal)';
-  const other = bi===0?1:0;
-  if (state[ci+'-'+other].found >= state[ci+'-'+other].total) {
-    finalizeCase(ci);
-  }
-}
-
-function finalizeCase(ci){
-  const n1 = state[ci+'-0'].total, n2 = state[ci+'-1'].total, tot = 2*n1+3*n2;
-  const formula = document.getElementById('cfFormula'+ci);
-  formula.innerHTML =
-    '<p class="m t-h2" style="margin:0;">' +
-    fmtFrac(1,5,'hl-amber') + ' × ' + fmtFrac(2,5,'hl-violet') + ' × ' + fmtFrac(n1,16,'hl-teal') +
-    ' <span class="op">+</span> ' +
-    fmtFrac(1,5,'hl-amber') + ' × ' + fmtFrac(3,5,'hl-violet') + ' × ' + fmtFrac(n2,16,'hl-teal') +
-    ' <span class="op">=</span> ' + fmtFrac('2×'+n1+' + 3×'+n2, 400) +
-    ' <span class="op">=</span> <span class="hl-amber" style="font-weight:700;">' + fmtFrac(tot,400) + '</span></p>';
-  document.getElementById('cf'+ci).classList.add('is-ready');
-  const tabBtn = tabBtns[ci+1];
-  if (tabBtn) tabBtn.style.color = 'var(--teal)';
-}
-
-document.querySelectorAll('.gridTbl').forEach(function(tbl){
-  tbl.addEventListener('click', function(e){
-    const td = e.target.closest('td.is-cell');
-    if (!td) return;
-    const ci = +td.dataset.c, bi = +td.dataset.b;
-    if (td.dataset.hit === '1') {
-      if (td.classList.contains('is-correct')) return;
-      td.classList.add('is-correct');
-      const s = state[ci+'-'+bi]; s.found++;
-      document.getElementById('pg'+ci+bi).textContent = '찾은 칸 ' + s.found + ' / ' + s.total;
-      checkBranch(ci,bi);
-    } else {
-      td.classList.add('is-wrong');
-      setTimeout(function(){ td.classList.remove('is-wrong'); }, 320);
-    }
-  });
-});
-
-document.querySelectorAll('[data-imp]').forEach(function(btn){
-  btn.addEventListener('click', function(){
-    const k = btn.dataset.imp, ci=+k[0], bi=+k[1];
-    document.getElementById('im'+ci+bi).style.display = 'block';
-    document.getElementById('pg'+ci+bi).style.display = 'none';
-    btn.style.display = 'none';
-    checkBranch(ci,bi);
-  });
-});
-
-function revealCase(ci){
-  document.querySelectorAll('#panel'+(ci+1)+' td.is-cell').forEach(function(td){
-    if (td.dataset.hit==='1' && !td.classList.contains('is-correct')) {
-      td.classList.add('is-correct');
-      const bi = +td.dataset.b;
-      state[ci+'-'+bi].found++;
-    }
-  });
-  [0,1].forEach(function(bi){
-    document.getElementById('pg'+ci+bi).textContent = '찾은 칸 ' + state[ci+'-'+bi].found + ' / ' + state[ci+'-'+bi].total;
-    const btn = document.querySelector('[data-imp="'+ci+bi+'"]');
-    if (btn) {
-      btn.style.display='none';
-      document.getElementById('im'+ci+bi).style.display='block';
-      document.getElementById('pg'+ci+bi).style.display='none';
-    }
-    checkBranch(ci,bi);
-  });
-}
-document.querySelectorAll('[data-all]').forEach(function(btn){
-  btn.addEventListener('click', function(){ revealCase(+btn.dataset.all); });
-});
-
+/* ---------------------------------------------------------------------------
+   init
+--------------------------------------------------------------------------- */
+buildSumTbl();
+buildFinTbl();
+setCombo(0);
+document.getElementById('d1').classList.add('on');
+stepDone[0] = 1;
 renderTab();
 </script>
 </body>
