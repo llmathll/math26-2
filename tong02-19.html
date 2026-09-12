@@ -7,12 +7,12 @@
 <style>
 @charset "UTF-8";
 /* ============================================================================
-   chalk-stage.css  v3 (16:11)
-   - 스테이지 1600 x 1100 고정 (11인치 아이패드 가로), translate+scale 로 아이패드 화면에 꽉 채움
+   chalk-stage.css  v4 (16:9 / 확장 모니터용)
+   - 스테이지 1600 x 900 고정 (아이패드 확장 모니터 -> 16:9 TV), translate+scale 로 아이패드 화면에 꽉 채움
    - 머리말 제거: 제목은 발판 왼쪽 아래 구석에 작게
    - 좌측 풀이 칼럼: 폭을 줄이고 글자를 키움, 넘치면 세로 스크롤
 ============================================================================ */
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&family=Caveat:wght@600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400..700;1,400..700&family=Noto+Sans+KR:wght@400;500;700&display=swap');
 
 :root{
   --bg-deep:#0a1420; --bg:#0e1b2b; --panel:#16283e; --panel-2:#1d3350;
@@ -20,14 +20,15 @@
   --chalk:#eaf1f8; --chalk-soft:#b9cadd; --chalk-faint:#7d94ad;
   --amber:#f5b642; --coral:#ff7d6a; --teal:#49d1c0; --violet:#9d8cf5;
   --amber-dim:rgba(245,182,66,.16); --coral-dim:rgba(255,125,106,.16);
+  --laser:#ff2d2d;
   --teal-dim:rgba(73,209,192,.16); --violet-dim:rgba(157,140,245,.16);
-  --f-en:'Space Grotesk'; --f-kr:'Noto Sans KR';
+  --f-en:'STIX Two Text'; --f-kr:'Noto Sans KR';
   --r-s:10px; --r-m:18px; --r-l:28px;
 
   /* 좌측 풀이 글자 기준값 — 여기만 바꾸면 전체가 같이 커진다 */
-  --ls:38px;     /* 본문 식 */
-  --ls-sm:29px;  /* 보조 설명 */
-  --ls-q:32px;   /* 문제 원문 */
+  --ls:42px;     /* 본문 식 */
+  --ls-sm:33px;  /* 보조 설명 */
+  --ls-q:35px;   /* 문제 원문 */
 }
 
 *{box-sizing:border-box}
@@ -37,7 +38,7 @@ body{color:var(--chalk);font-family:var(--f-en),var(--f-kr),system-ui,sans-serif
   line-height:1.45;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
 
 .viewport{position:fixed;inset:0;overflow:hidden;background:var(--bg-deep)}
-.stage{position:absolute;top:0;left:0;width:1600px;height:1100px;transform-origin:0 0;
+.stage{position:absolute;top:0;left:0;width:1600px;height:900px;transform-origin:0 0;
   will-change:transform;overflow:hidden;
   background:
     radial-gradient(120% 90% at 18% 8%, #16273b 0%, rgba(22,39,59,0) 60%),
@@ -65,11 +66,11 @@ body{color:var(--chalk);font-family:var(--f-en),var(--f-kr),system-ui,sans-serif
 
 .panel{position:relative;border:2px solid var(--line);border-radius:var(--r-l);background:var(--panel)}
 
-.stepCard{flex:0 0 auto;padding:17px 24px 17px 76px;
+.stepCard{flex:0 0 auto;padding:16px 26px 16px 88px;
   transition:opacity .28s ease, filter .28s ease, border-color .2s ease, background .2s ease}
-.stepCard .no{position:absolute;left:18px;top:20px;
-  width:42px;height:42px;border-radius:50%;display:grid;place-items:center;
-  font-size:22px;font-weight:700;background:var(--panel-2);color:var(--chalk-faint);font-family:var(--f-en)}
+.stepCard .no{position:absolute;left:20px;top:20px;
+  width:50px;height:50px;border-radius:50%;display:grid;place-items:center;
+  font-size:25px;font-weight:700;background:var(--panel-2);color:var(--chalk-faint);font-family:var(--f-en)}
 .stepCard:not(.on){opacity:.16;filter:blur(3px)}
 .stepCard.on{background:var(--panel-2);border-color:var(--line-strong)}
 .stepCard.on .no{background:var(--amber);color:#241703}
@@ -78,6 +79,8 @@ body{color:var(--chalk);font-family:var(--f-en),var(--f-kr),system-ui,sans-serif
 .ln{margin:0;font-size:var(--ls);line-height:1.42;word-break:keep-all}
 .ln + .ln{margin-top:6px}
 .ln.sm{font-size:var(--ls-sm);color:var(--chalk-soft)}
+.ln.ind{padding-left:1.5em}
+.sm2{font-size:var(--ls-sm);color:var(--chalk-soft)}
 .ln.q{font-size:var(--ls-q);color:var(--chalk-soft);line-height:1.5;
   padding-bottom:12px;margin-bottom:10px;border-bottom:2px dashed var(--line)}
 
@@ -85,13 +88,13 @@ body{color:var(--chalk);font-family:var(--f-en),var(--f-kr),system-ui,sans-serif
 #rightCol{flex:0 0 720px;display:flex;flex-direction:column;gap:12px;min-height:0;
   padding:20px 22px;background:var(--panel-2);border-color:var(--line-strong)}
 .ghead{display:flex;align-items:center;gap:12px;flex:0 0 auto;white-space:nowrap}
-.ghead .ttl{font-size:26px;color:var(--chalk-soft);flex:1 1 auto;min-width:0;overflow:hidden}
-.ghead .tag{flex:0 0 auto;font-size:24px;padding:6px 16px}
+.ghead .ttl{font-size:30px;color:var(--chalk-soft);flex:1 1 auto;min-width:0;overflow:hidden}
+.ghead .tag{flex:0 0 auto;font-size:27px;padding:6px 18px}
 .gwrap{position:relative;flex:1 1 0;min-height:0}
 .gwrap svg{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
 
 .srow{flex:0 0 auto;display:flex;align-items:center;gap:18px}
-.srow .lab{font-size:34px;font-weight:700;white-space:nowrap;font-family:var(--f-en)}
+.srow .lab{font-size:38px;font-weight:700;white-space:nowrap;font-family:var(--f-en)}
 .sldwrap{position:relative;flex:1;height:40px;display:flex;align-items:center}
 .band{position:absolute;height:12px;border-radius:6px;background:var(--teal-dim);
   border:1px solid rgba(73,209,192,.55);top:14px;pointer-events:none;opacity:0;transition:.4s}
@@ -107,18 +110,18 @@ input[type=range]::-moz-range-thumb{width:36px;height:36px;border-radius:50%;bac
 .app-foot{flex:0 0 auto;display:flex;align-items:flex-end;justify-content:space-between;gap:20px;
   padding-top:14px;border-top:2px solid var(--line)}
 .footL{display:flex;flex-direction:column;gap:10px;min-width:0}
-.appTitle{margin:0;font-size:22px;font-weight:500;color:var(--chalk-faint);letter-spacing:-.01em;
+.appTitle{margin:0;font-size:24px;font-weight:500;color:var(--chalk-faint);letter-spacing:-.01em;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .appTitle .no19{color:var(--amber);font-weight:700;font-family:var(--f-en);margin-right:8px}
 
 .dots{display:flex;gap:13px;align-items:center}
-.dots i{width:15px;height:15px;border-radius:50%;background:var(--line-strong);
+.dots i{width:16px;height:16px;border-radius:50%;background:var(--line-strong);
   transition:background .2s ease, transform .2s ease}
 .dots i.on{background:var(--amber);transform:scale(1.25)}
 
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;
-  padding:14px 30px;border:2px solid var(--line-strong);border-radius:999px;background:transparent;
-  color:var(--chalk);font-family:inherit;font-size:28px;font-weight:600;cursor:pointer;
+  padding:14px 28px;border:2px solid var(--line-strong);border-radius:999px;background:transparent;
+  color:var(--chalk);font-family:inherit;font-size:30px;font-weight:600;cursor:pointer;
   transition:background .18s ease,border-color .18s ease,color .18s ease,opacity .18s ease}
 .btn:hover{background:rgba(255,255,255,.07)}
 .btn:active{transform:translateY(1px)}
@@ -128,7 +131,7 @@ input[type=range]::-moz-range-thumb{width:36px;height:36px;border-radius:50%;bac
 .btn--teal:hover{background:var(--teal-dim)}
 .btn[disabled]{opacity:.3;cursor:default}
 .btn[disabled]:hover{background:transparent}
-.btn svg{width:26px;height:26px;flex:none}
+.btn svg{width:28px;height:28px;flex:none}
 :where(button,[tabindex]):focus-visible{outline:3px solid var(--amber);outline-offset:4px}
 
 .row{display:flex;align-items:center}
@@ -143,25 +146,46 @@ input[type=range]::-moz-range-thumb{width:36px;height:36px;border-radius:50%;bac
 /* ---------------- 수식 조판 ---------------- */
 .m{font-family:var(--f-en),var(--f-kr),serif;font-variant-numeric:tabular-nums;
   white-space:nowrap;line-height:1.15;display:inline-block}
-.var{font-style:italic}
-.frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;
-  margin:0 .2em;transform:translateY(-.06em);line-height:1.02;font-size:.8em}
-.frac>.num{padding:0 .3em .03em}
-.frac>.den{padding:.05em .3em 0;border-top:.07em solid currentColor}
+.var,.v{font-style:italic;font-family:var(--f-en),serif}
+/* 분수 — align-items:stretch 라 분수선이 분자·분모 중 넓은 쪽에 맞춰 그어진다 */
+.frac{display:inline-flex;flex-direction:column;align-items:stretch;text-align:center;
+  vertical-align:middle;margin:0 .22em;transform:translateY(-.08em);line-height:1.06;font-size:.86em}
+.frac>.num{padding:0 .22em .07em;border-bottom:.058em solid currentColor}
+.frac>.den{padding:.09em .22em 0}
 .hl-amber{color:var(--amber)} .hl-coral{color:var(--coral)}
 .hl-teal{color:var(--teal)} .hl-violet{color:var(--violet)}
 
-/* 필기체 a */
-.var-a{font-family:'Caveat','Space Grotesk',cursive;font-style:normal;font-weight:700;
-  font-size:1.24em;letter-spacing:.01em;padding:0 .04em}
+/* 변수 a — 교과서 조판대로 이탤릭 세리프 */
+.var-a{font-style:italic;font-weight:600;font-size:1.02em;padding:0 .04em 0 .02em}
 
-/* 루트 기호 */
-.sq{display:inline-flex;align-items:stretch;margin:0 .06em .04em 0;position:relative}
-.sq>i{font-style:normal;position:relative;width:.6em;flex:0 0 auto}
-.sq>i::before{content:'';position:absolute;left:.10em;right:-1px;bottom:.28em;top:.05em;
-  border-left:2.6px solid currentColor;border-bottom:2.6px solid currentColor;
-  transform:skewX(-13deg);transform-origin:bottom left}
-.sq>u{text-decoration:none;border-top:2.6px solid currentColor;padding:.14em .06em 0 .1em;margin-left:-1px}
+/* 근호 — 선 굵기를 em 으로 잡아 글자 크기와 함께 자연스럽게 커진다.
+   i 가 갈고리(진입 획 + 사선), u 가 피근호 위의 가로선. */
+.sq{display:inline-flex;align-items:stretch;margin:0 .06em .02em .05em;position:relative}
+.sq>i{font-style:normal;position:relative;width:.56em;flex:0 0 auto}
+.sq>i::before{content:'';position:absolute;left:.16em;right:-.01em;bottom:.24em;top:.01em;
+  border-left:.075em solid currentColor;border-bottom:.075em solid currentColor;
+  transform:skewX(-15deg);transform-origin:bottom left}
+.sq>i::after{content:'';position:absolute;left:.005em;bottom:.30em;width:.19em;
+  border-top:.055em solid currentColor;transform:rotate(-26deg);transform-origin:right center}
+.sq>u{text-decoration:none;border-top:.075em solid currentColor;
+  padding:.11em .12em 0 .04em;margin-left:-.015em}
+
+
+/* ---------------- 레이저 포인터 ---------------- */
+/* 레이어 전체가 pointer-events:none 이라 버튼/슬라이더 클릭을 절대 가로채지 않는다 */
+#laser{position:fixed;inset:0;pointer-events:none;z-index:9999;display:none;transition:opacity .2s}
+body.laser-on #laser{display:block}
+body.laser-on.has-mouse{cursor:none}
+body.laser-on.has-mouse *{cursor:none !important}
+.lz{position:absolute;left:0;top:0;pointer-events:none;will-change:transform}
+#lzDot{width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;
+  background:radial-gradient(circle, #fff 0%, #ffd9d9 18%, var(--laser) 40%, rgba(255,45,45,.7) 60%, rgba(255,45,45,0) 74%);
+  box-shadow:0 0 26px 12px rgba(255,45,45,.42)}
+.lzT{width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;
+  background:rgba(255,45,45,.5);filter:blur(3px)}
+.lzRing{position:absolute;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;
+  border:3px solid rgba(255,45,45,.95);pointer-events:none;animation:lzr .5s ease-out forwards}
+@keyframes lzr{to{transform:scale(4.4);opacity:0;border-width:1px}}
 
 @media (prefers-reduced-motion: reduce){
   .stepCard,.btn,.dots i,.band{transition-duration:.01ms !important}
@@ -180,32 +204,36 @@ input[type=range]::-moz-range-thumb{width:36px;height:36px;border-radius:50%;bac
         <div id="leftCol">
 
           <div class="panel stepCard" data-s="0"><span class="no">1</span>
-            <p class="ln q"><span class="m"><span class="frac"><span class="num">3</span><span class="den">2</span></span><span class="sq"><i></i><u>−x²+<span class="var-a">a</span>x</u></span></span> 의 세제곱근 중 <b class="hl-amber">자연수</b>가 존재하도록 하는 실수 x의 개수가 <b class="hl-amber">4</b>일 때, 자연수 <span class="m var-a">a</span>의 값의 합은?</p>
-            <p class="ln"><span class="m"><span class="var">n</span>³ = <span class="frac"><span class="num">3</span><span class="den">2</span></span><span class="sq"><i></i><u>−x²+<span class="var-a">a</span>x</u></span></span> <span class="ln sm" style="display:inline">(<span class="m var">n</span>은 자연수)</span></p>
-            <p class="ln"><span class="m">−x²+<span class="var-a">a</span>x ≥ 0</span> ⟹ <span class="m">x(x−<span class="var-a">a</span>) ≤ 0</span> ⟹ <span class="m hl-teal">0 ≤ x ≤ <span class="var-a">a</span></span></p>
+            <p class="ln q"><span class="m"><span class="frac"><span class="num">3</span><span class="den">2</span></span><span class="sq"><i></i><u>−<span class="v">x</span>²+<span class="var-a">a</span><span class="v">x</span></u></span></span> 의 세제곱근 중 <b class="hl-amber">자연수</b>가 존재하도록 하는 실수 <span class="v">x</span>의 개수가 <b class="hl-amber">4</b>일 때, 자연수 <span class="var-a">a</span>의 값의 합은?</p>
+            <p class="ln"><span class="m"><span class="v">n</span>³ = <span class="frac"><span class="num">3</span><span class="den">2</span></span><span class="sq"><i></i><u>−<span class="v">x</span>²+<span class="var-a">a</span><span class="v">x</span></u></span></span> <span class="sm2">(<span class="v">n</span>은 자연수)</span></p>
+            <p class="ln"><span class="m">−<span class="v">x</span>²+<span class="var-a">a</span><span class="v">x</span> ≥ 0</span></p>
+            <p class="ln ind"><span class="m">⟹ <span class="v">x</span>(<span class="v">x</span>−<span class="var-a">a</span>) ≤ 0 ⟹ <span class="hl-teal">0 ≤ <span class="v">x</span> ≤ <span class="var-a">a</span></span></span></p>
           </div>
 
           <div class="panel stepCard" data-s="1"><span class="no">2</span>
-            <p class="ln">양변을 제곱 &nbsp;⟹&nbsp; <span class="m"><span class="var">n</span>⁶ = <span class="frac"><span class="num">9</span><span class="den">4</span></span>(−x²+<span class="var-a">a</span>x) = <span class="hl-coral">f(x)</span></span></p>
+            <p class="ln">양변을 제곱하면</p>
+            <p class="ln ind"><span class="m"><span class="v">n</span>⁶ = <span class="frac"><span class="num">9</span><span class="den">4</span></span>(−<span class="v">x</span>²+<span class="var-a">a</span><span class="v">x</span>) = <span class="hl-coral"><span class="v">f</span>(<span class="v">x</span>)</span></span></p>
           </div>
 
           <div class="panel stepCard" data-s="2"><span class="no">3</span>
-            <p class="ln"><span class="m"><span class="hl-coral">f(x)</span> = −<span class="frac"><span class="num">9</span><span class="den">4</span></span>(x − <span class="frac"><span class="num var-a">a</span><span class="den">2</span></span>)² + <span class="hl-amber"><span class="frac"><span class="num">9</span><span class="den">16</span></span><span class="var-a">a</span>²</span></span></p>
+            <p class="ln"><span class="m"><span class="hl-coral"><span class="v">f</span>(<span class="v">x</span>)</span> = −<span class="frac"><span class="num">9</span><span class="den">4</span></span>(<span class="v">x</span> − <span class="frac"><span class="num var-a">a</span><span class="den">2</span></span>)² + <span class="hl-amber"><span class="frac"><span class="num">9</span><span class="den">16</span></span><span class="var-a">a</span>²</span></span></p>
           </div>
 
           <div class="panel stepCard" data-s="3"><span class="no">4</span>
-            <p class="ln">실근 4개 ⟺ <span class="m"><span class="var">n</span> = <span class="hl-teal">1</span>, <span class="hl-teal">2</span></span> 에서만 교점 2개씩</p>
-            <p class="ln"><span class="m">2⁶ &lt; <span class="hl-amber"><span class="frac"><span class="num">9</span><span class="den">16</span></span><span class="var-a">a</span>²</span> &lt; 3⁶</span></p>
+            <p class="ln">실근 4개 ⟺ <span class="m"><span class="v">n</span> = <span class="hl-teal">1</span>, <span class="hl-teal">2</span></span> 에서만 교점 2개</p>
+            <p class="ln ind"><span class="m">2⁶ &lt; <span class="hl-amber"><span class="frac"><span class="num">9</span><span class="den">16</span></span><span class="var-a">a</span>²</span> &lt; 3⁶</span></p>
           </div>
 
           <div class="panel stepCard" data-s="4"><span class="no">5</span>
-            <p class="ln"><span class="m"><span class="frac"><span class="num">2¹⁰</span><span class="den">9</span></span> &lt; <span class="var-a">a</span>² &lt; <span class="frac"><span class="num">2⁴</span><span class="den">9</span></span>×3⁶</span> ⟹ <span class="m">(<span class="frac"><span class="num">32</span><span class="den">3</span></span>)² &lt; <span class="var-a">a</span>² &lt; 36²</span></p>
-            <p class="ln"><span class="m hl-teal"><span class="frac"><span class="num">32</span><span class="den">3</span></span> &lt; <span class="var-a">a</span> &lt; 36</span></p>
+            <p class="ln"><span class="m"><span class="frac"><span class="num">2¹⁰</span><span class="den">9</span></span> &lt; <span class="var-a">a</span>² &lt; <span class="frac"><span class="num">2⁴</span><span class="den">9</span></span>×3⁶</span></p>
+            <p class="ln ind"><span class="m">⟹ (<span class="frac"><span class="num">32</span><span class="den">3</span></span>)² &lt; <span class="var-a">a</span>² &lt; 36²</span></p>
+            <p class="ln ind"><span class="m">⟹ <span class="hl-teal"><span class="frac"><span class="num">32</span><span class="den">3</span></span> &lt; <span class="var-a">a</span> &lt; 36</span></span></p>
           </div>
 
           <div class="panel stepCard" data-s="5"><span class="no">6</span>
-            <p class="ln"><span class="m"><span class="var-a">a</span> = 11, 12, ⋯, 35</span> <span class="ln sm" style="display:inline">(25개)</span></p>
-            <p class="ln">합 = <span class="m"><span class="frac"><span class="num">25(11+35)</span><span class="den">2</span></span> = 23×25 =</span> <span class="tag is-teal" style="font-size:32px;padding:4px 20px">575</span></p>
+            <p class="ln"><span class="m"><span class="var-a">a</span> = 11, 12, ⋯, 35</span> <span class="sm2">(25개)</span></p>
+            <p class="ln">합 = <span class="m"><span class="frac"><span class="num">25(11+35)</span><span class="den">2</span></span></span></p>
+            <p class="ln ind"><span class="m">= 23×25 =</span> <span class="tag is-teal" style="font-size:36px;padding:4px 22px">575</span></p>
           </div>
 
         </div>
@@ -213,7 +241,7 @@ input[type=range]::-moz-range-thumb{width:36px;height:36px;border-radius:50%;bac
         <!-- ============ 우측: 그래프 ============ -->
         <div class="panel" id="rightCol">
           <div class="ghead">
-            <span class="ttl"><span class="m var">y</span> = f(x) 와 <span class="m"><span class="var">y</span> = <span class="var">n</span>⁶</span> 의 교점</span>
+            <span class="ttl"><span class="m"><span class="v">y</span> = <span class="v">f</span>(<span class="v">x</span>)</span> 와 <span class="m"><span class="v">y</span> = <span class="v">n</span>⁶</span> 의 교점</span>
             <span class="tag is-amber" id="chipMax" style="visibility:hidden"><span class="m"><span class="frac"><span class="num">9</span><span class="den">16</span></span><span class="var-a">a</span>² = <b id="vmax">324</b></span></span>
             <span class="tag is-teal" id="chipCnt" style="visibility:hidden">실근 <b id="cnt">4</b>개</span>
           </div>
@@ -248,6 +276,10 @@ input[type=range]::-moz-range-thumb{width:36px;height:36px;border-radius:50%;bac
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 4v6h6"/><path d="M20 20v-6h-6"/><path d="M5.5 15a8 8 0 0013.9 3.3M18.5 9A8 8 0 004.6 5.7"/></svg>
             처음부터
           </button>
+          <button class="btn btn--coral" id="lzBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="3.4" fill="currentColor" stroke="none"/><path d="M12 2.5v3.4"/><path d="M12 18.1v3.4"/><path d="M2.5 12h3.4"/><path d="M18.1 12h3.4"/><path d="M5.3 5.3l2.4 2.4"/><path d="M16.3 16.3l2.4 2.4"/><path d="M18.7 5.3l-2.4 2.4"/><path d="M7.7 16.3l-2.4 2.4"/></svg>
+            <span id="lzLabel">레이저</span>
+          </button>
           <button class="btn btn--teal" id="fsBtn">
             <svg id="fsIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
             <span id="fsLabel">전체화면</span>
@@ -259,11 +291,13 @@ input[type=range]::-moz-range-thumb{width:36px;height:36px;border-radius:50%;bac
   </div>
 </div>
 
+<div id="laser"><div class="lz" id="lzDot"></div></div>
+
 <script>
 'use strict';
 
-/* ---------- 1) 16:11 (1600x1100) 스케일링 ---------- */
-const STAGE_W = 1600, STAGE_H = 1100;
+/* ---------- 1) 16:9 (1600x900) 스케일링 ---------- */
+const STAGE_W = 1600, STAGE_H = 900;
 const stage = document.getElementById('stage');
 function fitStage(){
   const vv = window.visualViewport;
@@ -317,7 +351,7 @@ const NSTEP = 6;
 let step = 0, a = 24, level = 450, visited = new Set(), dragging = false;
 
 const SV = document.getElementById('gr');
-const P = { l: 132, r: 34, t: 44, b: 76, W: 676, H: 700 };
+const P = { l: 150, r: 34, t: 44, b: 86, W: 676, H: 620 };
 const X0 = -1.6, X1 = 41.5, YMAX = 930;
 const PW = function(){ return P.W - P.l - P.r; };
 const PH = function(){ return P.H - P.t - P.b; };
@@ -356,20 +390,20 @@ function draw(){
   o.push('<polygon points="'+(P.W-10)+','+base+' '+(P.W-24)+','+(base-7)+' '+(P.W-24)+','+(base+7)+'" fill="#5f74a8"/>');
   o.push('<line x1="'+px(0)+'" y1="'+(base+12)+'" x2="'+px(0)+'" y2="'+(P.t-10)+'" stroke="#5f74a8" stroke-width="3"/>');
   o.push('<polygon points="'+px(0)+','+(P.t-16)+' '+(px(0)-7)+','+(P.t-2)+' '+(px(0)+7)+','+(P.t-2)+'" fill="#5f74a8"/>');
-  o.push('<text x="'+(px(0)-24)+'" y="'+(base+32)+'" fill="#8fa0c8" font-size="26">O</text>');
-  o.push('<text x="'+(P.W-16)+'" y="'+(base+36)+'" fill="#8fa0c8" font-size="27" font-style="italic" text-anchor="end">x</text>');
+  o.push('<text x="'+(px(0)-24)+'" y="'+(base+32)+'" fill="#8fa0c8" font-size="29">O</text>');
+  o.push('<text x="'+(P.W-16)+'" y="'+(base+36)+'" fill="#8fa0c8" font-size="30" font-style="italic" text-anchor="end">x</text>');
 
   /* 정의역 0 ≤ x ≤ a */
   o.push('<line x1="'+px(0)+'" y1="'+base+'" x2="'+px(a)+'" y2="'+base+'" stroke="#49d1c0" stroke-width="9" stroke-linecap="round" opacity=".85"/>');
   o.push('<circle cx="'+px(a)+'" cy="'+base+'" r="8" fill="#49d1c0"/>');
-  o.push('<text x="'+px(a)+'" y="'+(base+44)+'" fill="#49d1c0" font-size="38" font-weight="700" text-anchor="middle" font-family="Caveat, cursive">a</text>');
+  o.push('<text x="'+px(a)+'" y="'+(base+44)+'" fill="#49d1c0" font-size="46" font-weight="700" text-anchor="middle" font-family="STIX Two Text, serif" font-style="italic">a</text>');
 
   /* 포물선 */
   if (step >= 1){
     let d = '';
     for (let i = 0; i <= 240; i++){ const x = a*i/240; d += (i?'L':'M') + A(px(x), py(f(x))); }
     o.push('<path d="'+d+'" fill="none" stroke="#ff7d6a" stroke-width="5.2" stroke-linejoin="round"/>');
-    o.push('<text x="'+(px(0)+16)+'" y="'+(P.t+28)+'" fill="#ff7d6a" font-size="30" font-weight="700">y = f(x)</text>');
+    o.push('<text x="'+(px(0)+16)+'" y="'+(P.t+28)+'" fill="#ff7d6a" font-size="33" font-weight="700"><tspan font-style="italic">y</tspan> = <tspan font-style="italic">f</tspan>(<tspan font-style="italic">x</tspan>)</text>');
   }
 
   /* 꼭짓점 */
@@ -379,7 +413,12 @@ function draw(){
     o.push('<line x1="'+vx+'" y1="'+vy+'" x2="'+vx+'" y2="'+base+'" stroke="#f5b642" stroke-width="2.4" stroke-dasharray="7 7" opacity=".7"/>');
     o.push('<line x1="'+px(0)+'" y1="'+vy+'" x2="'+vx+'" y2="'+vy+'" stroke="#f5b642" stroke-width="2.4" stroke-dasharray="7 7" opacity=".7"/>');
     o.push('<circle cx="'+vx+'" cy="'+vy+'" r="11" fill="'+col+'" stroke="#0e1b2b" stroke-width="3.5"/>');
-    o.push('<text x="'+(vx+20)+'" y="'+Math.max(vy-22, P.t+24)+'" fill="'+col+'" font-size="29" font-weight="700">9<tspan font-family="Caveat, cursive" font-size="1.18em">a</tspan>²/16 = '+v.toFixed(v%1?2:0)+'</text>');
+    var fs = 30, fx = vx + 24, fw = 62;
+    var cy = Math.min(Math.max(vy - 12, P.t + 46), base - 44);
+    o.push('<text x="'+(fx+fw/2)+'" y="'+(cy-10)+'" fill="'+col+'" font-size="'+fs+'" font-weight="700" text-anchor="middle">9<tspan font-style="italic">a</tspan>²</text>');
+    o.push('<line x1="'+fx+'" y1="'+cy+'" x2="'+(fx+fw)+'" y2="'+cy+'" stroke="'+col+'" stroke-width="2.6"/>');
+    o.push('<text x="'+(fx+fw/2)+'" y="'+(cy+31)+'" fill="'+col+'" font-size="'+fs+'" font-weight="700" text-anchor="middle">16</text>');
+    o.push('<text x="'+(fx+fw+14)+'" y="'+(cy+11)+'" fill="'+col+'" font-size="'+fs+'" font-weight="700">= '+v.toFixed(v%1?2:0)+'</text>');
   }
 
   /* y = n⁶ 수평선 + 끌 수 있는 보라선 */
@@ -387,8 +426,8 @@ function draw(){
     LV.forEach(function(L){
       const y = py(L.k), c = rootsAt(L.k), col = c > 0 ? '#49d1c0' : '#5a6b95';
       o.push('<line x1="'+px(0)+'" y1="'+y+'" x2="'+(P.W-34)+'" y2="'+y+'" stroke="'+col+'" stroke-width="'+(c?3.4:2.2)+'" opacity="'+(c?.95:.5)+'"/>');
-      o.push('<text x="8" y="'+(y-10)+'" fill="'+col+'" font-size="26" font-weight="700">y='+L.n+'⁶='+L.k+'</text>');
-      o.push('<text x="'+(P.W-38)+'" y="'+(y-11)+'" fill="'+col+'" font-size="26" font-weight="700" text-anchor="end">'+c+'개</text>');
+      o.push('<text x="8" y="'+(y-10)+'" fill="'+col+'" font-size="29" font-weight="700"><tspan font-style="italic">y</tspan>='+L.n+'⁶='+L.k+'</text>');
+      o.push('<text x="'+(P.W-38)+'" y="'+(y-11)+'" fill="'+col+'" font-size="29" font-weight="700" text-anchor="end">'+c+'개</text>');
       xsAt(L.k).forEach(function(x){
         o.push('<circle cx="'+px(x)+'" cy="'+y+'" r="10" fill="#f5b642" stroke="#0e1b2b" stroke-width="3"/>');
       });
@@ -398,15 +437,15 @@ function draw(){
     o.push('<line x1="'+px(0)+'" y1="'+y+'" x2="'+(P.W-34)+'" y2="'+y+'" stroke="#9d8cf5" stroke-width="3.6" stroke-dasharray="12 8"/>');
     const hy2 = Math.min(y, base - 20);
     o.push('<rect x="'+(P.W-34)+'" y="'+(hy2-26)+'" width="33" height="52" rx="11" fill="#9d8cf5"/>');
-    o.push('<text x="'+(P.W-17.5)+'" y="'+(hy2+9)+'" text-anchor="middle" font-size="26" fill="#150c2e" font-weight="700">↕</text>');
+    o.push('<text x="'+(P.W-17.5)+'" y="'+(hy2+9)+'" text-anchor="middle" font-size="28" fill="#150c2e" font-weight="700">↕</text>');
     xsAt(level).forEach(function(x){
       o.push('<circle cx="'+px(x)+'" cy="'+y+'" r="9" fill="#9d8cf5" stroke="#0e1b2b" stroke-width="3"/>');
     });
-    const bw = 250, bx = P.l + 70;
+    const bw = 280, bx = P.l + 70;
     const by = level < 130 ? P.t + 56 : Math.max(P.t+2, Math.min(base-56, y-58));
     o.push('<rect x="'+bx+'" y="'+by+'" width="'+bw+'" height="44" rx="12" fill="rgba(157,140,245,.24)" stroke="#9d8cf5" stroke-width="2"/>');
-    o.push('<text x="'+(bx+bw/2)+'" y="'+(by+31)+'" text-anchor="middle" fill="#e4deff" font-size="25" font-weight="700">y='+Math.round(level)+' · 교점 '+c+'개</text>');
-    if (visited.size < 3) o.push('<text x="'+(P.W-17)+'" y="'+(Math.min(y, base-20)+48)+'" text-anchor="middle" fill="#9d8cf5" font-size="19" font-weight="700">끌기</text>');
+    o.push('<text x="'+(bx+bw/2)+'" y="'+(by+31)+'" text-anchor="middle" fill="#e4deff" font-size="27" font-weight="700"><tspan font-style="italic">y</tspan>='+Math.round(level)+' · 교점 '+c+'개</text>');
+    if (visited.size < 3) o.push('<text x="'+(P.W-17)+'" y="'+(Math.min(y, base-20)+48)+'" text-anchor="middle" fill="#9d8cf5" font-size="21" font-weight="700">끌기</text>');
   }
 
   SV.innerHTML = o.join('');
@@ -482,6 +521,7 @@ window.addEventListener('keydown', function(e){
   if (e.key === 'ArrowLeft'){ e.preventDefault(); go(step-1); }
   if (e.key === 'r' || e.key === 'R') document.getElementById('resetBtn').click();
   if (e.key === 'f' || e.key === 'F') toggleFullscreen();
+  if (e.key === 'l' || e.key === 'L') document.getElementById('lzBtn').click();
 });
 document.getElementById('sld').addEventListener('input', function(e){ a = +e.target.value; draw(); });
 
@@ -493,6 +533,69 @@ document.getElementById('sld').addEventListener('input', function(e){ a = +e.tar
 })();
 
 if (window.ResizeObserver) new ResizeObserver(function(){ draw(); }).observe(SV);
+
+
+/* ---------- 5) 레이저 포인터 ----------
+   #laser 레이어는 pointer-events:none 이므로 이전/다음 버튼, 슬라이더,
+   그래프 드래그 어느 것도 가로채지 않는다. 클릭은 전부 그대로 아래로 통과한다. */
+const laser  = document.getElementById('laser');
+const lzDot  = document.getElementById('lzDot');
+const lzBtn  = document.getElementById('lzBtn');
+const NT = 5, tEls = [], tPos = [];
+for (let i = 0; i < NT; i++){
+  const d = document.createElement('div');
+  d.className = 'lz lzT';
+  d.style.opacity = (0.34 - i * 0.06).toFixed(2);
+  laser.insertBefore(d, lzDot);
+  tEls.push(d); tPos.push({x:-200, y:-200});
+}
+let lx = -200, ly = -200, lzSeen = false;
+
+document.addEventListener('pointermove', function(e){
+  if (e.pointerType && e.pointerType !== 'mouse') return;
+  document.body.classList.add('has-mouse');
+  lx = e.clientX; ly = e.clientY; lzSeen = true;
+}, {passive:true});
+
+document.addEventListener('pointerdown', function(e){
+  if (!document.body.classList.contains('laser-on')) return;
+  if (e.pointerType && e.pointerType !== 'mouse') return;
+  const r = document.createElement('div');
+  r.className = 'lzRing';
+  r.style.left = e.clientX + 'px';
+  r.style.top  = e.clientY + 'px';
+  laser.appendChild(r);
+  setTimeout(function(){ r.remove(); }, 520);
+}, {passive:true});
+
+document.addEventListener('mouseleave', function(){ laser.style.opacity = '0'; });
+document.addEventListener('mouseenter', function(){ laser.style.opacity = '1'; });
+
+(function lzLoop(){
+  if (lzSeen){
+    lzDot.style.transform = 'translate(' + lx + 'px,' + ly + 'px)';
+    let qx = lx, qy = ly;
+    for (let i = 0; i < NT; i++){
+      tPos[i].x += (qx - tPos[i].x) * 0.34;
+      tPos[i].y += (qy - tPos[i].y) * 0.34;
+      tEls[i].style.transform = 'translate(' + tPos[i].x + 'px,' + tPos[i].y + 'px)';
+      qx = tPos[i].x; qy = tPos[i].y;
+    }
+  }
+  requestAnimationFrame(lzLoop);
+})();
+
+function lzSync(){
+  const on = document.body.classList.contains('laser-on');
+  lzBtn.classList.toggle('btn--coral', on);
+  document.getElementById('lzLabel').textContent = on ? '레이저 끄기' : '레이저 켜기';
+}
+lzBtn.addEventListener('click', function(){
+  document.body.classList.toggle('laser-on');
+  lzSync();
+});
+document.body.classList.add('laser-on');
+lzSync();
 
 go(0);
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
