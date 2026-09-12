@@ -5,199 +5,281 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>사차함수와 g(t)의 불연속</title>
+<title>사차함수 f(x)와 g(t)의 불연속</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400..700;1,400..700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
+/* ============ 색 토큰 ============ */
 :root{
-  --bg:#0b1220; --bg2:#0e1729;
-  --ink:#f2f6ff; --dim:#9db0cf; --faint:#5d739a;
-  --amber:#f5b642; --coral:#ff7d6a; --teal:#49d1c0;
-  --panel:#12203a; --panel2:#16274a; --line:#2b4168;
-  --fs:1;
+  --bg-deep:#0a1420; --bg:#0e1b2b; --panel:#16283e; --panel-2:#1d3350;
+  --line:rgba(214,229,245,.18); --line-strong:rgba(214,229,245,.38);
+  --chalk:#eaf1f8; --chalk-soft:#b9cadd; --chalk-faint:#7d94ad;
+  --amber:#f5b642; --coral:#ff7d6a; --teal:#49d1c0; --violet:#9d8cf5;
+  --laser:#ff2d2d;
+  /* STIX 로드 실패해도 항상 세리프로 떨어지도록 Times 를 체인에 포함 */
+  --f-en:'STIX Two Text','Times New Roman',Georgia;
+  --f-kr:'Noto Sans KR';
+  --f-math:'STIX Two Text','Times New Roman',Georgia,'Noto Sans KR',sans-serif;
+  --ls:31px; --ls-sm:25px; --ls-q:23px;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;padding:0;height:100%;overflow:hidden;background:var(--bg)}
-body{font-family:'Noto Sans KR','Space Grotesk',system-ui,sans-serif;color:var(--ink);
-  -webkit-user-select:none;user-select:none;touch-action:manipulation}
-.viewport{position:fixed;inset:0;overflow:hidden;background:
-  radial-gradient(1200px 800px at 22% 8%, #16233d 0%, var(--bg) 62%)}
-.stage{position:absolute;left:0;top:0;width:1600px;height:1100px;transform-origin:0 0}
-.sheet{width:100%;height:100%;padding:16px 20px 14px;display:flex;flex-direction:column;gap:12px}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;overscroll-behavior:none;background:var(--bg-deep)}
+body{font-family:var(--f-math);color:var(--chalk);
+  -webkit-user-select:none;user-select:none;touch-action:manipulation;word-break:keep-all}
 
-/* ===== 본문 ===== */
-.body{flex:1 1 auto;display:flex;gap:16px;min-height:0}
-.col-l{flex:0 0 872px;display:flex;flex-direction:column;gap:10px;min-height:0}
-.col-r{flex:1 1 auto;display:flex;flex-direction:column;gap:12px;min-height:0}
+.viewport{position:fixed;inset:0;overflow:hidden;
+  background:radial-gradient(1300px 800px at 20% 4%, #17273c 0%, var(--bg) 60%)}
+.stage{position:absolute;left:0;top:0;width:1600px;height:900px;transform-origin:0 0}
+.sheet{width:100%;height:100%;padding:12px 26px 12px;display:flex;flex-direction:column;gap:10px}
+.topline{flex:0 0 2px;background:linear-gradient(90deg,var(--amber),rgba(245,182,66,0) 62%);border-radius:2px}
 
-.panel{background:linear-gradient(180deg,var(--panel) 0%,var(--bg2) 100%);
-  border:1.5px solid var(--line);border-radius:16px;position:relative;overflow:hidden}
-.panel .tag{position:absolute;left:16px;top:12px;font-size:21px;font-weight:700;color:var(--dim);
-  letter-spacing:.2px;z-index:2}
-.p-graph{flex:1 1 auto;min-height:0;display:flex}
-.p-graph svg{width:100%;height:100%;display:block;touch-action:none;cursor:grab}
-.p-graph svg:active{cursor:grabbing}
+/* ============ 조판 ============ */
+.m{font-variant-numeric:tabular-nums;white-space:nowrap;line-height:1.15;display:inline-block}
+.v{font-style:italic;font-family:var(--f-en),'Noto Sans KR',sans-serif;font-weight:inherit}
+.v.fn{margin-right:.09em}
+.frac{display:inline-flex;flex-direction:column;align-items:stretch;text-align:center;
+  vertical-align:middle;margin:0 .22em;transform:translateY(-.10em);line-height:1.06;font-size:.86em}
+.frac>.num{padding:0 .22em .07em;border-bottom:.058em solid currentColor}
+.frac>.den{padding:.09em .22em 0}
+.lim{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;
+  line-height:1.02;margin:0 .12em;transform:translateY(.14em)}
+.lim>.lb{font-size:.46em;color:var(--chalk-soft);margin-top:.05em;white-space:nowrap}
+sup{font-size:.62em;vertical-align:super;line-height:0}
 
-/* ===== 슬라이더 바 ===== */
-.ctrl{flex:0 0 auto;display:flex;align-items:center;gap:14px;background:var(--panel);
-  border:1.5px solid var(--line);border-radius:14px;padding:10px 18px}
-.tval{font-family:'Space Grotesk',sans-serif;font-size:38px;font-weight:700;color:var(--amber);
-  min-width:186px;letter-spacing:.5px}
-.tval i{font-family:'Times New Roman',serif;font-style:italic}
-input[type=range]{-webkit-appearance:none;appearance:none;flex:1 1 auto;height:20px;border-radius:11px;
-  background:linear-gradient(90deg,#22365a,#2e4a78);outline:none;border:1px solid var(--line);
-  touch-action:none}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:52px;height:52px;border-radius:50%;
-  background:var(--amber);border:5px solid #2a2110;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.55)}
-input[type=range]::-moz-range-thumb{width:46px;height:46px;border-radius:50%;background:var(--amber);
-  border:5px solid #2a2110;cursor:pointer}
-.chip{font-family:'Space Grotesk',sans-serif;font-size:25px;font-weight:700;color:var(--ink);
-  background:#1d3157;border:1.5px solid var(--line);border-radius:11px;padding:9px 17px;cursor:pointer}
-.chip:hover{background:#27436f;border-color:var(--teal)}
-.chip.on{background:var(--teal);color:#06251f;border-color:var(--teal)}
+/* ============ 본문 2단 ============ */
+#body2col{flex:1 1 auto;display:flex;gap:16px;min-height:0}
+#leftCol{flex:1 1 auto;display:flex;flex-direction:column;gap:10px;min-width:0}
+#rightCol{flex:0 0 760px;display:flex;flex-direction:column;gap:8px;min-height:0}
 
-/* ===== g(t) 패널 ===== */
-.p-gt{flex:0 0 320px;transition:flex-basis .45s cubic-bezier(.4,0,.2,1),opacity .3s;overflow:hidden}
-.p-gt.hide{flex-basis:0px;opacity:0;border-width:0}
+.panel{background:linear-gradient(180deg,var(--panel) 0%,#0f1e30 100%);
+  border:1.5px solid var(--line);border-radius:15px;position:relative}
+.panel>.tag{position:absolute;left:15px;top:9px;font-size:21px;font-weight:700;
+  color:var(--chalk-faint);z-index:2;pointer-events:none}
+.p-graph>.tag{left:auto;right:16px;top:7px;font-size:23px;color:var(--chalk-soft);
+  background:rgba(10,20,32,.78);padding:3px 10px;border-radius:9px}
 
-/* ===== 단계 설명 ===== */
-.p-step{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;padding:16px 22px 18px}
-.p-step h2{margin:0 0 12px;font-size:calc(30px*var(--fs));font-weight:700;color:var(--amber);
-  line-height:1.25;letter-spacing:-.3px}
-.stepbody{flex:1 1 auto;min-height:0;overflow:hidden;font-size:calc(25px*var(--fs));line-height:1.52;color:var(--ink)}
-.stepbody p{margin:0 0 10px}
-.stepbody .dimline{color:var(--dim)}
-.eq{font-family:'Space Grotesk',sans-serif;font-size:calc(28px*var(--fs));font-weight:600;
-  margin:9px 0;line-height:1.45}
-sup{font-size:.6em;vertical-align:super;line-height:0}
-.v{font-family:'Times New Roman',serif;font-style:italic;font-size:1.06em}
-.box{background:#0c1a31;border:1.5px solid var(--teal);border-radius:12px;padding:10px 15px;margin:11px 0}
-.box.amberb{border-color:var(--amber)}
-.result{background:linear-gradient(90deg,rgba(245,182,66,.22),rgba(245,182,66,.05));
-  border-left:6px solid var(--amber);border-radius:9px;padding:10px 15px;margin:10px 0;
-  font-size:calc(27px*var(--fs));font-weight:700}
+/* ---- 조건 고정 박스 (접기/펼치기) ---- */
+.condbox{flex:0 0 auto;background:linear-gradient(180deg,#17293f,#101f31);
+  border:2px solid var(--line-strong);border-radius:15px;padding:9px 16px 11px;
+  display:flex;flex-direction:column;gap:6px;position:relative}
+.foldbtn{position:absolute;right:10px;top:8px;font-family:var(--f-kr),sans-serif;font-size:19px;font-weight:700;
+  color:var(--chalk-soft);background:var(--panel-2);border:1.5px solid var(--line);
+  border-radius:9px;padding:3px 12px;cursor:pointer;z-index:3}
+.foldbtn:hover{background:#27436f;color:var(--chalk)}
+.qtext{font-size:var(--ls-q);line-height:1.42;color:var(--chalk-soft);font-family:var(--f-math)}
+.qtext .ql{padding-right:118px}
+.qtext .ql+.ql{padding-right:0;margin-top:2px}
+.crow{display:flex;align-items:center;gap:13px;font-size:29px;line-height:1.2;font-family:var(--f-math)}
+.ctag{flex:0 0 auto;font-size:25px;font-weight:700;color:var(--bg);background:var(--teal);
+  border-radius:8px;padding:2px 11px;font-family:var(--f-kr),sans-serif}
+.goal{margin-left:auto;font-size:25px;font-weight:700;color:var(--amber);white-space:nowrap;padding-right:0}
+.condbox.fold .qtext{display:none}
+.condbox.fold .goal{padding-right:124px}
+
+/* ---- 단계 스크롤 ---- */
+#steps{flex:1 1 auto;overflow-y:auto;position:relative;
+  padding:2px 8px 400px 2px;scrollbar-width:none}
+#steps::-webkit-scrollbar{width:0;height:0}
+.stepCard{border:2px solid var(--line);border-radius:15px;background:#12233a;
+  padding:11px 17px 13px;margin-bottom:12px;opacity:.15;filter:blur(3px);
+  transition:opacity .35s,filter .35s,border-color .35s,box-shadow .35s}
+.stepCard.on{opacity:1;filter:none}
+.stepCard.live{opacity:1;filter:none;border-color:var(--amber);
+  box-shadow:0 0 0 1px rgba(245,182,66,.35),0 8px 30px rgba(245,182,66,.14)}
+.sc-h{display:flex;align-items:center;gap:12px;margin-bottom:7px}
+.sc-n{flex:0 0 auto;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;
+  font-size:23px;font-weight:700;background:var(--panel-2);color:var(--chalk-soft);border:2px solid var(--line)}
+.stepCard.live .sc-n{background:var(--amber);color:#231a06;border-color:var(--amber)}
+.sc-t{font-size:28px;font-weight:700;color:var(--amber);letter-spacing:-.3px;line-height:1.25;font-family:var(--f-math)}
+.stepCard:not(.live) .sc-t{color:var(--chalk)}
+.sc-b{font-size:var(--ls-sm);line-height:1.5;font-family:var(--f-math)}
+.sc-b p{margin:0 0 6px}
+/* 수식 줄은 반드시 블록 — .m 과 겹쳐도 인라인이 되지 않게 */
+.eq{display:block;font-family:var(--f-math);font-size:var(--ls);margin:8px 0;line-height:1.4;
+  white-space:nowrap;font-variant-numeric:tabular-nums}
+.eq.ind{padding-left:1.5em}
+.eq.sm{font-size:26px}
+.dim{color:var(--chalk-soft)}
 .bad{color:var(--coral);font-weight:700}
 .ok{color:var(--teal);font-weight:700}
 .am{color:var(--amber);font-weight:700}
-.locked{opacity:0;transform:translateY(10px);transition:opacity .45s,transform .45s;pointer-events:none}
-.locked.show{opacity:1;transform:none;pointer-events:auto}
-.hint{margin-top:9px;font-size:calc(23px*var(--fs));color:var(--teal);font-weight:600}
-.hint::before{content:"▸ ";}
-ul.tight{margin:7px 0 7px 2px;padding-left:22px}
-ul.tight li{margin:5px 0}
+.vio{color:var(--violet);font-weight:700}
+.box{background:#0c1a2b;border:2px solid var(--teal);border-radius:12px;padding:7px 14px;margin:8px 0}
+.box.amberb{border-color:var(--amber)}
+.recall{background:#0b1727;border:1.5px dashed var(--chalk-faint);border-radius:11px;
+  padding:4px 14px 6px;margin:0 0 8px;display:flex;align-items:baseline;gap:12px;white-space:nowrap}
+.recall .rl{flex:0 0 auto;font-size:19px;color:var(--chalk-faint);font-weight:700;font-family:var(--f-kr),sans-serif}
+.recall .eq{margin:0;font-size:26px;color:var(--chalk-soft)}
+.result{background:linear-gradient(90deg,rgba(245,182,66,.22),rgba(245,182,66,.04));
+  border-left:6px solid var(--amber);border-radius:9px;padding:7px 15px;margin:8px 0;
+  font-size:30px;font-weight:700;font-family:var(--f-math)}
+.hint{margin-top:7px;font-size:24px;color:var(--teal);font-weight:600;font-family:var(--f-math)}
+.hint::before{content:"▸ "}
+ul.tight{margin:5px 0 5px 2px;padding-left:24px}
+ul.tight li{margin:4px 0}
+.locked{opacity:0;transform:translateY(8px);transition:opacity .4s,transform .4s}
+.locked.show{opacity:1;transform:none}
 
-.frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;
-  margin:0 4px;font-size:.82em;line-height:1.05;position:relative;top:-.08em}
-.frac .num{padding:0 5px 1px}
-.frac .den{padding:1px 5px 0;border-top:2px solid currentColor}
+/* ---- 그래프 ---- */
+.p-graph{flex:1 1 auto;min-height:0;display:flex;overflow:hidden}
+.p-graph svg{width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+.p-graph svg:active{cursor:grabbing}
+.botrow{flex:0 0 250px;display:flex;gap:8px;min-height:0}
+.p-gt{flex:1 1 auto;display:flex;overflow:hidden;min-width:0}
+.p-gt svg{width:100%;height:100%;display:block}
 
-/* ===== 하단 : 제목(좌) + 조작(우) ===== */
-.app-foot{flex:0 0 96px;display:flex;align-items:center;gap:24px}
-.titlewrap{display:flex;flex-direction:column;justify-content:center;gap:3px;min-width:0}
-.t1{display:flex;align-items:center;gap:14px}
-.no{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:31px;color:var(--bg);
-  background:var(--amber);border-radius:11px;padding:3px 15px}
-.ttl{font-size:35px;font-weight:700;letter-spacing:-.4px;white-space:nowrap}
-.t2{font-size:27px;color:var(--dim);font-weight:500;white-space:nowrap}
-.t2 b{color:var(--teal);font-weight:700}
-.navwrap{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:7px}
-.navrow{display:flex;align-items:center;gap:16px}
-.btn{font-family:'Noto Sans KR',sans-serif;font-size:26px;font-weight:700;color:var(--ink);
-  background:#1d3157;border:1.5px solid var(--line);border-radius:13px;padding:11px 26px;cursor:pointer}
+/* ---- t 조작 패널 ---- */
+.p-ctrl{flex:0 0 292px;display:flex;flex-direction:column;justify-content:center;
+  gap:11px;padding:12px 14px}
+.tval{font-family:var(--f-math);font-size:36px;font-weight:700;color:var(--amber);
+  font-variant-numeric:tabular-nums;text-align:center;line-height:1}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:18px;border-radius:10px;
+  background:linear-gradient(90deg,#22365a,#2e4a78);outline:none;border:1px solid var(--line);touch-action:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:44px;height:44px;border-radius:50%;
+  background:var(--amber);border:5px solid #2a2110;box-shadow:0 3px 12px rgba(0,0,0,.55)}
+input[type=range]::-moz-range-thumb{width:40px;height:40px;border-radius:50%;background:var(--amber);border:5px solid #2a2110}
+.crow2{display:flex;align-items:center;gap:8px;justify-content:center}
+.clab{font-family:var(--f-kr),sans-serif;font-size:19px;color:var(--chalk-faint);font-weight:700}
+.chip{font-family:var(--f-math);font-size:23px;font-weight:700;color:var(--chalk);
+  background:var(--panel-2);border:1.5px solid var(--line);border-radius:10px;padding:6px 13px;cursor:pointer}
+.chip.k{font-family:var(--f-kr),sans-serif;font-size:20px}
+.chip:hover{background:#27436f;border-color:var(--teal)}
+.chip.on{background:var(--teal);color:#06251f;border-color:var(--teal)}
+
+/* ---- 발판 ---- */
+.app-foot{flex:0 0 60px;display:flex;align-items:center;gap:16px}
+.ftitle{display:flex;align-items:center;gap:12px;min-width:0}
+.fno{font-family:var(--f-math);font-size:24px;font-weight:700;color:var(--bg);background:var(--amber);border-radius:9px;padding:2px 12px}
+.fttl{font-family:var(--f-kr),sans-serif;font-size:25px;font-weight:700;letter-spacing:-.3px;white-space:nowrap}
+.dots{display:flex;gap:9px;margin:0 auto}
+.dots i{width:14px;height:14px;border-radius:50%;background:#2b4468;display:block;cursor:pointer;transition:all .25s}
+.dots i.on{background:var(--amber);width:38px;border-radius:7px}
+.btn{font-family:var(--f-kr),sans-serif;font-size:24px;font-weight:700;color:var(--chalk);
+  background:var(--panel-2);border:1.5px solid var(--line);border-radius:11px;padding:9px 19px;cursor:pointer}
 .btn:hover{background:#27436f}
 .btn.primary{background:var(--amber);color:#231a06;border-color:var(--amber)}
 .btn.primary:hover{filter:brightness(1.08)}
 .btn:disabled{opacity:.3;cursor:default}
-.btn.mini{font-size:24px;padding:10px 16px}
-.dots{display:flex;gap:11px}
-.dots i{width:16px;height:16px;border-radius:50%;background:#284066;display:block;cursor:pointer;
-  transition:all .25s}
-.dots i.on{background:var(--amber);width:42px;border-radius:8px}
-.keys{font-size:16px;color:var(--faint)}
+.btn.mini{padding:9px 13px;font-size:22px}
+.btn.mini.on{background:var(--laser);border-color:var(--laser);color:#fff}
+
+/* ---- 레이저 ---- */
+#laser{position:fixed;inset:0;pointer-events:none;z-index:9999;display:none}
+body.laser-on #laser{display:block}
+body.laser-on.has-mouse{cursor:none}
+body.laser-on.has-mouse *{cursor:none !important}
+.ldot{position:absolute;left:0;top:0;width:20px;height:20px;margin:-10px 0 0 -10px;border-radius:50%;
+  background:radial-gradient(circle,#fff 0%,var(--laser) 42%,rgba(255,45,45,0) 72%);
+  box-shadow:0 0 22px 8px rgba(255,45,45,.55)}
+.ltail{position:absolute;left:0;top:0;border-radius:50%;background:var(--laser)}
+.lring{position:absolute;left:0;top:0;width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:50%;border:3px solid var(--laser)}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important}}
 </style>
 </head>
-<body>
+<body class="laser-on">
+
 <div class="viewport">
 <div class="stage" id="stage">
  <div class="sheet">
+  <div class="topline"></div>
 
-  <div class="body">
-    <div class="col-l">
-      <div class="panel p-graph"><span class="tag">y = f(x) 와 직선 ℓ<sub>t</sub></span>
-        <svg id="gv" viewBox="0 0 872 880" preserveAspectRatio="xMidYMid meet"></svg>
-      </div>
-      <div class="ctrl">
-        <div class="tval"><i>t</i> = <span id="tv">1.00</span></div>
-        <input type="range" id="sl" min="-4" max="6.4" step="0.005" value="-2">
-        <button class="chip" data-t="1"><i class="v">t</i>=1</button>
-        <button class="chip" data-t="5"><i class="v">t</i>=5</button>
-        <button class="chip" id="auto">▶ 자동 회전</button>
-      </div>
-    </div>
+  <div id="body2col">
 
-    <div class="col-r">
-      <div class="panel p-gt" id="gtp"><span class="tag">y = g(t)</span>
-        <svg id="gt" viewBox="0 0 672 320" preserveAspectRatio="xMidYMid meet"></svg>
-      </div>
-      <div class="panel p-step">
-        <h2 id="sttitle"></h2>
-        <div class="stepbody" id="stbody"></div>
-      </div>
-    </div>
+   <!-- ============ 좌 ============ -->
+   <div id="leftCol">
+     <div class="condbox" id="condbox">
+       <button class="foldbtn" id="foldBtn">문제 ▲</button>
+       <div class="qtext"><div class="ql"><span class="v">x</span> ≥ −1에서 정의된 사차함수 <span class="v fn">f</span>(<span class="v">x</span>)에 대하여, 방정식 <span class="v fn">f</span>(<span class="v">x</span>) = <span class="v">tx</span> + <span class="v">t</span> 가 실근을 가질 <span class="v">t</span>의 최댓값이 5.</div><div class="ql"><span class="v">t</span> ≤ 5인 <span class="v">t</span>에 대하여 <span class="v fn">g</span>(<span class="v">t</span>)는 방정식을 만족시키는 <span class="v">x</span>의 최솟값.</div></div>
+       <div class="crow">
+         <span class="ctag">가</span>
+         <span class="m"><span class="v fn">g</span>(1) = 0,&nbsp; <span class="v fn">g</span>(5) = 2</span>
+         <span class="goal">구하는 값 &nbsp;|<span class="v fn">f</span>(3)|</span>
+       </div>
+       <div class="crow">
+         <span class="ctag">나</span>
+         <span class="m"><span class="lim">lim<span class="lb"><span class="v">t</span>→1+</span></span><span class="v fn">g</span>(<span class="v">t</span>) − <span class="lim">lim<span class="lb"><span class="v">t</span>→1−</span></span><span class="v fn">g</span>(<span class="v">t</span>) = 1</span>
+       </div>
+     </div>
+     <div id="steps"></div>
+   </div>
+
+   <!-- ============ 우 ============ -->
+   <div id="rightCol">
+     <div class="panel p-graph"><span class="tag"><span class="v">y</span> = <span class="v fn">f</span>(<span class="v">x</span>) 와 직선 <span class="v">y</span> = <span class="v">tx</span> + <span class="v">t</span></span>
+       <svg id="gv" viewBox="0 0 760 536" preserveAspectRatio="xMidYMid meet"></svg>
+     </div>
+     <div class="botrow">
+       <div class="panel p-gt"><span class="tag"><span class="v">y</span> = <span class="v fn">g</span>(<span class="v">t</span>)</span>
+         <svg id="gt" viewBox="0 0 460 250" preserveAspectRatio="xMidYMid meet"></svg>
+       </div>
+       <div class="panel p-ctrl">
+         <div class="tval"><span class="v">t</span> = <span id="tv">1.00</span></div>
+         <input type="range" id="sl" min="-4" max="6.4" step="0.005" value="-2">
+         <div class="crow2">
+           <button class="chip" data-t="1"><span class="v">t</span>=1</button>
+           <button class="chip" data-t="5"><span class="v">t</span>=5</button>
+           <button class="chip k" id="auto">▶ 회전</button>
+         </div>
+         <div class="crow2">
+           <span class="clab">미세</span>
+           <button class="chip" id="tm">−</button>
+           <button class="chip" id="tp">+</button>
+           <button class="chip k" id="jump">점프 재생</button>
+         </div>
+       </div>
+     </div>
+   </div>
+
   </div>
 
+  <!-- ============ 발판 ============ -->
   <div class="app-foot">
-    <div class="titlewrap">
-      <div class="t1">
-        <span class="no">22</span>
-        <span class="ttl">사차함수 <span class="v">f</span>(<span class="v">x</span>)와 <span class="v">g</span>(<span class="v">t</span>)의 불연속</span>
-      </div>
-      <div class="t2"><span class="v">f</span>(<span class="v">x</span>) = <span class="v">tx</span> + <span class="v">t</span>&nbsp; (<span class="v">x</span> ≥ −1)&nbsp; /&nbsp; 구하는 값 <b>|<span class="v">f</span>(3)|</b></div>
+    <div class="ftitle">
+      <span class="fno">22</span>
+      <span class="fttl">사차함수 <span class="v fn">f</span>(<span class="v">x</span>)와 <span class="v fn">g</span>(<span class="v">t</span>)의 불연속</span>
     </div>
-    <div class="navwrap">
-      <div class="navrow">
-        <button class="btn mini" id="fs">⛶</button>
-        <button class="btn" id="prev">← 이전</button>
-        <div class="dots" id="dots"></div>
-        <button class="btn primary" id="next">다음 →</button>
-      </div>
-      <span class="keys">그래프를 손가락으로 끌면 직선이 회전 · Space/→ 다음 · ← 이전 · 1~7 단계 · R 초기화</span>
-    </div>
+    <div class="dots" id="dots"></div>
+    <button class="btn mini on" id="laserBtn" title="레이저 (L)">레이저</button>
+    <button class="btn mini" id="fsBtn" title="전체화면 (F)">⛶</button>
+    <button class="btn mini" id="rsBtn" title="처음부터 (R)">↺</button>
+    <button class="btn" id="prev">← 이전</button>
+    <button class="btn primary" id="next">다음 →</button>
   </div>
 
  </div>
 </div>
 </div>
 
+<div id="laser">
+  <div class="ltail" id="lt0"></div><div class="ltail" id="lt1"></div><div class="ltail" id="lt2"></div>
+  <div class="ltail" id="lt3"></div><div class="ltail" id="lt4"></div>
+  <div class="ldot" id="ldot"></div>
+</div>
+
 <script>
-/* ================= 스케일링 (16:11, 여백 0) ================= */
-const SW=1600, SH=1100;
-const stage=document.getElementById('stage');
-function fit(){
-  const vw=(window.visualViewport&&window.visualViewport.width)||window.innerWidth;
-  const vh=(window.visualViewport&&window.visualViewport.height)||window.innerHeight;
-  let sx=vw/SW, sy=vh/SH;
-  const r=sx/sy;
-  // 화면 비율이 16:11에서 크게 벗어나면(±14%) 왜곡 대신 비율 유지
-  if(r>1.14||r<0.877){ const s=Math.min(sx,sy); sx=s; sy=s; }
-  stage.style.transform='translate('+((vw-SW*sx)/2)+'px,'+((vh-SH*sy)/2)+'px) scale('+sx+','+sy+')';
+/* ================= 스케일링 ================= */
+const STAGE_W=1600, STAGE_H=900, stage=document.getElementById('stage');
+function fitStage(){
+  const vv=window.visualViewport;
+  const w=vv?vv.width:innerWidth, h=vv?vv.height:innerHeight;
+  const s=Math.min(w/STAGE_W,h/STAGE_H);
+  stage.style.transform=`translate(${Math.round((w-STAGE_W*s)/2)}px,${Math.round((h-STAGE_H*s)/2)}px) scale(${s})`;
 }
-['resize','orientationchange','pageshow'].forEach(e=>addEventListener(e,fit));
-if(window.visualViewport){visualViewport.addEventListener('resize',fit);visualViewport.addEventListener('scroll',fit);}
-fit();[60,300,700,1500].forEach(d=>setTimeout(fit,d));
+['resize','orientationchange','pageshow'].forEach(e=>addEventListener(e,fitStage));
+if(window.visualViewport){visualViewport.addEventListener('resize',fitStage);visualViewport.addEventListener('scroll',fitStage);}
+fitStage();[0,60,300,700,1500].forEach(t=>setTimeout(fitStage,t));
 
 /* ================= 수학 ================= */
 const fmt=v=>v.toFixed(2).replace('-','\u2212');
-const F=x=>((((-5*x+18)*x-13)*x+1)*x+1);      // f(x) = -5x^4+18x^3-13x^2+x+1
-const H=x=>F(x)/(x+1);                         // 정점 (-1,0)에서의 기울기
-const XM=(2*Math.sqrt(61)-7)/15;               // h의 극소점 ≈ 0.5747
-const XR=3.8, EPS=1e-9;
-const BR=[[-1+EPS,0],[0,XM],[XM,2],[2,XR]];    // h의 단조구간 4개
+const F=x=>((((-5*x+18)*x-13)*x+1)*x+1);
+const H=x=>F(x)/(x+1);
+const XM=(2*Math.sqrt(61)-7)/15, XR=3.8, EPS=1e-9;
+const ALPHA=13/5;
+const BR=[[-1+EPS,0],[0,XM],[XM,2],[2,XR]];
 function solveBranch(b,t){
   let a=b[0],c=b[1],ha=H(a)-t,hc=H(c)-t;
-  if(ha===0)return a; if(hc===0)return c;
-  if(ha*hc>0)return null;
+  if(ha===0)return a; if(hc===0)return c; if(ha*hc>0)return null;
   for(let i=0;i<70;i++){const m=(a+c)/2,hm=H(m)-t; if(ha*hm<=0){c=m;hc=hm;}else{a=m;ha=hm;}}
   return (a+c)/2;
 }
@@ -206,23 +288,19 @@ function allRoots(t){
   for(const b of BR){const x=solveBranch(b,t); if(x!==null&&!r.some(u=>Math.abs(u-x)<1e-6))r.push(x);}
   return r.sort((p,q)=>p-q);
 }
-function gmin(t){                               // 최소 교점
-  if(t>5+1e-9)return null;
-  if(t<=1)return solveBranch(BR[0],t);
-  return solveBranch(BR[2],t);
-}
+function gmin(t){ if(t>5+1e-9)return null; return t<=1?solveBranch(BR[0],t):solveBranch(BR[2],t); }
 
 /* ================= 상태 ================= */
-let t=-2, step=0, zoomT=0, autoId=null;
+let t=-2, step=0, zoomT=0, autoId=null, jumpId=null;
 const visited=new Array(240).fill(false);
 let sweepDone=false;
 const TMIN=-4,TMAX=6.4;
-const WIDE={x0:-1.12,x1:2.92,y0:-11.5,y1:19.5};
-const ZOOM={x0:-0.45,x1:1.58,y0:-0.9,y1:4.2};
+const WIDE={x0:-1.12,x1:2.95,y0:-11.5,y1:19.5};
+const ZOOM={x0:-1.10,x1:2.92,y0:-5.5,y1:16.5};   // ⑤ : x=α 까지 보이는 완만한 확대
 let win=Object.assign({},WIDE);
 
-/* ================= 좌측 그래프 좌표 ================= */
-const GL=70,GR=846,GT=34,GB=806;
+/* ================= f(x) 그래프 ================= */
+const GL=64,GR=740,GT=28,GB=470;
 const px=x=>GL+(x-win.x0)/(win.x1-win.x0)*(GR-GL);
 const py=y=>GB-(y-win.y0)/(win.y1-win.y0)*(GB-GT);
 function clipPoly(pts){
@@ -231,111 +309,117 @@ function clipPoly(pts){
   const cross=(a,b,yb)=>{const s=(yb-a[1])/(b[1]-a[1]);return [a[0]+s*(b[0]-a[0]),yb];};
   for(let i=0;i<pts.length;i++){
     const p=pts[i], ins=inY(p);
-    if(ins){ if(i>0&&!inY(pts[i-1])){const q=pts[i-1];const yb=q[1]<win.y0?win.y0:win.y1;cur.push(cross(q,p,yb));} cur.push(p); }
-    else { if(i>0&&inY(pts[i-1])){const q=pts[i-1];const yb=p[1]<win.y0?win.y0:win.y1;cur.push(cross(q,p,yb));} if(cur.length>1)out.push(cur); cur=[]; }
+    if(ins){ if(i>0&&!inY(pts[i-1])){const q=pts[i-1];cur.push(cross(q,p,q[1]<win.y0?win.y0:win.y1));} cur.push(p); }
+    else { if(i>0&&inY(pts[i-1])){const q=pts[i-1];cur.push(cross(q,p,p[1]<win.y0?win.y0:win.y1));} if(cur.length>1)out.push(cur); cur=[]; }
   }
   if(cur.length>1)out.push(cur);
   return out;
 }
 const toPath=segs=>segs.map(s=>'M'+s.map(p=>px(p[0]).toFixed(1)+' '+py(p[1]).toFixed(1)).join(' L ')).join(' ');
-
-/* ================= 좌측 그래프 ================= */
 const gv=document.getElementById('gv');
 function drawGraph(){
   let s='';
-  for(let gx=Math.ceil(win.x0);gx<=win.x1;gx++){
-    s+=`<line x1="${px(gx)}" y1="${GT}" x2="${px(gx)}" y2="${GB}" stroke="#1d2f4e" stroke-width="1.2"/>`;
-  }
-  const dy=(win.y1-win.y0)>10?5:1;
-  for(let gy=Math.ceil(win.y0/dy)*dy;gy<=win.y1;gy+=dy){
-    s+=`<line x1="${GL}" y1="${py(gy)}" x2="${GR}" y2="${py(gy)}" stroke="#1d2f4e" stroke-width="1.2"/>`;
-  }
-  if(win.y0<0&&win.y1>0)s+=`<line x1="${GL}" y1="${py(0)}" x2="${GR}" y2="${py(0)}" stroke="#5d739a" stroke-width="2.5"/>`;
-  if(win.x0<0&&win.x1>0)s+=`<line x1="${px(0)}" y1="${GT}" x2="${px(0)}" y2="${GB}" stroke="#5d739a" stroke-width="2.5"/>`;
+  for(let gx=Math.ceil(win.x0);gx<=win.x1;gx++)
+    s+=`<line x1="${px(gx)}" y1="${GT}" x2="${px(gx)}" y2="${GB}" stroke="#1e3350" stroke-width="1.2"/>`;
+  const dy=(win.y1-win.y0)>10?5:2;
+  for(let gy=Math.ceil(win.y0/dy)*dy;gy<=win.y1;gy+=dy)
+    s+=`<line x1="${GL}" y1="${py(gy)}" x2="${GR}" y2="${py(gy)}" stroke="#1e3350" stroke-width="1.2"/>`;
+  if(win.y0<0&&win.y1>0)s+=`<line x1="${GL}" y1="${py(0)}" x2="${GR}" y2="${py(0)}" stroke="#7d94ad" stroke-width="2.4"/>`;
+  if(win.x0<0&&win.x1>0)s+=`<line x1="${px(0)}" y1="${GT}" x2="${px(0)}" y2="${GB}" stroke="#7d94ad" stroke-width="2.4"/>`;
   for(let gx=Math.ceil(win.x0);gx<=win.x1;gx++){ if(gx===0||gx===-1)continue;
-    s+=`<text x="${px(gx)}" y="${Math.min(GB-6,py(0)+34)}" fill="#8fa4c6" font-size="26" text-anchor="middle" font-family="Times New Roman" font-style="italic">${String(gx).replace('-','\u2212')}</text>`;}
+    s+=`<text x="${px(gx)}" y="${Math.min(GB-6,py(0)+30)}" fill="#9db0cf" font-size="24" text-anchor="middle" font-style="italic" font-family="STIX Two Text, Times New Roman, serif">${String(gx).replace('-','\u2212')}</text>`;}
 
-  s+=`<text x="${GR}" y="${GT-6}" fill="#5d739a" font-size="21" text-anchor="end">손가락으로 끌어 직선 회전</text>`;
+  s+=`<line x1="${px(-1)}" y1="${GT}" x2="${px(-1)}" y2="${GB}" stroke="#ff7d6a" stroke-width="2.4" stroke-dasharray="8 7" opacity=".75"/>`;
+  s+=`<text x="${px(-1)+9}" y="${GT+24}" fill="#ff7d6a" font-size="23" font-weight="700"><tspan font-style="italic">x</tspan> ≥ −1</text>`;
 
-  // 정의역 경계 x=-1
-  s+=`<line x1="${px(-1)}" y1="${GT}" x2="${px(-1)}" y2="${GB}" stroke="#ff7d6a" stroke-width="2.5" stroke-dasharray="8 7" opacity=".75"/>`;
-  s+=`<text x="${px(-1)+10}" y="${GT+26}" fill="#ff7d6a" font-size="25" font-weight="700">x ≥ −1</text>`;
-
-  // step1 : 직선다발
   if(step===0){
     for(const k of [-3,-1.5,0,1.5,3,4.5,6]){
       const pts=[];for(let i=0;i<=60;i++){const x=win.x0+(win.x1-win.x0)*i/60;pts.push([x,k*(x+1)]);}
-      s+=`<path d="${toPath(clipPoly(pts))}" fill="none" stroke="#49d1c0" stroke-width="2.4" opacity=".3"/>`;
+      s+=`<path d="${toPath(clipPoly(pts))}" fill="none" stroke="#49d1c0" stroke-width="2.2" opacity=".30"/>`;
     }
   }
-  // 고정된 두 직선
   const pinned=[];
   if(step>=3)pinned.push([5,'#ff7d6a']);
   if(step>=4)pinned.push([1,'#49d1c0']);
   for(const [k,c] of pinned){
     const pts=[];for(let i=0;i<=80;i++){const x=win.x0+(win.x1-win.x0)*i/80;pts.push([x,k*(x+1)]);}
-    s+=`<path d="${toPath(clipPoly(pts))}" fill="none" stroke="${c}" stroke-width="3.5" opacity=".55" stroke-dasharray="11 8"/>`;
+    s+=`<path d="${toPath(clipPoly(pts))}" fill="none" stroke="${c}" stroke-width="3.2" opacity=".55" stroke-dasharray="11 8"/>`;
   }
-  // 곡선 f
-  const cp=[];for(let i=0;i<=900;i++){const x=-1+(Math.min(win.x1,XR)+1)*i/900;cp.push([x,F(x)]);}
-  s+=`<path d="${toPath(clipPoly(cp))}" fill="none" stroke="#f2f6ff" stroke-width="5.5" stroke-linecap="round"/>`;
+  const cp=[];for(let i=0;i<=1000;i++){const x=-1+(Math.min(win.x1,XR)+1)*i/1000;cp.push([x,F(x)]);}
+  s+=`<path d="${toPath(clipPoly(cp))}" fill="none" stroke="#eaf1f8" stroke-width="5" stroke-linecap="round"/>`;
 
-  // 현재 직선
   const lp=[];for(let i=0;i<=80;i++){const x=-1+(win.x1+1)*i/80;lp.push([x,t*(x+1)]);}
-  s+=`<path d="${toPath(clipPoly(lp))}" fill="none" stroke="#f5b642" stroke-width="4.5"/>`;
+  s+=`<path d="${toPath(clipPoly(lp))}" fill="none" stroke="#f5b642" stroke-width="4"/>`;
 
-  // 정점
-  s+=`<circle cx="${px(-1)}" cy="${py(0)}" r="12" fill="#0b1220" stroke="#49d1c0" stroke-width="5"/>`;
-  s+=`<text x="${px(-1)+16}" y="${py(0)-18}" fill="#49d1c0" font-size="27" font-weight="700">(−1, 0)</text>`;
+  s+=`<circle cx="${px(-1)}" cy="${py(0)}" r="11" fill="#0e1b2b" stroke="#49d1c0" stroke-width="4.5"/>`;
+  s+=`<text x="${px(-1)+14}" y="${py(0)-16}" fill="#49d1c0" font-size="25" font-weight="700">(−1, 0)</text>`;
 
-  // 교점
   const rts=allRoots(t), gm=gmin(t);
   rts.forEach(x=>{ const Y=F(x); if(Y<win.y0||Y>win.y1)return;
     const isMin=(gm!==null&&Math.abs(x-gm)<1e-6);
-    const merge=(step===4&&!isMin&&x<XM+1e-6&&t<=1);
-    s+=`<circle cx="${px(x)}" cy="${py(Y)}" r="${isMin?15:9}" fill="${isMin?'#f5b642':(merge?'#ff7d6a':'#9db0cf')}" stroke="#0b1220" stroke-width="${isMin?3.5:2.5}"/>`;
+    const merge=(step===4&&!isMin&&x<XM+1e-6&&t<=1.0001);
+    s+=`<circle cx="${px(x)}" cy="${py(Y)}" r="${isMin?13:8}" fill="${isMin?'#f5b642':(merge?'#ff7d6a':'#b9cadd')}" stroke="#0e1b2b" stroke-width="${isMin?3:2.2}"/>`;
   });
-  if(gm!==null&&F(gm)>=win.y0&&F(gm)<=win.y1){
-    s+=`<line x1="${px(gm)}" y1="${py(F(gm))}" x2="${px(gm)}" y2="${GB}" stroke="#f5b642" stroke-width="2.5" stroke-dasharray="6 6" opacity=".8"/>`;
-    const lx=Math.max(GL+110,Math.min(GR-110,px(gm)));
-    s+=`<text x="${lx}" y="${GB+52}" fill="#f5b642" font-size="36" font-weight="700" text-anchor="middle">g(t) = ${fmt(gm)}</text>`;
-  }else if(gm===null){
-    const cx=(GL+GR)/2;
-    s+=`<rect x="${cx-310}" y="${GT+14}" width="620" height="62" rx="16" fill="#0b1220" stroke="#ff7d6a" stroke-width="3" opacity=".96"/>`;
-    s+=`<text x="${cx}" y="${GT+55}" fill="#ff7d6a" font-size="33" font-weight="700" text-anchor="middle">교점 없음 — 실근이 존재하지 않는다</text>`;
+
+  /* ⑤ 이후 : x = α 교점 강조 */
+  if(step>=4 && Math.abs(t-1)<0.02){
+    const Ya=F(ALPHA);
+    if(Ya>=win.y0&&Ya<=win.y1){
+      s+=`<circle cx="${px(ALPHA)}" cy="${py(Ya)}" r="13" fill="none" stroke="#9d8cf5" stroke-width="4.5"/>`;
+      const lb = (step>=5) ? '<tspan font-style="italic">α</tspan> = 13/5' : '<tspan font-style="italic">x</tspan> = <tspan font-style="italic">α</tspan>';
+      s+=`<text x="${px(ALPHA)+17}" y="${py(Ya)+9}" fill="#9d8cf5" font-size="26" font-weight="700">${lb}</text>`;
+    }
   }
 
-  // 단계별 주석
+  /* 하단 상태 라벨 — 그래프를 가리지 않도록 항상 플롯 밖 아래쪽에 */
+  const cx=(GL+GR)/2;
+  if(gm!==null){
+    if(F(gm)>=win.y0&&F(gm)<=win.y1){
+      s+=`<line x1="${px(gm)}" y1="${py(F(gm))}" x2="${px(gm)}" y2="${GB}" stroke="#f5b642" stroke-width="2.2" stroke-dasharray="6 6" opacity=".8"/>`;
+    }
+    const lx=Math.max(GL+100,Math.min(GR-100,px(gm)));
+    s+=`<text x="${lx}" y="${GB+48}" fill="#f5b642" font-size="33" font-weight="700" text-anchor="middle"><tspan font-style="italic">g</tspan>(<tspan font-style="italic">t</tspan>) = ${fmt(gm)}</text>`;
+  }else{
+    s+=`<text x="${cx}" y="${GB+48}" fill="#ff7d6a" font-size="31" font-weight="700" text-anchor="middle">교점 없음 — 실근이 존재하지 않는다</text>`;
+  }
+
   if(step===1){
-    s+=`<path d="M ${px(-1)} ${py(0)} L ${px(-1)} ${GB-8}" stroke="#ff7d6a" stroke-width="4"/>`;
-    s+=`<text x="${px(-1)+18}" y="${GB-16}" fill="#ff7d6a" font-size="30" font-weight="700">f(−1) &lt; 0 (아래로 내려감)</text>`;
+    s+=`<path d="M ${px(-1)} ${py(0)} L ${px(-1)} ${GB-8}" stroke="#ff7d6a" stroke-width="3.4"/>`;
+    s+=`<text x="${px(-1)+16}" y="${GB-14}" fill="#ff7d6a" font-size="26" font-weight="700"><tspan font-style="italic">f</tspan>(−1) &lt; 0</text>`;
   }
   if(step>=3){ const X=2,Y=15; if(Y<=win.y1&&Y>=win.y0){
-    s+=`<circle cx="${px(X)}" cy="${py(Y)}" r="16" fill="none" stroke="#ff7d6a" stroke-width="5"/>`;
-    s+=`<text x="${px(X)+22}" y="${py(Y)-12}" fill="#ff7d6a" font-size="29" font-weight="700">접점 (2, 15)</text>`;}}
+    s+=`<circle cx="${px(X)}" cy="${py(Y)}" r="14" fill="none" stroke="#ff7d6a" stroke-width="4.5"/>`;
+    s+=`<text x="${px(X)-18}" y="${py(Y)-16}" fill="#ff7d6a" font-size="25" font-weight="700" text-anchor="end">접점 (2, 15)</text>`;
+    s+=`<text x="${px(X)-18}" y="${py(Y)+12}" fill="#ff7d6a" font-size="25" font-weight="700" text-anchor="end">기울기 5</text>`;}}
   if(step>=4){ [[0,1,'접점 (0, 1)'],[1,2,'(1, 2)']].forEach(([X,Y,lb])=>{
     if(Y<=win.y1&&Y>=win.y0){
-      s+=`<circle cx="${px(X)}" cy="${py(Y)}" r="15" fill="none" stroke="#49d1c0" stroke-width="5"/>`;
-      s+=`<text x="${px(X)+20}" y="${py(Y)-20}" fill="#49d1c0" font-size="29" font-weight="700">${lb}</text>`;}});}
+      s+=`<circle cx="${px(X)}" cy="${py(Y)}" r="13" fill="none" stroke="#49d1c0" stroke-width="4.5"/>`;
+      s+=`<text x="${px(X)+16}" y="${py(Y)-18}" fill="#49d1c0" font-size="25" font-weight="700">${lb}</text>`;}});}
   gv.innerHTML=s;
 }
 
 /* ================= g(t) 그래프 ================= */
 const gtsvg=document.getElementById('gt');
-const HL=60,HR=648,HT=46,HB=286;
+const HL=50,HR=440,HT=52,HB=206;
+const GY0=-1.0, GY1=2.75;
 const qx=v=>HL+(v-TMIN)/(TMAX-TMIN)*(HR-HL);
-const qy=v=>HB-(v-(-1.35))/(2.65-(-1.35))*(HB-HT);
+const qy=v=>HB-(v-GY0)/(GY1-GY0)*(HB-HT);
 const BK=visited.length;
 const bkOf=v=>Math.max(0,Math.min(BK-1,Math.floor((v-TMIN)/(TMAX-TMIN)*BK)));
 function drawGT(){
   let s='';
-  s+=`<line x1="${HL}" y1="${qy(0)}" x2="${HR}" y2="${qy(0)}" stroke="#5d739a" stroke-width="2.5"/>`;
-  s+=`<line x1="${qx(0)}" y1="${HT}" x2="${qx(0)}" y2="${HB}" stroke="#5d739a" stroke-width="2.5"/>`;
-  for(const k of [-4,-2,2,4,6]) s+=`<text x="${qx(k)}" y="${qy(0)+27}" fill="#8fa4c6" font-size="21" text-anchor="middle">${k}</text>`;
-  for(const k of [1,2]) s+=`<text x="${qx(0)-14}" y="${qy(k)+8}" fill="#8fa4c6" font-size="21" text-anchor="end">${k}</text>`;
-  s+=`<text x="${HR-2}" y="${qy(0)-12}" fill="#8fa4c6" font-size="24" text-anchor="end" font-family="Times New Roman" font-style="italic">t</text>`;
-  s+=`<line x1="${qx(5)}" y1="${HT}" x2="${qx(5)}" y2="${HB}" stroke="#ff7d6a" stroke-width="2.5" stroke-dasharray="7 7" opacity=".6"/>`;
-  s+=`<text x="${qx(5)+8}" y="${HT+20}" fill="#ff7d6a" font-size="22" font-weight="700">t = 5</text>`;
+  const y0=qy(0);
+  s+=`<line x1="${HL}" y1="${y0}" x2="${HR}" y2="${y0}" stroke="#7d94ad" stroke-width="2.2"/>`;
+  s+=`<line x1="${qx(0)}" y1="${HT}" x2="${qx(0)}" y2="${HB}" stroke="#7d94ad" stroke-width="2.2"/>`;
+  /* 눈금 숫자를 축 '위'에 두어 곡선과 겹치지 않게 */
+  for(const k of [-4,-2,2,4,6]){
+    s+=`<line x1="${qx(k)}" y1="${y0-5}" x2="${qx(k)}" y2="${y0+5}" stroke="#7d94ad" stroke-width="2"/>`;
+    s+=`<text x="${qx(k)}" y="${y0-11}" fill="#9db0cf" font-size="20" text-anchor="middle">${String(k).replace('-','\u2212')}</text>`;
+  }
+  for(const k of [1,2]) s+=`<text x="${qx(0)-11}" y="${qy(k)+7}" fill="#9db0cf" font-size="20" text-anchor="end">${k}</text>`;
+  s+=`<text x="${HR-2}" y="${y0+26}" fill="#9db0cf" font-size="23" text-anchor="end" font-style="italic">t</text>`;
+  s+=`<line x1="${qx(5)}" y1="${HT}" x2="${qx(5)}" y2="${HB}" stroke="#ff7d6a" stroke-width="2.2" stroke-dasharray="7 7" opacity=".6"/>`;
+  s+=`<text x="${qx(5)+6}" y="${HT+16}" fill="#ff7d6a" font-size="20" font-weight="700"><tspan font-style="italic">t</tspan>=5</text>`;
 
   const showAll=(step>=3)||sweepDone;
   const pts=[];
@@ -346,7 +430,7 @@ function drawGT(){
     pts.push([tv,gmin(tv),tv>1]);
   }
   let cur=[],side=null;
-  const flush=()=>{ if(cur.length>1)s+=`<path d="M${cur.map(p=>qx(p[0]).toFixed(1)+' '+qy(p[1]).toFixed(1)).join(' L ')}" fill="none" stroke="#f5b642" stroke-width="5" stroke-linecap="round"/>`; cur=[];};
+  const flush=()=>{ if(cur.length>1)s+=`<path d="M${cur.map(p=>qx(p[0]).toFixed(1)+' '+qy(p[1]).toFixed(1)).join(' L ')}" fill="none" stroke="#f5b642" stroke-width="4.4" stroke-linecap="round"/>`; cur=[];};
   for(const p of pts){
     if(!p||p[1]===null){flush();side=null;continue;}
     if(side!==null&&p[2]!==side)flush();
@@ -354,86 +438,121 @@ function drawGT(){
   }
   flush();
   if(showAll){
-    s+=`<circle cx="${qx(1)}" cy="${qy(0)}" r="9" fill="#f5b642"/>`;
-    s+=`<circle cx="${qx(1)}" cy="${qy(1)}" r="9" fill="#0e1729" stroke="#f5b642" stroke-width="3.5"/>`;
-    s+=`<circle cx="${qx(5)}" cy="${qy(2)}" r="9" fill="#f5b642"/>`;
-    s+=`<line x1="${qx(1)}" y1="${qy(0)}" x2="${qx(1)}" y2="${qy(1)}" stroke="#49d1c0" stroke-width="3.5" stroke-dasharray="5 5"/>`;
-    s+=`<text x="${qx(1)+14}" y="${qy(.5)+8}" fill="#49d1c0" font-size="24" font-weight="700">점프 = 1</text>`;
+    s+=`<circle cx="${qx(1)}" cy="${qy(0)}" r="8" fill="#f5b642"/>`;
+    s+=`<circle cx="${qx(1)}" cy="${qy(1)}" r="8" fill="#0e1b2b" stroke="#f5b642" stroke-width="3.2"/>`;
+    s+=`<circle cx="${qx(5)}" cy="${qy(2)}" r="8" fill="#f5b642"/>`;
+    s+=`<line x1="${qx(1)}" y1="${qy(0)}" x2="${qx(1)}" y2="${qy(1)}" stroke="#49d1c0" stroke-width="3.2" stroke-dasharray="5 5"/>`;
+    s+=`<text x="${qx(1)-13}" y="${(qy(0)+qy(1))/2+8}" fill="#49d1c0" font-size="22" font-weight="700" text-anchor="end">점프 1</text>`;
+    s+=`<text x="${qx(5)-8}" y="${qy(2)-14}" fill="#f5b642" font-size="21" font-weight="700" text-anchor="end"><tspan font-style="italic">g</tspan>(5)=2</text>`;
   }
   const gm=gmin(t);
-  s+=`<line x1="${qx(t)}" y1="${HT}" x2="${qx(t)}" y2="${HB}" stroke="#f5b642" stroke-width="2.5" opacity=".45"/>`;
-  if(gm!==null)s+=`<circle cx="${qx(t)}" cy="${qy(gm)}" r="11" fill="#fff" stroke="#f5b642" stroke-width="4.5"/>`;
+  s+=`<line x1="${qx(t)}" y1="${HT}" x2="${qx(t)}" y2="${HB}" stroke="#f5b642" stroke-width="2.2" opacity=".45"/>`;
+  if(gm!==null)s+=`<circle cx="${qx(t)}" cy="${qy(gm)}" r="10" fill="#fff" stroke="#f5b642" stroke-width="4"/>`;
   gtsvg.innerHTML=s;
 }
 
-/* ================= 단계 내용 ================= */
+/* ================= 단계 ================= */
+const V=x=>`<span class="v">${x}</span>`;
+const FN='<span class="v fn">f</span>', GN='<span class="v fn">g</span>', AL='<span class="v">α</span>';
+const f35='<span class="frac"><span class="num">3</span><span class="den">5</span></span>';
+const f25='<span class="frac"><span class="num">2</span><span class="den">5</span></span>';
 const f135='<span class="frac"><span class="num">13</span><span class="den">5</span></span>';
+const EQ5=`${FN}(${V('x')}) − (${V('x')}+1) = ${V('a')}${V('x')}<sup>2</sup>(${V('x')} − 1)(${V('x')} − ${AL})`;
+const RECALL=`<div class="recall"><span class="rl">⑤에서</span><span class="eq">${EQ5}</span></div>`;
+
 const STEPS=[
-{t:'① 식 변형 — 모든 직선은 (−1, 0)을 지난다',
- b:`<div class="eq"><span class="v">tx</span> + <span class="v">t</span> = <span class="v">t</span>(<span class="v">x</span> + 1)</div>
-    <p>⇒ 직선 <span class="am">y = t(x+1)</span> 은 <b class="ok">기울기 t</b>, <b class="ok">항상 점 (−1, 0)</b>을 지난다.</p>
-    <p class="dimline">정점이 정의역의 끝 <span class="v">x</span> = −1 과 같다는 것이 이 문제의 장치.</p>
-    <div class="result"><span class="v">g</span>(<span class="v">t</span>) = 교점의 <span class="v">x</span>좌표 중 <span class="am">최솟값</span></div>
-    <div class="hint">슬라이더 또는 그래프를 끌어 직선을 회전시켜 보세요.</div>`},
-{t:'② 그래프의 모양이 먼저 결정된다',
- b:`<p class="dimline"><span class="v">t</span>의 최댓값이 존재하려면?</p>
+{n:'①', t:'모든 직선은 점 (−1, 0)을 지난다',
+ b:`<div class="eq">${V('t')}${V('x')} + ${V('t')} = ${V('t')}(${V('x')} + 1)</div>
+    <p>직선 <span class="am m">${V('y')} = ${V('t')}(${V('x')}+1)</span> 은 기울기가 <b class="ok">${V('t')}</b> 이고, <b class="ok">항상 점 (−1, 0)</b>을 지난다.</p>
+    <p class="dim">정의역의 끝 ${V('x')} = −1 이 곧 직선다발의 정점이라는 것이 이 문제의 장치.</p>
+    <div class="result">${GN}(${V('t')})는 교점의 ${V('x')}좌표 중 <span class="am">최솟값</span></div>
+    <div class="hint">슬라이더를 움직이거나 그래프를 끌어 직선을 회전시켜 보세요.</div>`},
+
+{n:'②', t:'곡선의 모양이 먼저 결정된다',
+ b:`<p class="dim">${V('t')}의 최댓값이 존재하려면 어떤 모양이어야 하는가?</p>
     <ul class="tight">
-      <li><span class="v">f</span>(−1) = 0 ⇒ <span class="v">x</span> = −1이 <b>모든</b> <span class="v">t</span>의 근 <span class="bad">✗</span></li>
-      <li><span class="v">f</span>(−1) &gt; 0 ⇒ 아무리 세워도 −1 곁에서 만남 <span class="bad">✗</span></li>
-      <li>최고차항 계수 &gt; 0 ⇒ 오른쪽에서 반드시 만남 <span class="bad">✗</span></li>
+      <li><span class="m">${FN}(−1) = 0</span> 이면 ${V('x')} = −1이 <b>모든</b> ${V('t')}에 대한 근 <span class="bad">✗</span></li>
+      <li><span class="m">${FN}(−1) &gt; 0</span> 이면 아무리 세워도 −1 근처에서 만남 <span class="bad">✗</span></li>
+      <li>최고차항 계수 &gt; 0 이면 오른쪽에서 반드시 만남 <span class="bad">✗</span></li>
     </ul>
-    <div class="result"><span class="v">f</span>(−1) &lt; 0 이고 최고차항 계수 <span class="v">a</span> &lt; 0</div>`},
-{t:'③ 직선을 돌려 g(t)를 그려보자',
+    <div class="result">${FN}(−1) &lt; 0 이고 최고차항 계수 ${V('a')} &lt; 0</div>`},
+
+{n:'③', t:`직선을 돌리며 ${GN}(${V('t')})를 관찰한다`,
  b:`<p>정점 (−1, 0)을 중심으로 직선을 회전시키며 <span class="am">가장 왼쪽 교점</span>을 추적한다.</p>
-    <div class="hint">슬라이더를 왼쪽 끝에서 오른쪽 끝까지 움직여 보세요.</div>
+    <div class="hint">슬라이더를 왼쪽 끝에서 오른쪽 끝까지 한 번 쓸어 보세요.</div>
     <div class="locked" id="lk3">
-      <div class="box"><p style="margin:0"><span class="am">관찰 1.</span> <span class="v">t</span> &gt; 5 에서는 교점이 없다 → 최댓값 5</p>
-      <p style="margin:7px 0 0"><span class="am">관찰 2.</span> <span class="v">t</span> = 1 에서 <span class="v">g</span>가 <b class="ok">뚝 뛴다</b> (불연속)</p></div>
+      <div class="box">
+        <p style="margin:0"><span class="am">관찰 1.</span> ${V('t')} &gt; 5 에서는 교점이 없다 → ${V('t')}의 최댓값 5</p>
+        <p style="margin:5px 0 0"><span class="am">관찰 2.</span> ${V('t')} = 1 에서 ${GN}가 <b class="ok">뚝 뛴다</b> (불연속, 점프 = 1)</p>
+      </div>
     </div>`},
-{t:'④ t의 최댓값 5 ⇒ ℓ₅는 접선',
- b:`<p><span class="v">t</span> = 5가 한계 ⇒ 이 직선이 곡선에 <span class="bad">접한다</span>. 접점은 <span class="v">g</span>(5) = 2.</p>
-    <div class="eq"><span class="v">f</span>(2) = 5 · (2+1) = <span class="am">15</span></div>
-    <div class="box amberb"><div class="eq" style="margin:2px 0"><span class="v">f</span>(<span class="v">x</span>) − 5(<span class="v">x</span>+1) = <span class="v">a</span>(<span class="v">x</span>−2)<sup>2</sup>(<span class="v">x</span><sup>2</sup>+<span class="v">px</span>+<span class="v">q</span>)</div>
-    <p class="dimline" style="margin:5px 0 0;font-size:.85em">(뒤 이차식은 실근 없음)</p></div>`},
-{t:'⑤ 불연속 = 왼쪽 두 교점의 소멸',
- b:`<p><span class="v">t</span>를 키우면 왼쪽 <span class="bad">두 교점</span>이 합쳐져 접점이 되고 곧 사라진다.</p>
-    <p>그 순간이 <span class="am">t = 1</span>, 접점은 <span class="v">g</span>(1) = <span class="am">0</span>.</p>
-    <p>점프 후 = 같은 직선의 <b class="ok">다음 교점</b> = 0 + 1 = <span class="am">1</span></p>
-    <div class="eq"><span class="v">f</span>(0) = 1, &nbsp; <span class="v">f</span>(1) = 2</div>
-    <div class="box"><div class="eq" style="margin:2px 0"><span class="v">f</span>(<span class="v">x</span>) − (<span class="v">x</span>+1) = <span class="v">a</span><span class="v">x</span><sup>2</sup>(<span class="v">x</span>−1)(<span class="v">x</span>−<span class="v">r</span>)</div></div>`},
-{t:'⑥ 두 식을 연립',
- b:`<div class="eq"><span class="v">P</span>(<span class="v">x</span>) = <span class="v">a</span><span class="v">x</span><sup>2</sup>(<span class="v">x</span>−1)(<span class="v">x</span>−<span class="v">r</span>) − 4(<span class="v">x</span>+1)</div>
-    <p class="dimline">가 <span class="v">x</span> = 2에서 <b class="ok">중근</b>을 가져야 한다.</p>
-    <div class="eq"><span class="v">P</span>(2) = 0 : &nbsp; 4<span class="v">a</span>(2−<span class="v">r</span>) = 12</div>
-    <div class="eq"><span class="v">P</span>′(2) = 0 : &nbsp; <span class="v">a</span>(20 − 8<span class="v">r</span>) = 4</div>
-    <div class="result"><span class="v">r</span> = ${f135}, &nbsp; <span class="v">a</span> = −5</div>`},
-{t:'⑦ 답',
- b:`<div class="eq" style="font-size:calc(31px*var(--fs))"><span class="v">f</span>(<span class="v">x</span>) = −5<span class="v">x</span><sup>4</sup> + 18<span class="v">x</span><sup>3</sup> − 13<span class="v">x</span><sup>2</sup> + <span class="v">x</span> + 1</div>
-    <p class="dimline" style="font-size:.9em">검산 : <span class="v">f</span>−5(<span class="v">x</span>+1) = −(<span class="v">x</span>−2)<sup>2</sup>(5<span class="v">x</span><sup>2</sup>+2<span class="v">x</span>+1) ✓ &nbsp; <span class="v">f</span>(−1) = −36 &lt; 0 ✓</p>
-    <div class="eq"><span class="v">f</span>(3) = −405 + 486 − 117 + 3 + 1 = −32</div>
-    <div class="result" style="font-size:calc(38px*var(--fs))">|<span class="v">f</span>(3)| = 32</div>`}
+
+{n:'④', t:`${V('t')} = 5 는 접선 — ${FN}(2)와 ${FN}′(2)를 얻는다`,
+ b:`<p>${V('t')} = 5가 한계값이므로 직선 <span class="bad m">${V('y')} = 5(${V('x')}+1)</span> 은 곡선에 <b class="bad">접한다</b>. 접점의 ${V('x')}좌표는 (가)에서 ${GN}(5) = 2.</p>
+    <div class="box amberb">
+      <div class="eq" style="margin:3px 0">${FN}(2) = 5 · (2 + 1) = <span class="am">15</span></div>
+      <div class="eq" style="margin:8px 0 3px">${FN}′(2) = <span class="am">5</span> <span class="dim" style="font-size:.72em">&nbsp;&nbsp;(접선의 기울기)</span></div>
+    </div>
+    <p class="dim">여기서는 ${FN}(${V('x')})를 인수분해하지 않고 <b class="ok">두 개의 수치 조건</b>만 챙긴다.</p>`},
+
+{n:'⑤', t:'불연속의 정체 — 왼쪽 두 교점의 소멸',
+ b:`<p>${V('t')}를 키우면 왼쪽의 <span class="bad">두 교점</span>이 하나로 합쳐져 접점이 되고 곧 사라진다. 그 순간이 ${V('t')} = 1.</p>
+    <p>(가)에서 ${GN}(1) = 0 이므로 접점은 ${V('x')} = 0, (나)에서 점프 후 값은 0 + 1 = <span class="am">1</span> 이므로 다음 교점은 ${V('x')} = 1.</p>
+    <div class="box"><div class="eq" style="margin:3px 0">${EQ5}</div></div>
+    <p class="dim">${V('x')} = 0 은 <b>중근</b>(접함), ${V('x')} = 1 은 다음 교점, 남은 한 근을 <span class="vio">${AL}</span> 로 둔다.</p>
+    <div class="hint">〈점프 재생〉으로 ${V('t')} = 1 앞뒤를 지나가 보세요.</div>`},
+
+{n:'⑥', t:`${V('x')} = 2 를 대입해 ${V('a')} 와 ${AL} 를 구한다`,
+ b:`${RECALL}
+    <div class="eq">${FN}(2) − 3 = ${V('a')} · 2<sup>2</sup>(2 − 1)(2 − ${AL}) = 12</div>
+    <div class="eq ind">⟹ <span class="ok">${V('a')}(2 − ${AL}) = 3</span></div>
+    <div class="eq sm" style="margin-top:11px">${FN}′(${V('x')}) − 1 = ${V('a')}[ 2${V('x')}(${V('x')}−1)(${V('x')}−${AL}) + ${V('x')}<sup>2</sup>(${V('x')}−${AL}) + ${V('x')}<sup>2</sup>(${V('x')}−1) ]</div>
+    <div class="eq sm ind">${FN}′(2) − 1 = ${V('a')}[ 2·2·1·(2−${AL}) + 2<sup>2</sup>(2−${AL}) + 2<sup>2</sup>·1 ]</div>
+    <div class="eq ind">⟹ 4 = ${V('a')}[ 8(2 − ${AL}) + 4 ] = 8 · 3 + 4${V('a')}</div>
+    <div class="result">${V('a')} = −5, &nbsp; 2 − ${AL} = −${f35} &nbsp;⟹&nbsp; ${AL} = ${f135}</div>`},
+
+{n:'⑦', t:`${V('x')} = 3 을 대입한다`,
+ b:`${RECALL}
+    <p class="dim">${FN}(${V('x')})를 전개할 필요 없이 ${V('a')} = −5, ${AL} = ${f135} 를 넣고 ${V('x')} = 3 을 대입한다.</p>
+    <div class="eq">${FN}(3) − 4 = (−5) · 3<sup>2</sup>(3 − 1)(3 − ${f135})</div>
+    <div class="eq ind">= (−5)(9)(2)${f25} = −36</div>
+    <div class="eq">${FN}(3) = 4 − 36 = −32</div>
+    <div class="result" style="font-size:38px">|${FN}(3)| = 32</div>`}
 ];
 
-const stT=document.getElementById('sttitle'), stB=document.getElementById('stbody'), gtp=document.getElementById('gtp');
-function fitCard(){
-  let s=1.38; document.documentElement.style.setProperty('--fs',s);
-  for(let i=0;i<30;i++){ if(stB.scrollHeight<=stB.clientHeight+1)break; s-=0.03; document.documentElement.style.setProperty('--fs',s.toFixed(3)); }
+const stepsBox=document.getElementById('steps');
+STEPS.forEach((S,i)=>{
+  const d=document.createElement('div');
+  d.className='stepCard'; d.id='card'+i;
+  d.innerHTML=`<div class="sc-h"><span class="sc-n">${S.n}</span><span class="sc-t">${S.t}</span></div><div class="sc-b">${S.b}</div>`;
+  d.addEventListener('click',()=>go(i));
+  stepsBox.appendChild(d);
+});
+const dotsBox=document.getElementById('dots');
+STEPS.forEach((_,i)=>{const d=document.createElement('i');d.addEventListener('click',()=>go(i));dotsBox.appendChild(d);});
+
+function scrollToCard(){
+  const card=document.getElementById('card'+step);
+  stepsBox.scrollTo({top:Math.max(0,card.offsetTop-4),behavior:'smooth'});
 }
-function renderStep(){
-  stT.innerHTML=STEPS[step].t; stB.innerHTML=STEPS[step].b;
-  gtp.classList.toggle('hide',step>=5);
-  document.querySelectorAll('#dots i').forEach((d,i)=>d.classList.toggle('on',i===step));
+function go(i){
+  step=Math.max(0,Math.min(STEPS.length-1,i));
+  STEPS.forEach((_,k)=>{
+    const c=document.getElementById('card'+k);
+    c.classList.toggle('on',k<step);
+    c.classList.toggle('live',k===step);
+  });
+  document.querySelectorAll('#dots i').forEach((d,k)=>d.classList.toggle('on',k===step));
   document.getElementById('prev').disabled=(step===0);
   document.getElementById('next').disabled=(step===STEPS.length-1);
   if(step===2&&sweepDone){const e=document.getElementById('lk3');if(e)e.classList.add('show');}
+  requestAnimationFrame(scrollToCard);
   zoomT=(step===4)?1:0;
-  requestAnimationFrame(()=>{fitCard();requestAnimationFrame(fitCard);});
-  if(step===3)setT(5); if(step===4)setT(0.9); if(step===5||step===6)setT(1);
+  if(step===3)setT(5); else if(step>=4)setT(1);
   animate();
 }
-function goto(i){ step=Math.max(0,Math.min(STEPS.length-1,i)); renderStep(); }
 
-/* ================= 애니메이션 / 입력 ================= */
+/* ================= 애니메이션 ================= */
 let raf=null;
 function animate(){
   if(raf)return;
@@ -449,21 +568,35 @@ function animate(){
   raf=requestAnimationFrame(tick);
 }
 const sl=document.getElementById('sl'), tv=document.getElementById('tv');
+let tRaf=null;
 function setT(v,mark){
   t=Math.max(TMIN,Math.min(TMAX,v)); sl.value=t; tv.textContent=fmt(t);
   if(mark!==false){
     visited[bkOf(t)]=true;
-    if(!sweepDone){
-      const n=visited.filter(Boolean).length;
-      if(n>=BK*0.88){sweepDone=true;const e=document.getElementById('lk3');if(e){e.classList.add('show');requestAnimationFrame(fitCard);}}
+    if(!sweepDone && visited.filter(Boolean).length>=BK*0.88){
+      sweepDone=true; const e=document.getElementById('lk3'); if(e)e.classList.add('show');
     }
   }
-  drawGraph();drawGT();
+  if(!tRaf) tRaf=requestAnimationFrame(()=>{tRaf=null;drawGraph();drawGT();});
 }
 sl.addEventListener('input',()=>setT(parseFloat(sl.value)));
 document.querySelectorAll('.chip[data-t]').forEach(b=>b.addEventListener('click',()=>setT(parseFloat(b.dataset.t))));
+document.getElementById('tm').addEventListener('click',()=>setT(t-0.01));
+document.getElementById('tp').addEventListener('click',()=>setT(t+0.01));
 
-/* --- 그래프 직접 드래그로 직선 회전 --- */
+/* 점프 재생 : t = 0.85 → 1.15 를 천천히 */
+const jumpBtn=document.getElementById('jump');
+jumpBtn.addEventListener('click',()=>{
+  if(jumpId){clearInterval(jumpId);jumpId=null;jumpBtn.classList.remove('on');jumpBtn.textContent='점프 재생';return;}
+  jumpBtn.classList.add('on');jumpBtn.textContent='정지';
+  setT(0.85);
+  jumpId=setInterval(()=>{
+    setT(t+0.0035);
+    if(t>=1.15){clearInterval(jumpId);jumpId=null;jumpBtn.classList.remove('on');jumpBtn.textContent='점프 재생';setT(1);}
+  },16);
+});
+
+/* 그래프 드래그 */
 let gdrag=false;
 function svgPt(ev){
   const m=gv.getScreenCTM(); if(!m)return null;
@@ -477,36 +610,81 @@ function dragT(ev){
   if(xm+1<0.15)return;
   setT(ym/(xm+1));
 }
-gv.addEventListener('pointerdown',e=>{gdrag=true;try{gv.setPointerCapture(e.pointerId);}catch(_){} dragT(e);e.preventDefault();});
+gv.addEventListener('pointerdown',e=>{gdrag=true;try{gv.setPointerCapture(e.pointerId);}catch(_){ } dragT(e);e.preventDefault();});
 gv.addEventListener('pointermove',e=>{if(gdrag){dragT(e);e.preventDefault();}});
-['pointerup','pointercancel','pointerleave'].forEach(t=>gv.addEventListener(t,()=>{gdrag=false;}));
+['pointerup','pointercancel','pointerleave'].forEach(n=>gv.addEventListener(n,()=>{gdrag=false;}));
 
 const autoBtn=document.getElementById('auto');
 autoBtn.addEventListener('click',()=>{
-  if(autoId){clearInterval(autoId);autoId=null;autoBtn.classList.remove('on');autoBtn.textContent='▶ 자동 회전';return;}
+  if(autoId){clearInterval(autoId);autoId=null;autoBtn.classList.remove('on');autoBtn.textContent='▶ 회전';return;}
   autoBtn.classList.add('on');autoBtn.textContent='❚❚ 정지';
   if(t>=TMAX-0.05)setT(TMIN);
-  autoId=setInterval(()=>{ setT(t+0.035); if(t>=TMAX-0.001){clearInterval(autoId);autoId=null;autoBtn.classList.remove('on');autoBtn.textContent='▶ 자동 회전';} },16);
+  autoId=setInterval(()=>{setT(t+0.035); if(t>=TMAX-0.001){clearInterval(autoId);autoId=null;autoBtn.classList.remove('on');autoBtn.textContent='▶ 회전';}},16);
 });
-document.getElementById('next').addEventListener('click',()=>goto(step+1));
-document.getElementById('prev').addEventListener('click',()=>goto(step-1));
-document.getElementById('fs').addEventListener('click',()=>{
-  document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen();
-});
+
+/* 문제 접기 */
+const condbox=document.getElementById('condbox'), foldBtn=document.getElementById('foldBtn');
+function toggleFold(){
+  const f=condbox.classList.toggle('fold');
+  foldBtn.textContent=f?'문제 ▼':'문제 ▲';
+  requestAnimationFrame(scrollToCard);
+}
+foldBtn.addEventListener('click',e=>{e.stopPropagation();toggleFold();});
+
+/* 버튼 */
+document.getElementById('next').addEventListener('click',()=>go(step+1));
+document.getElementById('prev').addEventListener('click',()=>go(step-1));
+document.getElementById('fsBtn').addEventListener('click',toggleFS);
+document.getElementById('rsBtn').addEventListener('click',reset);
+function toggleFS(){ document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen(); }
+function reset(){ visited.fill(false); sweepDone=false; const e=document.getElementById('lk3'); if(e)e.classList.remove('show'); setT(-2,false); go(0); }
+
 addEventListener('keydown',e=>{
-  if(e.key===' '||e.key==='ArrowRight'||e.key==='PageDown'){goto(step+1);e.preventDefault();}
-  else if(e.key==='ArrowLeft'||e.key==='PageUp'){goto(step-1);e.preventDefault();}
+  if(e.key===' '||e.key==='ArrowRight'||e.key==='PageDown'){go(step+1);e.preventDefault();}
+  else if(e.key==='ArrowLeft'||e.key==='PageUp'){go(step-1);e.preventDefault();}
   else if(e.key==='ArrowUp'){setT(t+0.05);e.preventDefault();}
   else if(e.key==='ArrowDown'){setT(t-0.05);e.preventDefault();}
-  else if(e.key>='1'&&e.key<='7'){goto(parseInt(e.key)-1);}
-  else if(e.key==='r'||e.key==='R'){visited.fill(false);sweepDone=false;setT(-2);goto(0);}
-  else if(e.key==='f'||e.key==='F'){document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen();}
+  else if(e.key>='1'&&e.key<='7'){go(parseInt(e.key)-1);}
+  else if(e.key==='r'||e.key==='R'){reset();}
+  else if(e.key==='f'||e.key==='F'){toggleFS();}
+  else if(e.key==='l'||e.key==='L'){toggleLaser();}
+  else if(e.key==='q'||e.key==='Q'){toggleFold();}
 });
 
-const dots=document.getElementById('dots');
-STEPS.forEach((_,i)=>{const d=document.createElement('i');d.addEventListener('click',()=>goto(i));dots.appendChild(d);});
+/* ================= 레이저 ================= */
+const laserBtn=document.getElementById('laserBtn'), ldot=document.getElementById('ldot');
+const tails=[0,1,2,3,4].map(i=>document.getElementById('lt'+i));
+let LX=-300,LY=-300; const TX=[],TY=[];
+tails.forEach((el,i)=>{TX[i]=-300;TY[i]=-300;el.style.opacity=(0.55-i*0.09).toFixed(2);
+  const sz=12-i*1.7; el.style.width=sz+'px'; el.style.height=sz+'px'; el.style.margin=(-sz/2)+'px 0 0 '+(-sz/2)+'px';});
+addEventListener('pointermove',e=>{
+  if(e.pointerType!=='mouse')return;
+  document.body.classList.add('has-mouse'); LX=e.clientX; LY=e.clientY;
+},{passive:true});
+addEventListener('pointerdown',e=>{
+  if(e.pointerType!=='mouse'||!document.body.classList.contains('laser-on'))return;
+  const r=document.createElement('div'); r.className='lring';
+  document.getElementById('laser').appendChild(r);
+  r.animate([{transform:`translate(${e.clientX}px,${e.clientY}px) scale(.3)`,opacity:.95},
+             {transform:`translate(${e.clientX}px,${e.clientY}px) scale(3.4)`,opacity:0}],
+            {duration:550,easing:'ease-out'});
+  setTimeout(()=>r.remove(),580);
+},{passive:true});
+(function lloop(){
+  ldot.style.transform=`translate(${LX}px,${LY}px)`;
+  let ax=LX,ay=LY;
+  tails.forEach((el,i)=>{
+    TX[i]+=(ax-TX[i])*0.34; TY[i]+=(ay-TY[i])*0.34;
+    el.style.transform=`translate(${TX[i]}px,${TY[i]}px)`;
+    ax=TX[i]; ay=TY[i];
+  });
+  requestAnimationFrame(lloop);
+})();
+function toggleLaser(){ laserBtn.classList.toggle('on',document.body.classList.toggle('laser-on')); }
+laserBtn.addEventListener('click',toggleLaser);
 
-setT(-2,false); renderStep(); drawGraph(); drawGT();
+/* ================= 시작 ================= */
+setT(-2,false); go(0); drawGraph(); drawGT();
 </script>
 </body>
 </html>

@@ -2,371 +2,597 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
 <title>13. 사차함수와 절댓값의 미분가능성</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400..700;1,400..700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-:root{--bg:#0d1425;--panel:#16203a;--panel2:#111a30;--line:#2c3a63;--txt:#e9eefb;--dim:#93a3c6;
-      --amber:#fbbf24;--coral:#fb7185;--teal:#2dd4bf;--violet:#a78bfa}
-html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);position:fixed;inset:0}
-body{font-family:'Space Grotesk','Noto Sans KR',sans-serif;color:var(--txt)}
-#stage{position:absolute;left:0;top:0;width:1600px;height:1100px;transform-origin:0 0;
-  background:radial-gradient(1200px 760px at 18% -12%,#1a2544 0%,var(--bg) 62%);
-  display:flex;flex-direction:column;padding:18px 30px 18px}
-i{font-style:italic;font-family:Arial,Helvetica,'Noto Sans KR',sans-serif;font-weight:600;letter-spacing:.3px}
+/* ============================================================
+   색 토큰 — 칠판 팔레트 (규격 §2)
+   ============================================================ */
+:root{
+  --bg-deep:#0a1420;  --bg:#0e1b2b;  --panel:#16283e;  --panel-2:#1d3350;
+  --line:rgba(214,229,245,.18);  --line-strong:rgba(214,229,245,.38);
+  --chalk:#eaf1f8;  --chalk-soft:#b9cadd;  --chalk-faint:#7d94ad;
+  --amber:#f5b642;   /* 핵심 값, 정답, 현재 단계 */
+  --coral:#ff7d6a;   /* 주어진 함수, 주의 */
+  --teal:#49d1c0;    /* 조건 성립, 확정 */
+  --violet:#9d8cf5;  /* 학생이 직접 끄는 요소 */
+  --laser:#ff2d2d;
 
-/* ---------- layout ---------- */
-.wrap{flex:1;display:flex;gap:18px;min-height:0}
-.left{width:826px;display:flex;flex-direction:column;gap:12px;min-height:0}
-.right{flex:1;min-width:0}
+  --f-en:'STIX Two Text'; --f-kr:'Noto Sans KR';
+
+  /* 글자 크기 — 스테이지 1600×900 좌표 기준 (규격 §4) */
+  --ls:42px;        /* 좌측 본문 수식 */
+  --ls-exp:35px;    /* 긴 전개식 */
+  --ls-sm:33px;     /* 보조 설명 */
+  --ls-q:32px;      /* 문제 원문 */
+}
+
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;height:100%;overflow:hidden;overscroll-behavior:none;
+  background:var(--bg-deep);position:fixed;inset:0;touch-action:manipulation}
+body{font-family:var(--f-en),var(--f-kr),system-ui,sans-serif;color:var(--chalk)}
+
+/* ============================================================
+   화면 골격 (규격 §1)
+   ============================================================ */
+.viewport{position:fixed;inset:0}
+#stage{position:absolute;left:0;top:0;width:1600px;height:900px;transform-origin:0 0;
+  background:radial-gradient(1250px 780px at 16% -14%,#152740 0%,var(--bg) 60%)}
+.sheet{width:100%;height:100%;padding:14px 30px 16px;display:flex;flex-direction:column;gap:10px}
+.topline{flex:0 0 2px;background:linear-gradient(90deg,var(--amber),rgba(245,182,66,0) 62%);border-radius:2px}
+#body2col{flex:1 1 auto;min-height:0;display:flex;gap:18px}
+#leftCol{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:10px}
+#rightCol{flex:0 0 620px;min-width:0}
+
 .card{background:var(--panel);border:2px solid var(--line);border-radius:18px}
 
-/* ---------- problem (fixed) ---------- */
-.prob{flex:0 0 auto;padding:15px 22px}
-.prob .q{font-size:24px;font-weight:700;line-height:1.45}
-.prob .q b{color:var(--amber)}
-.conds{margin-top:10px;display:flex;flex-direction:column;gap:3px}
-.conds div{font-size:22px;line-height:1.4}
-.conds span.k{color:var(--amber);font-weight:700;margin-right:8px}
+/* ============================================================
+   조판 (규격 §3)
+   ============================================================ */
+.m{font-family:var(--f-en),var(--f-kr),serif;font-variant-numeric:tabular-nums;
+   white-space:nowrap;line-height:1.15;display:inline-block}
+i,.v,.var{font-style:italic;font-family:var(--f-en),serif;font-weight:500}
+.v.fn{margin-right:.09em}
+.frac{display:inline-flex;flex-direction:column;align-items:stretch;text-align:center;
+      vertical-align:middle;margin:0 .22em;transform:translateY(-.08em);
+      line-height:1.06;font-size:.86em}
+.frac>.num{padding:0 .22em .07em;border-bottom:.058em solid currentColor}
+.frac>.den{padding:.09em .22em 0}
+.ind{padding-left:1.5em;display:block}
+.kr{font-family:var(--f-kr),sans-serif;word-break:keep-all}
+.am{color:var(--amber)}.co{color:var(--coral)}.te{color:var(--teal)}
+.vi{color:var(--violet)}.dim{color:var(--chalk-faint)}.soft{color:var(--chalk-soft)}
 
-/* ---------- scrolling steps ---------- */
-.scroller{position:relative;flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding-right:10px;
-  -webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 22px);
-  mask-image:linear-gradient(to bottom,transparent 0,#000 22px)}
+/* ============================================================
+   좌측 — 문제 (고정, 접힘 가능)
+   ============================================================ */
+.prob{flex:0 0 auto;padding:14px 22px 15px;cursor:pointer;position:relative;
+  border-color:var(--line-strong);transition:padding .25s}
+.prob .qhead{font-family:var(--f-kr);font-size:21px;font-weight:700;color:var(--amber);
+  letter-spacing:2px;margin-bottom:5px;display:flex;align-items:center;gap:10px}
+.prob .qhead .fold-i{margin-left:auto;font-size:22px;color:var(--chalk-faint)}
+.prob .q{font-family:var(--f-kr);font-size:var(--ls-q);font-weight:700;line-height:1.42;word-break:keep-all}
+.prob .q b{color:var(--amber);font-weight:700}
+.conds{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+.conds div{font-family:var(--f-kr);font-size:30px;line-height:1.36;
+  display:flex;align-items:flex-start;gap:10px}
+.conds span.k{color:var(--amber);font-weight:700;font-size:29px;flex:0 0 auto;white-space:nowrap}
+.conds span.ct{flex:1 1 auto;min-width:0;word-break:keep-all}
+.prob.fold{padding:11px 22px}
+.prob.fold .conds{display:none}
+.prob.fold .q{font-size:27px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prob.fold .qhead{margin-bottom:2px}
+
+/* ============================================================
+   좌측 — 단계 카드 (규격 §6)
+   ============================================================ */
+.scroller{position:relative;flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;padding-right:12px}
 .scroller::-webkit-scrollbar{width:10px}
-.scroller::-webkit-scrollbar-thumb{background:#33436e;border-radius:5px}
+.scroller::-webkit-scrollbar-thumb{background:#31496b;border-radius:5px}
 .scroller::-webkit-scrollbar-track{background:transparent}
-.steps{display:flex;flex-direction:column;gap:12px;padding-bottom:20px}
-@keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
-.step{display:none;border:2px solid var(--line);border-radius:16px;background:var(--panel);
-  padding:15px 20px 15px 18px;border-left:6px solid #33436e;transition:border-color .3s,background .3s}
-.step.on{display:block;animation:rise .4s ease both}
-.step.now{border-left-color:var(--amber);background:#1b2745}
-.step .sh{display:flex;align-items:center;gap:10px;margin-bottom:7px}
-.step .sn{font-size:17px;font-weight:700;letter-spacing:1.5px;color:var(--teal)}
-.step .st{font-size:23px;font-weight:700;color:#cfdaf2}
-.step .bd{font-size:27px;line-height:1.55}
-.step .bd .sub{font-size:23px;color:var(--dim);line-height:1.5}
-.result{background:linear-gradient(90deg,rgba(251,191,36,.2),rgba(251,191,36,0));
-  border:2px solid var(--amber);border-radius:13px;padding:12px 18px;font-size:32px;font-weight:700;margin-top:9px}
-.final{border:3px solid var(--amber);border-radius:16px;padding:14px 20px;margin-top:8px;
-  background:linear-gradient(90deg,rgba(251,191,36,.18),rgba(45,212,191,.1));font-size:36px;font-weight:700}
-.am{color:var(--amber)}.co{color:var(--coral)}.te{color:var(--teal)}.vi{color:var(--violet)}.dimtx{color:var(--dim)}
-.frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;
-  margin:0 5px;font-size:.86em;line-height:1.05;position:relative;top:-.06em}
-.frac .n{padding:0 7px 3px;border-bottom:2.5px solid currentColor}
-.frac .d{padding:3px 7px 0}
-.mline{display:flex;align-items:center;flex-wrap:nowrap;white-space:nowrap;gap:2px}
+.steps{display:flex;flex-direction:column;gap:12px;padding-bottom:24px}
 
-/* ---------- right panel ---------- */
-.right{display:flex;flex-direction:column}
-.rpane{display:none;flex:1;flex-direction:column;gap:10px;padding:18px 20px}
+.stepCard{border:2px solid var(--line);border-radius:16px;background:var(--panel);
+  padding:14px 22px 16px 20px;border-left:7px solid #31496b;
+  opacity:.16;filter:blur(3px);transition:opacity .35s,filter .35s,border-color .3s,background .3s}
+.stepCard.on{opacity:1;filter:none}
+.stepCard.live{border-color:var(--amber);border-left-color:var(--amber);background:#1a2d47;
+  box-shadow:0 0 0 3px rgba(245,182,66,.16),0 10px 30px rgba(0,0,0,.35)}
+.sh{display:flex;align-items:center;gap:12px;margin-bottom:8px;font-family:var(--f-kr)}
+.sn{display:inline-flex;align-items:center;justify-content:center;
+  font-size:25px;font-weight:700;color:var(--teal)}
+.st{font-size:29px;font-weight:700;color:var(--chalk-soft)}
+.bd{font-size:var(--ls);line-height:1.5}
+.bd .sub{font-family:var(--f-kr);font-size:var(--ls-sm);color:var(--chalk-faint);line-height:1.45}
+.bd .exp{font-size:var(--ls-exp);line-height:1.42}
+.result{background:linear-gradient(90deg,rgba(245,182,66,.22),rgba(245,182,66,0));
+  border:2px solid var(--amber);border-radius:13px;padding:10px 20px;font-size:44px;font-weight:600;margin-top:10px}
+.final{border:3px solid var(--amber);border-radius:16px;padding:14px 22px;margin-top:8px;
+  background:linear-gradient(90deg,rgba(245,182,66,.2),rgba(73,209,192,.1));font-size:46px;font-weight:600;
+  display:flex;align-items:center;justify-content:center;flex-wrap:nowrap}
+
+/* ============================================================
+   우측 패널
+   ============================================================ */
+#rightCol{display:flex;flex-direction:column}
+.rpane{display:none;flex:1 1 auto;flex-direction:column;padding:16px 18px;min-height:0}
 .rpane.on{display:flex}
-.rtitle{font-size:22px;font-weight:700}
-.cap{font-size:21px;font-weight:700;text-align:center;margin-bottom:3px}
-svg{display:block;margin:0 auto}
-.sliderwrap{display:flex;align-items:center;gap:16px;font-size:24px}
+.ghead{flex:0 0 54px;display:flex;align-items:center;gap:12px;font-family:var(--f-kr);
+  font-size:30px;font-weight:700;min-width:0}
+.ghead .chip{margin-left:auto;font-family:var(--f-en);font-size:26px;font-weight:600;
+  background:var(--panel-2);border:2px solid var(--line);border-radius:11px;
+  padding:3px 14px;min-width:150px;text-align:center;font-variant-numeric:tabular-nums}
+.cap.m,.solrow .sc.m{display:block}
+#pB1{justify-content:space-between}
+.cap{font-size:29px;font-weight:600;text-align:center;height:32px;line-height:32px}
+.srow{flex:0 0 52px;display:flex;align-items:center;gap:16px;font-size:38px;font-weight:600}
 input[type=range]{-webkit-appearance:none;appearance:none;height:16px;border-radius:8px;
-  background:linear-gradient(90deg,#334166,#4a5c8f);outline:none;flex:1}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:44px;height:44px;border-radius:50%;
-  background:var(--amber);border:4px solid #0d1425;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.5)}
-input[type=range]::-moz-range-thumb{width:44px;height:44px;border-radius:50%;background:var(--amber);border:4px solid #0d1425}
-.readout{display:flex;gap:12px}
-.rd{flex:1;text-align:center;border:2px solid var(--line);border-radius:12px;padding:7px;background:var(--panel2)}
-.rd .t{font-size:18px;color:var(--dim)}.rd .v{font-size:27px;font-weight:700}
-.verdict{text-align:center;font-size:25px;font-weight:700;padding:9px;border-radius:12px;border:2px solid}
-.verdict.bad{color:var(--coral);border-color:var(--coral);background:rgba(251,113,133,.1)}
-.verdict.good{color:var(--teal);border-color:var(--teal);background:rgba(45,212,191,.12)}
-.note{font-size:17px;color:#6f80a8;text-align:center}
-.mini3{display:flex;gap:12px}
-.mini{flex:1;text-align:center;border:2px solid var(--line);border-radius:14px;padding:10px;background:var(--panel2)}
-.mini .lab{font-size:25px;font-weight:700;margin-top:6px}
-.mini .ex{font-size:19px;color:var(--dim);margin-top:2px}
-.grid8{display:grid;grid-template-columns:1fr 1fr;gap:9px}
-.ccard{border:2px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--panel2);
-  cursor:pointer;transition:.16s;display:flex;align-items:center;gap:9px}
-.ccard .nm{font-size:20px;font-weight:700;flex:1;line-height:1.2}
-.ccard .nm em{display:block;font-style:normal;font-size:17px;color:var(--dim)}
-.ccard .bd2{font-size:19px;font-weight:700;padding:3px 9px;border-radius:9px;background:#2b3760;color:var(--dim);min-width:58px;text-align:center}
-.ccard.sel{border-color:var(--amber);background:#1e2848}
-.ccard.done .bd2{background:rgba(251,113,133,.18);color:var(--coral)}
-.ccard.done.ok .bd2{background:rgba(45,212,191,.2);color:var(--teal)}
-.ccard.done.ok{border-color:var(--teal)}
-.twin{display:flex;gap:10px;min-width:0}
-#gB1,#gB2{min-height:280px;border-radius:14px;background:var(--panel2)}
-.tw{flex:1;min-width:0}
-.hint{font-size:21px;color:var(--dim);text-align:center}
-.srow{opacity:0;transform:translateY(12px);transition:.38s}
-.srow.on{opacity:1;transform:none}
-.srow .sc{font-size:21px;font-weight:700;text-align:center;color:var(--violet);margin-bottom:2px}
+  background:linear-gradient(90deg,#32486b,#4c6796);outline:none;flex:1;touch-action:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:46px;height:46px;border-radius:50%;
+  background:var(--violet);border:4px solid var(--bg);cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.55)}
+input[type=range]::-moz-range-thumb{width:46px;height:46px;border-radius:50%;background:var(--violet);border:4px solid var(--bg)}
+.srow .val{min-width:120px;text-align:right;font-variant-numeric:tabular-nums;color:var(--violet)}
+svg{display:block;margin:0 auto}
 
-/* ---------- footer ---------- */
-.foot{flex:0 0 auto;display:flex;align-items:center;gap:16px;margin-top:14px}
-.stamp{background:var(--amber);color:#241a00;border-radius:11px;padding:5px 15px;font-size:28px;font-weight:700;line-height:1.15}
-.ttl{font-size:26px;font-weight:700}
-.dots{display:flex;gap:8px;flex:1;justify-content:center}
-.dot{width:14px;height:14px;border-radius:50%;background:#2c3a63;cursor:pointer;transition:.2s}
+.readout{display:flex;gap:12px;flex:0 0 84px}
+.rd{flex:1;text-align:center;border:2px solid var(--line);border-radius:12px;padding:6px;background:var(--panel-2)}
+.rd .t{font-family:var(--f-kr);font-size:23px;color:var(--chalk-faint)}
+.rd .v{font-size:33px;font-weight:600;font-variant-numeric:tabular-nums;min-width:120px;display:inline-block}
+.verdict{flex:0 0 58px;display:flex;align-items:center;justify-content:center;font-family:var(--f-kr);
+  font-size:27px;font-weight:700;border-radius:12px;border:2px solid;text-align:center}
+.verdict.bad{color:var(--coral);border-color:var(--coral);background:rgba(255,125,106,.1)}
+.verdict.good{color:var(--teal);border-color:var(--teal);background:rgba(73,209,192,.13)}
+.note{font-family:var(--f-kr);font-size:21px;color:#6f86a3;text-align:center}
+.hint{font-family:var(--f-kr);font-size:26px;color:var(--chalk-soft);text-align:center;height:38px;line-height:38px}
+
+.tbtn{font-family:var(--f-kr);font-size:23px;font-weight:700;padding:5px 14px;border-radius:11px;
+  border:2px solid var(--violet);background:rgba(157,140,245,.14);color:var(--violet);cursor:pointer}
+.tbtn.act{background:var(--violet);color:#1b1440}
+
+.mini3{display:flex;gap:12px}
+.mini{flex:1;text-align:center;border:2px solid var(--line);border-radius:14px;padding:10px 6px;background:var(--panel-2)}
+.mini .lab{font-size:30px;font-weight:600;margin-top:8px}
+.mini .ex{font-family:var(--f-kr);font-size:22px;color:var(--chalk-faint);margin-top:3px;word-break:keep-all;line-height:1.25}
+
+.grid8{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ccard{border:2px solid var(--line);border-radius:12px;padding:8px 12px;background:var(--panel-2);
+  cursor:pointer;transition:.16s;display:flex;align-items:center;gap:10px;height:66px}
+.ccard .nm{font-family:var(--f-kr);font-size:20px;font-weight:700;flex:1;line-height:1.2;min-width:0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ccard .nm em{display:block;font-style:normal;font-family:var(--f-en);font-size:20px;color:var(--chalk-faint);margin-top:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ccard .bd2{font-size:23px;font-weight:700;padding:3px 9px;border-radius:9px;background:#2d4468;
+  color:var(--chalk-faint);min-width:62px;text-align:center;font-variant-numeric:tabular-nums}
+.ccard.sel{border-color:var(--amber);background:#22375a}
+.ccard.done .bd2{background:rgba(255,125,106,.2);color:var(--coral)}
+.ccard.done.ok .bd2{background:rgba(73,209,192,.22);color:var(--teal)}
+.ccard.done.ok{border-color:var(--teal)}
+.twin{display:flex;gap:12px;min-width:0}
+.tw{flex:1;min-width:0}
+.solrow{opacity:0;transform:translateY(12px);transition:.4s}
+.solrow.on{opacity:1;transform:none}
+.solrow .sc{font-size:25px;font-weight:600;text-align:center;color:var(--violet);height:46px;line-height:46px}
+
+/* ============================================================
+   발판
+   ============================================================ */
+.app-foot{flex:0 0 60px;display:flex;align-items:center;gap:16px}
+.stamp{background:var(--amber);color:#241a00;border-radius:11px;padding:4px 16px;font-size:30px;font-weight:700}
+.ttl{font-family:var(--f-kr);font-size:24px;font-weight:700;color:var(--chalk-soft)}
+.dots{display:flex;gap:9px;flex:1;justify-content:center}
+.dot{width:14px;height:14px;border-radius:50%;background:#31496b;cursor:pointer;transition:.2s}
 .dot.on{background:var(--amber)}
-.dot.now{transform:scale(1.45);background:var(--teal)}
-.fbtns{display:flex;gap:10px}
-.btn{padding:12px 24px;border-radius:13px;border:2px solid var(--line);background:#1a2440;color:var(--dim);
-  font-size:21px;font-weight:700;font-family:inherit;cursor:pointer;transition:.15s}
+.dot.now{transform:scale(1.5);background:var(--teal)}
+.fbtns{display:flex;gap:9px}
+.btn{padding:9px 17px;border-radius:12px;border:2px solid var(--line);background:#1a2c46;color:var(--chalk-soft);
+  font-family:var(--f-kr);font-size:25px;font-weight:700;cursor:pointer;transition:.15s}
 .btn.amber{background:var(--amber);border-color:var(--amber);color:#241a00}
 .btn.teal{background:var(--teal);border-color:var(--teal);color:#04302a}
+.btn.on{background:var(--laser);border-color:var(--laser);color:#fff}
 .btn:disabled{opacity:.28;cursor:default}
+
+/* ============================================================
+   레이저 포인터 (규격 §7) — 기본 꺼짐
+   ============================================================ */
+#laser{position:fixed;inset:0;pointer-events:none;z-index:9999;display:none}
+body.laser-on #laser{display:block}
+body.laser-on.has-mouse{cursor:none}
+body.laser-on.has-mouse *{cursor:none !important}
+.ldot{position:absolute;border-radius:50%;background:var(--laser);transform:translate(-50%,-50%)}
+.lhead{width:22px;height:22px;box-shadow:0 0 14px 7px rgba(255,45,45,.55),0 0 40px 18px rgba(255,45,45,.25)}
+.lring{position:absolute;border:4px solid var(--laser);border-radius:50%;transform:translate(-50%,-50%);
+  width:0;height:0;opacity:.9}
+@keyframes ringout{to{width:130px;height:130px;opacity:0}}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.001ms !important;transition-duration:.001ms !important}
+  .scroller{scroll-behavior:auto}
+}
 </style>
 </head>
 <body>
+
+<div class="viewport">
 <div id="stage">
+<div class="sheet">
 
-<div class="wrap">
-  <!-- ============ LEFT ============ -->
-  <section class="left">
-    <div class="card prob">
-      <div class="q">최고차항의 계수가 1인 모든 사차함수 <b>f(x)</b>에 대하여 모든 <b>f(−1)</b>의 값의 합은?</div>
-      <div class="conds">
-        <div><span class="k">(가)</span> f(0) = 0</div>
-        <div><span class="k">(나)</span> 함수 f(|x−1|)은 x = 1에서 미분가능하다.</div>
-        <div><span class="k">(다)</span> 함수 |f(x) − f(1)|이 x = <i>k</i>에서 미분가능하지 않은 실수 <i>k</i>의 개수는 1이다.</div>
+  <div class="topline"></div>
+
+  <div id="body2col">
+
+    <!-- ================= LEFT ================= -->
+    <section id="leftCol">
+
+      <div class="card prob" id="prob">
+        <div class="qhead">문제 <span class="fold-i" id="foldI">▾ 접기</span></div>
+        <div class="q">최고차항의 계수가 1인 모든 사차함수 <b class="m"><span class="v fn">f</span>(<span class="v">x</span>)</b>에 대하여 모든 <b class="m"><span class="v fn">f</span>(−1)</b>의 값의 합은?</div>
+        <div class="conds">
+          <div><span class="k">(가)</span><span class="ct"><span class="m"><span class="v fn">f</span>(0) = 0</span></span></div>
+          <div><span class="k">(나)</span><span class="ct">함수 <span class="m"><span class="v fn">f</span>(|<span class="v">x</span>−1|)</span>은 <span class="m"><span class="v">x</span> = 1</span>에서 미분가능하다.</span></div>
+          <div><span class="k">(다)</span><span class="ct">함수 <span class="m">|<span class="v fn">f</span>(<span class="v">x</span>) − <span class="v fn">f</span>(1)|</span>이 <span class="m"><span class="v">x</span> = <span class="v">k</span></span>에서 미분가능하지 않은 실수 <span class="m"><span class="v">k</span></span>의 개수는 1이다.</span></div>
+        </div>
       </div>
-    </div>
 
-    <div class="scroller" id="scr">
-      <div class="steps" id="steps">
+      <div class="scroller" id="scr">
+        <div class="steps" id="steps">
 
-        <div class="step" data-s="1" id="st1">
-          <div class="sh"><span class="sn">① 조건 (가)</span><span class="st">상수항 결정</span></div>
-          <div class="bd">f(x) = x⁴ + <i>a</i>x³ + <i>b</i>x² + <span class="co"><i>c</i></span>x + <span class="vi"><i>d</i></span><br>
-            f(0) = 0 &nbsp;⟹&nbsp; <span class="vi"><i>d</i> = 0</span></div>
+          <div class="stepCard" data-s="1" id="st1">
+            <div class="sh"><span class="sn">① 조건 (가)</span><span class="st">상수항 결정</span></div>
+            <div class="bd">
+              <span class="m"><span class="v fn">f</span>(<span class="v">x</span>) = <span class="v">x</span>⁴ + <span class="v">a</span><span class="v">x</span>³ + <span class="v">b</span><span class="v">x</span>² + <span class="co"><span class="v">c</span></span><span class="v">x</span> + <span class="vi"><span class="v">d</span></span></span><br>
+              <span class="m"><span class="v fn">f</span>(0) = <span class="vi"><span class="v">d</span></span> = 0</span>
+              <span class="ind m">⟹ <span class="vi"><span class="v">d</span> = 0</span></span>
+              <div class="sub" style="margin-top:6px">오른쪽에서 <span class="v">d</span>를 움직여 그래프를 원점에 맞춰 보자.</div>
+            </div>
+          </div>
+
+          <div class="stepCard" data-s="2" id="st2">
+            <div class="sh"><span class="sn">② 조건 (나)</span><span class="st">평행이동으로 바꿔 보기</span></div>
+            <div class="bd kr" style="font-size:38px;line-height:1.45">
+              <span class="m"><span class="v">y</span> = <span class="v fn">f</span>(|<span class="v">x</span>−1|)</span>을 <b class="te">x축 방향으로 −1</b>만큼 평행이동 ⟹ <span class="m"><span class="v">y</span> = <span class="v fn">f</span>(|<span class="v">x</span>|)</span>
+              <div class="sub" style="margin-top:6px">평행이동은 미분가능성을 바꾸지 않으므로</div>
+              <div class="m" style="margin-top:4px;font-size:40px"><span class="v fn">f</span>(|<span class="v">x</span>−1|)이 <span class="v">x</span> = 1에서 미분가능</div>
+              <div class="ind m" style="font-size:40px">⟺ <b class="am"><span class="v fn">f</span>(|<span class="v">x</span>|)가 <span class="v">x</span> = 0에서 미분가능</b></div>
+            </div>
+          </div>
+
+          <div class="stepCard" data-s="3" id="st3">
+            <div class="sh"><span class="sn">③ 조건 (나)</span><span class="st">좌·우 미분계수</span></div>
+            <div class="bd">
+              <span class="m"><span class="v">x</span> &gt; 0 : <span class="v fn">f</span>(|<span class="v">x</span>|) = <span class="v fn">f</span>(<span class="v">x</span>) → <span class="te"><span class="v fn">f</span>′(0)</span></span><br>
+              <span class="m"><span class="v">x</span> &lt; 0 : <span class="v fn">f</span>(|<span class="v">x</span>|) = <span class="v fn">f</span>(−<span class="v">x</span>) → <span class="co">−<span class="v fn">f</span>′(0)</span></span>
+              <div class="sub" style="margin-top:6px">두 값이 같아야 하므로</div>
+              <span class="m" style="margin-top:2px"><b><span class="v fn">f</span>′(0) = 0</b> ⟹ <span class="co"><span class="v">c</span> = 0</span></span>
+            </div>
+          </div>
+
+          <div class="stepCard" data-s="4" id="st4">
+            <div class="sh"><span class="sn">④ 정리</span><span class="st">미지수가 둘로 줄었다</span></div>
+            <div class="bd">
+              <div class="result m"><span class="v fn">f</span>(<span class="v">x</span>) = <span class="v">x</span>⁴ + <span class="v">a</span><span class="v">x</span>³ + <span class="v">b</span><span class="v">x</span>²</div>
+              <div class="sub" style="margin-top:10px"><span class="v">f</span>(<span class="v">x</span>)에는 <b class="am">일차항이 없다.</b> ⑧·⑨단계에서 α, β를 정하는 유일한 조건이 된다.</div>
+            </div>
+          </div>
+
+          <div class="stepCard" data-s="5" id="st5">
+            <div class="sh"><span class="sn">⑤ 조건 (다)</span><span class="st">꺾임은 중복도가 결정한다</span></div>
+            <div class="bd">
+              <span class="m"><span class="v fn">h</span>(<span class="v">x</span>) = <span class="v fn">f</span>(<span class="v">x</span>) − <span class="v fn">f</span>(1)</span>
+              <span class="sub">&nbsp;(사차식, 항상 <span class="m"><span class="v fn">h</span>(1) = 0</span>)</span>
+              <div style="margin-top:8px;font-size:38px" class="kr"><span class="m">|<span class="v fn">h</span>(<span class="v">x</span>)|</span>가 <span class="m"><span class="v">x</span> = <span class="v">k</span></span>에서 미분불가능</div>
+              <div class="ind kr" style="font-size:38px">⟺ <span class="m"><span class="v">k</span></span>가 <b class="am">중복도 1</b>인 근</div>
+              <div class="sub" style="margin-top:6px">중복도가 2 이상이면 x축에 매끄럽게 붙는다.</div>
+            </div>
+          </div>
+
+          <div class="stepCard" data-s="6" id="st6">
+            <div class="sh"><span class="sn">⑥ 조건 (다)</span><span class="st">중복도 분포 전수조사</span></div>
+            <div class="bd kr" style="font-size:38px;line-height:1.45">
+              사차식의 근을 중복도로 나눈 모든 경우 중<br>
+              단순근이 <b class="te">정확히 1개</b>인 것은
+              <div class="m am" style="margin-top:6px;font-size:40px">(3중근) + (단순근)</div>
+              뿐이다.
+              <div class="sub" style="margin-top:6px">오른쪽 카드 8개를 눌러 꺾인 점의 개수를 직접 확인해 보자.</div>
+            </div>
+          </div>
+
+          <div class="stepCard" data-s="7" id="st7">
+            <div class="sh"><span class="sn">⑦ 식의 꼴</span><span class="st">h(1) = 0 을 붙이면</span></div>
+            <div class="bd" style="text-align:center;line-height:1.6">
+              <span class="m am" style="font-size:44px"><span class="v fn">h</span>(<span class="v">x</span>) = (<span class="v">x</span>−1)³(<span class="v">x</span>−α)</span><br>
+              <span class="sub">또는</span><br>
+              <span class="m te" style="font-size:44px"><span class="v fn">h</span>(<span class="v">x</span>) = (<span class="v">x</span>−1)(<span class="v">x</span>−β)³</span>
+              <div class="result m" style="font-size:33px;margin-top:12px;text-align:center">
+                <span class="v fn">h</span>(0) = −<span class="v fn">f</span>(1) &nbsp;,&nbsp; <span class="v fn">f</span>(−1) = <span class="v fn">h</span>(−1) + <span class="v fn">f</span>(1)</div>
+              <div class="sub" style="margin-top:6px">계수를 모두 구하지 않고 <span class="v fn">h</span>의 두 값만 계산하면 된다.</div>
+            </div>
+          </div>
+
+          <div class="stepCard" data-s="8" id="st8">
+            <div class="sh"><span class="sn">⑧ 경우 ①</span><span class="st">α 결정 → f(1) → f(−1)</span></div>
+            <div class="bd">
+              <div class="exp m">(<span class="v">x</span>−1)³(<span class="v">x</span>−α) = (<span class="v">x</span>³ − 3<span class="v">x</span>² + 3<span class="v">x</span> − 1)(<span class="v">x</span> − α)</div>
+              <div class="sub" style="margin-top:4px"><span class="v fn">f</span>에 일차항이 없으므로 <span class="v fn">h</span>의 일차항 계수도 0</div>
+              <div class="m" style="font-size:38px">−(3α+1) = 0 ⟹ <b class="am">α = −<span class="frac"><span class="num">1</span><span class="den">3</span></span></b></div>
+              <div class="sub" style="margin-top:10px"><span class="v">x</span> = 0 을 대입 : <span class="v fn">h</span>(0) = <span class="v fn">f</span>(0) − <span class="v fn">f</span>(1) = −<span class="v fn">f</span>(1)</div>
+              <div class="m" style="font-size:38px">(−1)³(−α) = α = −<span class="frac"><span class="num">1</span><span class="den">3</span></span> ⟹ <b class="te"><span class="v fn">f</span>(1) = <span class="frac"><span class="num">1</span><span class="den">3</span></span></b></div>
+              <div class="sub" style="margin-top:10px"><span class="v">x</span> = −1 을 대입 : <span class="v fn">h</span>(−1) = <span class="v fn">f</span>(−1) − <span class="v fn">f</span>(1)</div>
+              <div class="m" style="font-size:38px">(−2)³(−1 + <span class="frac"><span class="num">1</span><span class="den">3</span></span>) = <span class="frac"><span class="num">16</span><span class="den">3</span></span></div>
+              <div class="m" style="font-size:40px;margin-top:4px">⟹ <b class="am"><span class="v fn">f</span>(−1) = <span class="frac"><span class="num">16</span><span class="den">3</span></span> + <span class="frac"><span class="num">1</span><span class="den">3</span></span> = <span class="frac"><span class="num">17</span><span class="den">3</span></span></b></div>
+            </div>
+          </div>
+
+          <div class="stepCard" data-s="9" id="st9">
+            <div class="sh"><span class="sn">⑨ 경우 ②</span><span class="st">β 결정 → f(1) → f(−1)</span></div>
+            <div class="bd">
+              <div class="exp m">(<span class="v">x</span>−1)(<span class="v">x</span>−β)³ = (<span class="v">x</span> − 1)(<span class="v">x</span>³ − 3β<span class="v">x</span>² + 3β²<span class="v">x</span> − β³)</div>
+              <div class="sub" style="margin-top:4px">일차항 계수가 0 이어야 하므로</div>
+              <div class="m" style="font-size:37px">−(β³+3β²) = 0 ⟹ <b class="am">β = 0</b> 또는 <b class="am">β = −3</b></div>
+              <div class="sub">(β = 1이면 4중근이 되어 제외)</div>
+              <div class="m" style="font-size:37px;margin-top:10px"><span class="v fn">h</span>(0) = (−1)(−β)³ = β³ = −<span class="v fn">f</span>(1) ⟹ <b class="te"><span class="v fn">f</span>(1) = −β³</b></div>
+              <div class="m" style="font-size:37px"><span class="v fn">h</span>(−1) = (−2)(−1−β)³ = 2(1+β)³</div>
+              <div class="m" style="font-size:37px;margin-top:4px">⟹ <span class="v fn">f</span>(−1) = <span class="v fn">h</span>(−1) + <span class="v fn">f</span>(1) = 2(1+β)³ − β³</div>
+              <div class="m" style="font-size:37px;margin-top:8px">β = 0 : <span class="v fn">f</span>(−1) = 2·1 − 0 = <b class="am">2</b></div>
+              <div class="m" style="font-size:37px">β = −3 : <span class="v fn">f</span>(−1) = 2(−2)³ + 27 = <b class="am">11</b></div>
+            </div>
+          </div>
+
+          <div class="stepCard" data-s="10" id="st10">
+            <div class="sh"><span class="sn">⑩ 마무리</span><span class="st">세 값을 모두 더한다</span></div>
+            <div class="final">
+              <span class="m am"><span class="frac"><span class="num">17</span><span class="den">3</span></span></span>
+              <span class="m">&nbsp;+ 2 + 11 =&nbsp;</span>
+              <span class="m te"><span class="frac"><span class="num">56</span><span class="den">3</span></span></span>
+              <span class="dim" style="font-size:26px;font-family:var(--f-kr)">&nbsp;&nbsp;정답 ①</span>
+            </div>
+          </div>
+
         </div>
-
-        <div class="step" data-s="2" id="st2">
-          <div class="sh"><span class="sn">② 조건 (나)</span><span class="st">평행이동으로 바꿔 보기</span></div>
-          <div class="bd">y = f(|x−1|)의 그래프를 <b class="te">x축 방향으로 −1만큼 평행이동</b>하면 &nbsp;y = f(|x|)
-            <div class="sub" style="margin-top:6px">평행이동은 미분가능성을 바꾸지 않으므로</div>
-            f(|x−1|)이 x = 1에서 미분가능<br>
-            ⟺ <b class="am">f(|x|)가 x = 0에서 미분가능</b></div>
-        </div>
-
-        <div class="step" data-s="3" id="st3">
-          <div class="sh"><span class="sn">③ 조건 (나)</span><span class="st">좌·우 미분계수</span></div>
-          <div class="bd">x &gt; 0 : f(|x|) = f(x) &nbsp;→&nbsp; 우미분계수 = <span class="te">f′(0)</span><br>
-            x &lt; 0 : f(|x|) = f(−x) &nbsp;→&nbsp; 좌미분계수 = <span class="co">−f′(0)</span><br>
-            두 값이 같아야 하므로 &nbsp;<b>f′(0) = 0</b> &nbsp;⟹&nbsp; <span class="co"><i>c</i> = 0</span></div>
-        </div>
-
-        <div class="step" data-s="4" id="st4">
-          <div class="sh"><span class="sn">④ 정리</span><span class="st">미지수가 둘로 줄었다</span></div>
-          <div class="result">f(x) = x⁴ + <i>a</i>x³ + <i>b</i>x²</div>
-          <div class="bd sub" style="margin-top:8px">→ f(x)에는 <b class="am">일차항이 없다</b>. ⑧·⑨단계에서 결정적으로 쓰인다.</div>
-        </div>
-
-        <div class="step" data-s="5" id="st5">
-          <div class="sh"><span class="sn">⑤ 조건 (다)</span><span class="st">꺾임은 중복도가 결정한다</span></div>
-          <div class="bd">h(x) = f(x) − f(1) &nbsp;<span class="sub">(사차식, 항상 h(1) = 0)</span>
-            <div style="margin-top:8px">|h(x)|가 x = <i>k</i>에서 미분불가능 &nbsp;⟺&nbsp; <i>k</i>가 <b class="am">중복도 1</b>인 근</div>
-            <div class="sub" style="margin-top:6px">중복도가 2 이상이면 x축에 매끄럽게 붙는다 (오른쪽 비교)</div></div>
-        </div>
-
-        <div class="step" data-s="6" id="st6">
-          <div class="sh"><span class="sn">⑥ 조건 (다)</span><span class="st">중복도 분포 전수조사</span></div>
-          <div class="bd">사차식의 근을 중복도로 나눈 모든 경우를 따져보면<br>
-            단순근이 <b class="te">정확히 1개</b>인 것은 <b>(3중근) + (단순근)</b> 뿐이다.
-            <div class="sub" style="margin-top:6px">오른쪽 카드 8개를 눌러 꺾인 점의 개수를 직접 확인해 보자.</div></div>
-        </div>
-
-        <div class="step" data-s="7" id="st7">
-          <div class="sh"><span class="sn">⑦ 식의 꼴</span><span class="st">h(1) = 0 을 붙이면</span></div>
-          <div class="bd" style="text-align:center;line-height:1.9;font-size:30px">
-            <span class="am">h(x) = (x−1)³(x−α)</span><br><span class="sub">또는</span><br>
-            <span class="te">h(x) = (x−1)(x−β)³</span></div>
-        </div>
-
-        <div class="step" data-s="8" id="st8">
-          <div class="sh"><span class="sn">⑧ 경우 ①</span><span class="st">일차항 계수 = 0</span></div>
-          <div class="bd" style="font-size:25px">h(x) = (x−1)³(x−α) = (x³ − 3x² + 3x − 1)(x − α)<br>
-            = x⁴ − (α+3)x³ + (3α+3)x² <b class="am">− (3α+1)</b>x + α
-            <div class="mline" style="margin-top:8px;font-size:28px">−(3α+1) = 0&nbsp; ⟹&nbsp; α =&nbsp;
-              <span class="am mline">−<span class="frac"><span class="n">1</span><span class="d">3</span></span></span></div>
-            <div class="mline" style="margin-top:6px;font-size:28px">f(x) = x⁴ −<span class="frac"><span class="n">8</span><span class="d">3</span></span>x³ + 2x²
-              &nbsp;⟹&nbsp; <b class="am mline">f(−1) =&nbsp;<span class="frac"><span class="n">17</span><span class="d">3</span></span></b></div></div>
-        </div>
-
-        <div class="step" data-s="9" id="st9">
-          <div class="sh"><span class="sn">⑨ 경우 ②</span><span class="st">일차항 계수 = 0</span></div>
-          <div class="bd" style="font-size:25px">h(x) = (x−1)(x−β)³ = (x − 1)(x³ − 3βx² + 3β²x − β³)<br>
-            = x⁴ − (3β+1)x³ + (3β²+3β)x² <b class="te">− (β³+3β²)</b>x + β³
-            <div style="margin-top:8px;font-size:28px">β²(β+3) = 0 &nbsp;⟹&nbsp; β = <span class="te">0</span> 또는 β = <span class="te">−3</span>
-              <span class="sub">&nbsp;(β=1이면 4중근이라 제외)</span></div>
-            <div style="margin-top:6px;font-size:28px">β = 0 : f(x) = x⁴ − x³ &nbsp;⟹&nbsp; <b class="am">f(−1) = 2</b></div>
-            <div style="margin-top:4px;font-size:28px">β = −3 : f(x) = x⁴ + 8x³ + 18x² &nbsp;⟹&nbsp; <b class="am">f(−1) = 11</b></div></div>
-        </div>
-
-        <div class="step" data-s="10" id="st10">
-          <div class="sh"><span class="sn">⑩ 마무리</span><span class="st">세 값을 모두 더한다</span></div>
-          <div class="final mline" style="justify-content:center">
-            <span class="am mline"><span class="frac"><span class="n">17</span><span class="d">3</span></span></span>
-            <span>&nbsp;+ 2 + 11 =&nbsp;</span>
-            <span class="te mline"><span class="frac"><span class="n">56</span><span class="d">3</span></span></span>
-            <span class="dimtx" style="font-size:24px">&nbsp;&nbsp;정답 ①</span></div>
-        </div>
-
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- ============ RIGHT ============ -->
-  <section class="right card">
-    <!-- A : 슬라이더 -->
-    <div class="rpane" id="pA">
-      <div class="rtitle">슬라이더로 <span class="am"><i>c</i></span>를 바꿔 보자
-        <span class="dimtx" style="font-size:19px">&nbsp;( f(x) = x⁴ + <i>c</i>x 로 관찰 )</span></div>
-      <div class="sliderwrap"><span class="am" style="font-weight:700"><i>c</i></span>
-        <input type="range" id="cs" min="-30" max="30" step="1" value="20">
-        <span id="cv" style="font-weight:700;width:80px;text-align:right">2.0</span></div>
-      <div><div class="cap dimtx">y = f(x)</div><div id="gA1"></div></div>
-      <div><div class="cap am">y = f(|x|)</div><div id="gA2"></div></div>
-      <div class="readout">
-        <div class="rd"><div class="t">좌미분계수 −f′(0)</div><div class="v co" id="dl">−2.0</div></div>
-        <div class="rd"><div class="t">우미분계수 f′(0)</div><div class="v te" id="dr">2.0</div></div>
+    <!-- ================= RIGHT ================= -->
+    <section id="rightCol" class="card">
+
+      <!-- P0 : d 슬라이더 -->
+      <div class="rpane" id="p0">
+        <div class="ghead"><span class="vi"><i>d</i></span>를 움직여 보자
+          <span class="chip"><i>f</i>(0) = <span id="d0v">1.2</span></span></div>
+        <div class="cap dim m"><span class="v">y</span> = <span class="v">x</span>⁴ + <span class="v">x</span>³ − 2<span class="v">x</span>² + <span class="vi"><span class="v">d</span></span></div>
+        <div style="flex:1 1 auto;min-height:0" id="g0"></div>
+        <div class="srow"><span class="vi"><i>d</i></span>
+          <input type="range" id="ds" min="-20" max="20" step="1" value="12">
+          <span class="val" id="dv">1.2</span></div>
+        <div class="verdict bad" id="d-vd" style="margin-top:8px">그래프가 원점을 지나지 않는다</div>
+        <div class="note" style="margin-top:8px">보라색 점이 원점에 정확히 닿으면 다음 단계로 넘어간다</div>
       </div>
-      <div class="verdict bad" id="vd">x = 0에서 꺾인다 — 미분불가능</div>
-    </div>
 
-    <!-- B1 : 중복도 미니 비교 -->
-    <div class="rpane" id="pB1">
-      <div class="rtitle">중복도에 따라 |h|의 모양이 달라진다</div>
-      <div class="mini3" id="mini" style="margin-top:6px"></div>
-      <div style="font-size:24px;line-height:1.6;margin-top:14px;border:2px solid var(--amber);
-        border-radius:14px;padding:16px;background:rgba(251,191,36,.1);text-align:center">
-        절댓값 그래프가 x축에서 <b class="co">꺾이는 것</b>은<br><b class="am">중복도가 1인 근</b>일 때뿐이다</div>
-      <div class="note" style="margin-top:10px">중복도 3이어도 |x|³처럼 매끄럽게 붙는다는 점에 주의</div>
-    </div>
-
-    <!-- B2 : 8가지 케이스 -->
-    <div class="rpane" id="pB2">
-      <div class="rtitle">카드를 <span class="am">모두 터치</span>해 꺾인 점의 개수를 확인하자</div>
-      <div class="grid8" id="cards"></div>
-      <div class="twin" style="margin-top:4px">
-        <div class="tw"><div class="cap dimtx">y = h(x)</div><div id="gB1"></div></div>
-        <div class="tw"><div class="cap am">y = |h(x)|</div><div id="gB2"></div></div>
+      <!-- A : c 슬라이더 -->
+      <div class="rpane" id="pA">
+        <div class="ghead"><span class="co"><i>c</i></span>를 움직여 보자
+          <button class="tbtn" id="shiftBtn" style="margin-left:auto">|x| ↔ |x−1|</button></div>
+        <div class="srow"><span class="co"><i>c</i></span>
+          <input type="range" id="cs" min="-30" max="30" step="1" value="20">
+          <span class="val" id="cv" style="color:var(--coral)">2.0</span></div>
+        <div class="cap dim m"><span class="v">y</span> = <span class="v fn">f</span>(<span class="v">x</span>) = <span class="v">x</span>⁴ + <span class="co"><span class="v">c</span></span><span class="v">x</span></div>
+        <div id="gA1"></div>
+        <div class="cap am m" id="capA2"><span class="v">y</span> = <span class="v fn">f</span>(|<span class="v">x</span>|)</div>
+        <div id="gA2"></div>
+        <div class="readout" style="margin-top:8px">
+          <div class="rd"><div class="t">좌미분계수 −<i>f</i>′(0)</div><div class="v co" id="dl">−2.0</div></div>
+          <div class="rd"><div class="t">우미분계수 <i>f</i>′(0)</div><div class="v te" id="dr">2.0</div></div>
+        </div>
+        <div class="verdict bad" id="vd" style="margin-top:8px">꺾인다 — 미분불가능</div>
       </div>
-      <div class="hint" id="hint">위 카드를 눌러 보세요 (0 / 8)</div>
-      <div class="note">※ 세로축은 모양이 잘 보이도록 확대 표시 (x축 부근은 실제 비율)</div>
-    </div>
 
-    <!-- C : 해답 그래프 -->
-    <div class="rpane" id="pC">
-      <div class="rtitle">조건을 만족하는 세 개의 h(x)</div>
-      <div class="twin" style="margin-top:2px"><div class="tw"><div class="cap dimtx" style="font-size:19px">y = h(x)</div></div>
-        <div class="tw"><div class="cap am" style="font-size:19px">y = |h(x)|</div></div></div>
-      <div id="sols" style="display:flex;flex-direction:column;gap:5px"></div>
-      <div class="note">빨간 점 = 꺾인 점 (각 그래프에 정확히 1개) &nbsp;·&nbsp; 보라 점선 = x = 1</div>
-    </div>
-  </section>
-</div>
+      <!-- B1 : 중복도 비교 -->
+      <div class="rpane" id="pB1">
+        <div class="ghead">중복도에 따라 <span class="m">|<span class="v fn">h</span>|</span>의 모양이 달라진다</div>
+        <div class="mini3" id="mini"></div>
+        <div style="font-family:var(--f-kr);font-size:29px;line-height:1.5;margin-top:16px;
+          border:2px solid var(--amber);border-radius:14px;padding:16px;
+          background:rgba(245,182,66,.1);text-align:center;word-break:keep-all">
+          절댓값 그래프가 x축에서 <b class="co">꺾이는 것</b>은<br><b class="am">중복도가 1인 근</b>일 때뿐이다</div>
+        <div class="note" style="margin-top:12px">중복도 3이어도 <span class="m">|<span class="v">x</span>|³</span>처럼 매끄럽게 붙는다는 점에 주의</div>
+      </div>
 
-<footer class="foot">
-  <div class="stamp">13</div>
-  <div class="ttl">사차함수와 절댓값의 미분가능성</div>
-  <div class="dots" id="dots"></div>
-  <div class="fbtns">
-    <button class="btn" id="bReset">처음부터</button>
-    <button class="btn" id="bPrev">◀ 이전</button>
-    <button class="btn amber" id="bNext">다음 ▶</button>
-    <button class="btn teal" id="bFull">⤢ 전체화면</button>
+      <!-- B2 : 8가지 케이스 -->
+      <div class="rpane" id="pB2">
+        <div class="ghead">카드를 <span class="am">모두 눌러</span> 꺾인 점 개수 확인</div>
+        <div class="grid8" id="cards"></div>
+        <div class="twin" style="margin-top:10px">
+          <div class="tw"><div class="cap dim m" style="font-size:26px"><span class="v">y</span> = <span class="v fn">h</span>(<span class="v">x</span>)</div><div id="gB1"></div></div>
+          <div class="tw"><div class="cap am m" style="font-size:26px"><span class="v">y</span> = |<span class="v fn">h</span>(<span class="v">x</span>)|</div><div id="gB2"></div></div>
+        </div>
+        <div class="hint" id="hint">카드를 눌러 보세요 (0 / 8)</div>
+        <div class="note">※ 세로축은 모양이 보이도록 확대 (x축 부근은 실제 비율)</div>
+      </div>
+
+      <!-- C : 해답 그래프 -->
+      <div class="rpane" id="pC">
+        <div class="ghead">조건을 만족하는 세 개의 <span class="m"><span class="v fn">h</span>(<span class="v">x</span>)</span></div>
+        <div class="twin"><div class="tw"><div class="cap dim m" style="font-size:24px;height:26px;line-height:26px"><span class="v">y</span> = <span class="v fn">h</span>(<span class="v">x</span>)</div></div>
+          <div class="tw"><div class="cap am m" style="font-size:24px;height:26px;line-height:26px"><span class="v">y</span> = |<span class="v fn">h</span>(<span class="v">x</span>)|</div></div></div>
+        <div id="sols" style="display:flex;flex-direction:column;gap:6px;margin-top:2px;flex:0 0 auto"></div>
+        <div class="note" style="margin-top:6px">빨간 점 = 꺾인 점 (각 그래프에 정확히 1개) · 보라 점선 = <span class="m"><span class="v">x</span> = 1</span></div>
+      </div>
+
+    </section>
   </div>
-</footer>
+
+  <footer class="app-foot">
+    <div class="stamp">13</div>
+    <div class="ttl">사차함수와 절댓값의 미분가능성</div>
+    <div class="dots" id="dots"></div>
+    <div class="fbtns">
+      <button class="btn" id="bProb">문제</button>
+      <button class="btn" id="bReset">처음부터</button>
+      <button class="btn" id="bPrev">◀</button>
+      <button class="btn amber" id="bNext">▶</button>
+      <button class="btn" id="bLaser">레이저</button>
+      <button class="btn teal" id="bFull">⤢</button>
+    </div>
+  </footer>
+
 </div>
+</div>
+</div>
+
+<div id="laser"></div>
 
 <script>
-/* ============ scaling ============ */
-function fit(){
-  const vw=(window.visualViewport&&visualViewport.width)||document.documentElement.clientWidth||innerWidth;
-  const vh=(window.visualViewport&&visualViewport.height)||document.documentElement.clientHeight||innerHeight;
-  const s=Math.min(vw/1600,vh/1100);
-  document.getElementById('stage').style.transform=
-    'translate('+Math.round((vw-1600*s)/2)+'px,'+Math.round((vh-1100*s)/2)+'px) scale('+s+')';
+/* ============================================================
+   스테이지 스케일링 (규격 §1)
+   ============================================================ */
+const STAGE_W=1600, STAGE_H=900, stage=document.getElementById('stage');
+function fitStage(){
+  const vv=window.visualViewport;
+  const w=vv?vv.width:innerWidth, h=vv?vv.height:innerHeight;
+  const s=Math.min(w/STAGE_W,h/STAGE_H);
+  stage.style.transform='translate('+Math.round((w-STAGE_W*s)/2)+'px,'+
+    Math.round((h-STAGE_H*s)/2)+'px) scale('+s+')';
 }
-addEventListener('resize',fit);addEventListener('load',fit);
-addEventListener('orientationchange',()=>{fit();[60,300,700].forEach(t=>setTimeout(fit,t));});
-if(window.visualViewport){visualViewport.addEventListener('resize',fit);visualViewport.addEventListener('scroll',fit);}
-fit();[60,300,700].forEach(t=>setTimeout(fit,t));
+addEventListener('resize',fitStage);addEventListener('load',fitStage);
+addEventListener('orientationchange',()=>{[0,60,300,700].forEach(t=>setTimeout(fitStage,t));});
+if(window.visualViewport){visualViewport.addEventListener('resize',fitStage);visualViewport.addEventListener('scroll',fitStage);}
+[0,60,300,700].forEach(t=>setTimeout(fitStage,t));
 
-/* ============ plot ============ */
+/* ============================================================
+   색 상수 (SVG 안에서 사용)
+   ============================================================ */
+const C={panel2:'#1d3350',grid:'#27405e',axis:'#7d94ad',chalk:'#eaf1f8',soft:'#b9cadd',
+  faint:'#7d94ad',amber:'#f5b642',coral:'#ff7d6a',teal:'#49d1c0',violet:'#9d8cf5',curve:'#8fa6c4'};
+const FEN="'STIX Two Text',serif";
+
+/* ============================================================
+   플롯
+   ============================================================ */
 function plot(o){
   const w=o.w,h=o.h,S=o.S,xmin=o.xmin,xmax=o.xmax,ymin=o.ymin,ymax=o.ymax;
+  const fs=o.fs||24;
   const wy=S?(y=>S*y/(S+Math.abs(y))):(y=>y);
   const X=x=>(x-xmin)/(xmax-xmin)*w, Y=y=>h-(wy(y)-ymin)/(ymax-ymin)*h;
   let s='<svg viewBox="0 0 '+w+' '+h+'" width="'+w+'" height="'+h+'">';
-  s+='<rect width="'+w+'" height="'+h+'" rx="14" fill="#111a30"/>';
+  s+='<rect width="'+w+'" height="'+h+'" rx="14" fill="'+C.panel2+'"/>';
   for(let g=Math.ceil(xmin);g<=xmax;g++)
-    s+='<line x1="'+X(g)+'" y1="0" x2="'+X(g)+'" y2="'+h+'" stroke="#22304f" stroke-width="1"/>';
-  s+='<line x1="0" y1="'+Y(0)+'" x2="'+w+'" y2="'+Y(0)+'" stroke="#5d6f9e" stroke-width="2.5"/>';
-  if(xmin<0&&xmax>0)s+='<line x1="'+X(0)+'" y1="0" x2="'+X(0)+'" y2="'+h+'" stroke="#5d6f9e" stroke-width="2.5"/>';
-  (o.vlines||[]).forEach(v=>{s+='<line x1="'+X(v.x)+'" y1="0" x2="'+X(v.x)+'" y2="'+h+'" stroke="'+v.c+'" stroke-width="2" stroke-dasharray="7 6" opacity=".8"/>';
-    if(v.t)s+='<text x="'+(X(v.x)+7)+'" y="21" fill="'+v.c+'" font-size="18" font-weight="700" font-family="Space Grotesk">'+v.t+'</text>';});
+    s+='<line x1="'+X(g)+'" y1="0" x2="'+X(g)+'" y2="'+h+'" stroke="'+C.grid+'" stroke-width="1.2"/>';
+  s+='<line x1="0" y1="'+Y(0)+'" x2="'+w+'" y2="'+Y(0)+'" stroke="'+C.axis+'" stroke-width="2.6"/>';
+  if(xmin<0&&xmax>0)s+='<line x1="'+X(0)+'" y1="0" x2="'+X(0)+'" y2="'+h+'" stroke="'+C.axis+'" stroke-width="2.6"/>';
+  (o.vlines||[]).forEach(v=>{
+    s+='<line x1="'+X(v.x)+'" y1="0" x2="'+X(v.x)+'" y2="'+h+'" stroke="'+v.c+'" stroke-width="2.4" stroke-dasharray="8 7" opacity=".85"/>';
+    if(v.t)s+='<text x="'+(X(v.x)+8)+'" y="'+(fs+4)+'" fill="'+v.c+'" font-size="'+fs+'" font-weight="600" font-family='+JSON.stringify(FEN)+'>'+v.t+'</text>';});
   (o.curves||[]).forEach(c=>{
-    const N=c.samples||640;let d='',pen=false;
+    const N=c.samples||700;let d='',pen=false;
     for(let i=0;i<=N;i++){const x=xmin+(xmax-xmin)*i/N,y=c.fn(x);
       if(!isFinite(y)){pen=false;continue;}
       const py=Y(y); if(py<-6||py>h+6){pen=false;continue;}
       d+=(pen?'L':'M')+X(x).toFixed(1)+' '+py.toFixed(1)+' ';pen=true;}
-    s+='<path d="'+d+'" fill="none" stroke="'+c.color+'" stroke-width="'+(c.w||4.5)+'" stroke-linejoin="round" stroke-linecap="round"/>';});
+    s+='<path d="'+d+'" fill="none" stroke="'+c.color+'" stroke-width="'+(c.w||4.8)+'" stroke-linejoin="round" stroke-linecap="round"/>';});
   (o.dots||[]).forEach(p=>{
-    s+='<circle cx="'+X(p.x)+'" cy="'+Y(0)+'" r="'+(p.r||9)+'" fill="'+p.c+'" stroke="#111a30" stroke-width="3"/>';
-    if(p.t)s+='<text x="'+(X(p.x)+(p.dx||0))+'" y="'+(Y(0)+(p.dy===undefined?-26:p.dy))+'" fill="'+p.c+
-      '" font-size="19" font-weight="700" text-anchor="middle" font-family="Space Grotesk">'+p.t+'</text>';});
+    const cy=Y(p.y||0);
+    s+='<circle cx="'+X(p.x)+'" cy="'+cy+'" r="'+(p.r||10)+'" fill="'+p.c+'" stroke="'+C.panel2+'" stroke-width="3"/>';
+    if(p.t){
+      const ty=Math.min(Math.max(cy+(p.dy===undefined?-26:p.dy),fs+4),h-8);
+      const tx=Math.min(Math.max(X(p.x)+(p.dx||0),46),w-46);
+      s+='<text x="'+tx+'" y="'+ty+'" fill="'+p.c+'" font-size="'+fs+'" font-weight="600" text-anchor="middle" font-family='+JSON.stringify(FEN)+'>'+p.t+'</text>';}});
   return s+'</svg>';
 }
 function maxAbs(fn,a,b){let m=0;for(let i=0;i<=500;i++){const y=fn(a+(b-a)*i/500);if(isFinite(y))m=Math.max(m,Math.abs(y));}return m||1;}
-function pair(i1,i2,fn,a,b,W,H,dots,vl){
+function pair(i1,i2,fn,a,b,W,H,dots,vl,fs){
   const S=maxAbs(fn,a,b)/7;
-  document.getElementById(i1).innerHTML=plot({w:W,h:H,xmin:a,xmax:b,S:S,ymin:-1.04*S,ymax:1.04*S,
-    curves:[{fn:fn,color:'#7f92c4'}],vlines:vl||[],dots:(dots||[]).map(d=>({x:d.x,c:'#5d6f9e',r:8}))});
-  document.getElementById(i2).innerHTML=plot({w:W,h:H,xmin:a,xmax:b,S:S,ymin:-0.18*S,ymax:1.04*S,
-    curves:[{fn:x=>Math.abs(fn(x)),color:'#fbbf24'}],vlines:vl||[],dots:dots||[]});
+  document.getElementById(i1).innerHTML=plot({w:W,h:H,xmin:a,xmax:b,S:S,ymin:-1.04*S,ymax:1.04*S,fs:fs,
+    curves:[{fn:fn,color:C.curve}],vlines:vl||[],dots:(dots||[]).map(d=>({x:d.x,c:'#5d7398',r:9}))});
+  document.getElementById(i2).innerHTML=plot({w:W,h:H,xmin:a,xmax:b,S:S,ymin:-0.18*S,ymax:1.04*S,fs:fs,
+    curves:[{fn:x=>Math.abs(fn(x)),color:C.amber}],vlines:vl||[],dots:dots||[]});
 }
 
-/* ============ step engine ============ */
+/* ============================================================
+   단계 엔진 (규격 §6)
+   ============================================================ */
 const TOT=10;
-let cur=1;
-const PANE=[null,'pA','pA','pA','pA','pB1','pB2','pB2','pC','pC','pC'];
-const scr=document.getElementById('scr');
+let cur=1, probManual=false;
+const PANE=[null,'p0','pA','pA','pA','pB1','pB2','pB2','pC','pC','pC'];
+const scr=document.getElementById('scr'), prob=document.getElementById('prob');
 function render(){
-  document.querySelectorAll('.step').forEach(e=>{
+  document.querySelectorAll('.stepCard').forEach(e=>{
     const n=+e.dataset.s;
     e.classList.toggle('on',n<=cur);
-    e.classList.toggle('now',n===cur);});
+    e.classList.toggle('live',n===cur);});
   const want=PANE[Math.max(cur,1)];
   document.querySelectorAll('.rpane').forEach(p=>p.classList.toggle('on',p.id===want));
-  document.querySelectorAll('.srow').forEach(r=>r.classList.toggle('on',cur>= +r.dataset.min));
+  document.querySelectorAll('.solrow').forEach(r=>r.classList.toggle('on',cur>=+r.dataset.min));
   document.getElementById('bPrev').disabled=cur<=1;
   document.getElementById('bNext').disabled=cur>=TOT;
+  if(!probManual)prob.classList.toggle('fold',cur>=5);
+  document.getElementById('foldI').textContent=prob.classList.contains('fold')?'▸ 펼치기':'▾ 접기';
   let d='';for(let i=1;i<=TOT;i++)d+='<span class="dot'+(i<=cur?' on':'')+(i===cur?' now':'')+'" data-i="'+i+'"></span>';
   document.getElementById('dots').innerHTML=d;
   document.querySelectorAll('.dot').forEach(x=>x.onclick=()=>go(+x.dataset.i));
   const el=document.getElementById('st'+cur);
-  if(el)requestAnimationFrame(()=>scr.scrollTo({top:Math.max(0,el.offsetTop-14),behavior:'smooth'}));
+  if(el)requestAnimationFrame(()=>scr.scrollTo({top:Math.max(0,el.offsetTop-12),behavior:'smooth'}));
 }
-function go(n){cur=Math.max(1,Math.min(n,TOT));render();}
+function go(n){cur=Math.max(1,Math.min(n,TOT));probManual=false;render();}
 document.getElementById('bNext').onclick=()=>go(cur+1);
 document.getElementById('bPrev').onclick=()=>go(cur-1);
 document.getElementById('bReset').onclick=()=>{resetCards();go(1);};
+prob.onclick=()=>{probManual=true;prob.classList.toggle('fold');
+  document.getElementById('foldI').textContent=prob.classList.contains('fold')?'▸ 펼치기':'▾ 접기';};
+document.getElementById('bProb').onclick=()=>{probManual=true;prob.classList.remove('fold');
+  document.getElementById('foldI').textContent='▾ 접기';};
 
-/* ============ fullscreen ============ */
+/* ============================================================
+   전체화면
+   ============================================================ */
 const fsb=document.getElementById('bFull');
 function isFs(){return !!(document.fullscreenElement||document.webkitFullscreenElement);}
 fsb.onclick=()=>{const el=document.documentElement;
   if(!isFs()){(el.requestFullscreen||el.webkitRequestFullscreen||function(){}).call(el);}
   else{(document.exitFullscreen||document.webkitExitFullscreen||function(){}).call(document);}};
-function fsChange(){fsb.textContent=isFs()?'⤡ 창으로':'⤢ 전체화면';[0,60,300,700].forEach(t=>setTimeout(fit,t));}
+function fsChange(){fsb.textContent=isFs()?'⤡':'⤢';[0,60,300,700].forEach(t=>setTimeout(fitStage,t));}
 addEventListener('fullscreenchange',fsChange);addEventListener('webkitfullscreenchange',fsChange);
 
-/* ============ keyboard ============ */
+/* ============================================================
+   레이저 포인터 (규격 §7) — 기본 꺼짐
+   ============================================================ */
+const laser=document.getElementById('laser'), lbtn=document.getElementById('bLaser');
+const TRAIL=5, parts=[];
+for(let i=0;i<TRAIL;i++){const d=document.createElement('div');
+  d.className='ldot';const sz=16-i*2.2;
+  d.style.width=sz+'px';d.style.height=sz+'px';d.style.opacity=(0.42-i*0.07);
+  laser.appendChild(d);parts.push({el:d,x:800,y:450});}
+const head=document.createElement('div');head.className='ldot lhead';laser.appendChild(head);
+let LX=800,LY=450,hx=800,hy=450;
+addEventListener('pointermove',e=>{
+  if(e.pointerType!=='mouse')return;
+  document.body.classList.add('has-mouse');LX=e.clientX;LY=e.clientY;},{passive:true});
+addEventListener('pointerdown',e=>{
+  if(e.pointerType!=='mouse'||!document.body.classList.contains('laser-on'))return;
+  const r=document.createElement('div');r.className='lring';
+  r.style.left=e.clientX+'px';r.style.top=e.clientY+'px';
+  r.style.animation='ringout .5s ease-out forwards';
+  laser.appendChild(r);setTimeout(()=>r.remove(),520);},{passive:true});
+(function loop(){
+  if(document.body.classList.contains('laser-on')){
+    hx+=(LX-hx)*0.45;hy+=(LY-hy)*0.45;
+    head.style.left=hx+'px';head.style.top=hy+'px';
+    let px=hx,py=hy;
+    parts.forEach(p=>{p.x+=(px-p.x)*0.32;p.y+=(py-p.y)*0.32;
+      p.el.style.left=p.x+'px';p.el.style.top=p.y+'px';px=p.x;py=p.y;});
+  }
+  requestAnimationFrame(loop);})();
+function toggleLaser(){
+  const on=document.body.classList.toggle('laser-on');
+  lbtn.classList.toggle('on',on);
+  if(on){hx=LX;hy=LY;parts.forEach(p=>{p.x=LX;p.y=LY;});}
+}
+lbtn.onclick=toggleLaser;
+
+/* ============================================================
+   키보드 (규격 §6)
+   ============================================================ */
 addEventListener('keydown',e=>{
   const inp=e.target&&e.target.tagName==='INPUT';
   if(inp&&e.key.indexOf('Arrow')===0)return;
@@ -374,41 +600,83 @@ addEventListener('keydown',e=>{
   else if(e.key==='ArrowLeft'){e.preventDefault();go(cur-1);}
   else if(e.key==='r'||e.key==='R'){resetCards();go(1);}
   else if(e.key==='f'||e.key==='F'){fsb.click();}
+  else if(e.key==='l'||e.key==='L'){toggleLaser();}
 });
 
-/* ============ pane A ============ */
+/* ============================================================
+   pane 0 — d 슬라이더
+   ============================================================ */
+const ds=document.getElementById('ds');
+let raf0=0;
+function draw0(){
+  const d=(+ds.value)/10, sgn=v=>(v<0?'−':'')+Math.abs(v).toFixed(1);
+  document.getElementById('dv').textContent=sgn(d);
+  document.getElementById('d0v').textContent=sgn(d);
+  const ok=Math.abs(d)<1e-9;
+  const vd=document.getElementById('d-vd');
+  vd.className='verdict '+(ok?'good':'bad');
+  vd.textContent=ok?'원점을 지난다 — 조건 (가) 만족 ✓':'그래프가 원점을 지나지 않는다';
+  const f=x=>x*x*x*x+x*x*x-2*x*x+d;
+  const a=-2.5,b=1.9,S=maxAbs(f,a,b)/6.2;
+  document.getElementById('g0').innerHTML=plot({w:584,h:470,xmin:a,xmax:b,S:S,ymin:-1.04*S,ymax:1.04*S,fs:26,
+    curves:[{fn:f,color:ok?C.teal:C.curve,w:5.2}],
+    dots:[{x:0,y:d,c:C.violet,r:13,dy:-30,t:'(0, '+sgn(d)+')'}]});
+  if(ok&&cur===1)setTimeout(()=>{if(cur===1)go(2);},550);
+}
+ds.addEventListener('input',()=>{if(raf0)return;raf0=requestAnimationFrame(()=>{raf0=0;draw0();});});
+draw0();
+
+/* ============================================================
+   pane A — c 슬라이더
+   ============================================================ */
 const cs=document.getElementById('cs');
+let shifted=false, rafA=0;
+document.getElementById('shiftBtn').onclick=function(){
+  shifted=!shifted;this.classList.toggle('act',shifted);
+  document.getElementById('capA2').innerHTML=shifted
+    ?'<span class="v">y</span> = <span class="v fn">f</span>(|<span class="v">x</span>−1|)'
+    :'<span class="v">y</span> = <span class="v fn">f</span>(|<span class="v">x</span>|)';
+  drawA();};
 function drawA(){
   const c=(+cs.value)/10, sgn=v=>(v<0?'−':'')+Math.abs(v).toFixed(1);
   document.getElementById('cv').textContent=sgn(c);
   document.getElementById('dl').textContent=(c===0?'0.0':sgn(-c));
   document.getElementById('dr').textContent=sgn(c);
-  const smooth=Math.abs(c)<1e-9, col=smooth?'#2dd4bf':'#fb7185';
+  const smooth=Math.abs(c)<1e-9, col=smooth?C.teal:C.coral;
   const vd=document.getElementById('vd');
   vd.className='verdict '+(smooth?'good':'bad');
-  vd.textContent=smooth?'f′(0) = 0 → x = 0에서 매끄럽다 — 미분가능 ✓':'x = 0에서 꺾인다 — 미분불가능 ✗';
-  const f=x=>x*x*x*x+c*x, fa=x=>f(Math.abs(x));
-  const a=-1.7,b=1.7,S=Math.max(maxAbs(fa,a,b),maxAbs(f,a,b))/6.5;
-  document.getElementById('gA1').innerHTML=plot({w:640,h:270,xmin:a,xmax:b,S:S,ymin:-1.04*S,ymax:1.04*S,
-    curves:[{fn:f,color:'#7f92c4'}]});
-  document.getElementById('gA2').innerHTML=plot({w:640,h:270,xmin:a,xmax:b,S:S,ymin:-1.04*S,ymax:1.04*S,
-    curves:[{fn:fa,color:col}],vlines:[{x:0,c:'#fbbf24'}],
-    dots:[{x:0,c:col,r:10,dx:82,dy:-30,t:smooth?'매끄러움':'꺾임'}]});
-  if(smooth&&cur===2)go(3);
+  const at=shifted?'x = 1':'x = 0';
+  vd.textContent=smooth?('f′(0) = 0 → '+at+'에서 매끄럽다 ✓'):(at+'에서 꺾인다 — 미분불가능 ✗');
+  const f=x=>x*x*x*x+c*x;
+  const k=shifted?1:0;
+  const fa=x=>f(Math.abs(x-k));
+  const a=-1.7+k*0.5,b=1.7+k*0.9;
+  const S=Math.max(maxAbs(fa,a,b),maxAbs(f,-1.7,1.7))/6.5;
+  document.getElementById('gA1').innerHTML=plot({w:584,h:205,xmin:-1.7,xmax:1.7,S:S,ymin:-1.04*S,ymax:1.04*S,fs:24,
+    curves:[{fn:f,color:C.curve}]});
+  document.getElementById('gA2').innerHTML=plot({w:584,h:205,xmin:a,xmax:b,S:S,ymin:-1.04*S,ymax:1.04*S,fs:24,
+    curves:[{fn:fa,color:col}],vlines:[{x:k,c:C.amber}],
+    dots:[{x:k,y:f(0),c:col,r:11,dx:96,dy:-26,t:smooth?'매끄러움':'꺾임'}]});
+  if(smooth&&cur===2)setTimeout(()=>{if(cur===2)go(3);},550);
 }
-cs.addEventListener('input',drawA);drawA();
+cs.addEventListener('input',()=>{if(rafA)return;rafA=requestAnimationFrame(()=>{rafA=0;drawA();});});
+drawA();
 
-/* ============ pane B1 ============ */
+/* ============================================================
+   pane B1 — 중복도 미니 비교
+   ============================================================ */
 const minis=[{t:'|x|',ex:'중복도 1 → 꺾임',f:x=>Math.abs(x),k:true},
              {t:'|x²|',ex:'중복도 2 → 매끄러움',f:x=>x*x,k:false},
              {t:'|x³|',ex:'중복도 3 → 매끄러움',f:x=>Math.abs(x*x*x),k:false}];
 document.getElementById('mini').innerHTML=minis.map(m=>
- '<div class="mini">'+plot({w:186,h:230,xmin:-1.15,xmax:1.15,ymin:-0.2,ymax:1.12,
-   curves:[{fn:m.f,color:m.k?'#fb7185':'#2dd4bf',w:5}],dots:[{x:0,c:m.k?'#fb7185':'#2dd4bf',r:9}]})+
- '<div class="lab" style="color:'+(m.k?'#fb7185':'#2dd4bf')+'">y = '+m.t+'</div>'+
+ '<div class="mini">'+plot({w:180,h:300,xmin:-1.15,xmax:1.15,ymin:-0.2,ymax:1.12,fs:22,
+   curves:[{fn:m.f,color:m.k?C.coral:C.teal,w:5.5}],dots:[{x:0,c:m.k?C.coral:C.teal,r:11}]})+
+ '<div class="lab m" style="color:'+(m.k?C.coral:C.teal)+'"><span class="v">y</span> = '+m.t+'</div>'+
  '<div class="ex">'+m.ex+'</div></div>').join('');
 
-/* ============ pane B2 ============ */
+/* ============================================================
+   pane B2 — 8가지 케이스 카드
+   ============================================================ */
 const P=(x,r,m)=>Math.pow(x-r,m);
 const CASES=[
  {nm:'4중근',ex:'(x−1)⁴',f:x=>P(x,1,4),k:[],a:-0.4,b:2.4},
@@ -424,8 +692,8 @@ const cw=document.getElementById('cards');
 cw.innerHTML=CASES.map((c,i)=>'<div class="ccard'+(c.ok?' ok':'')+'" data-i="'+i+'">'+
   '<div class="nm">'+c.nm+'<em>'+c.ex+'</em></div><div class="bd2">?</div></div>').join('');
 function drawCase(i){const c=CASES[i];
-  pair('gB1','gB2',c.f,c.a,c.b,315,280,c.k.map(x=>({x:x,c:'#fb7185',r:10,dy:40,t:'꺾임'})),
-       [{x:1,c:'#a78bfa',t:'x = 1'}]);}
+  pair('gB1','gB2',c.f,c.a,c.b,286,248,c.k.map(x=>({x:x,c:C.coral,r:11,dy:42,t:'꺾임'})),
+       [{x:1,c:C.violet,t:'x = 1'}],22);}
 cw.querySelectorAll('.ccard').forEach(el=>el.onclick=()=>{
   const i=+el.dataset.i;
   cw.querySelectorAll('.ccard').forEach(x=>x.classList.remove('sel'));
@@ -434,26 +702,29 @@ cw.querySelectorAll('.ccard').forEach(el=>el.onclick=()=>{
   drawCase(i);seen.add(i);
   document.getElementById('hint').innerHTML=seen.size<8
     ?'카드를 눌러 보세요 ('+seen.size+' / 8)'
-    :'<b style="color:#2dd4bf">꺾인 점이 1개인 경우는 «3중근 + 단순근» 뿐!</b>';
-  if(seen.size>=8&&cur===6)go(7);});
+    :'<b style="color:'+C.teal+'">꺾인 점이 1개인 경우는 «3중근 + 단순근» 뿐!</b>';
+  if(seen.size>=8&&cur===6)setTimeout(()=>{if(cur===6)go(7);},600);});
 function resetCards(){seen=new Set();
   cw.querySelectorAll('.ccard').forEach(x=>{x.classList.remove('sel','done');x.querySelector('.bd2').textContent='?';});
   document.getElementById('gB1').innerHTML='';document.getElementById('gB2').innerHTML='';
-  document.getElementById('hint').textContent='카드를 눌러 보세요 (0 / 8)';}
+  document.getElementById('hint').textContent='카드를 눌러 보세요 (0 / 8)';
+  ds.value=12;draw0();cs.value=20;drawA();}
 
-/* ============ pane C ============ */
-const FR=(n,d)=>'<span class="frac"><span class="n">'+n+'</span><span class="d">'+d+'</span></span>';
+/* ============================================================
+   pane C — 해답 그래프
+   ============================================================ */
+const FR=(n,d)=>'<span class="frac"><span class="num">'+n+'</span><span class="den">'+d+'</span></span>';
 const SOL=[
- {min:8,c:'α = −'+FR(1,3)+' &nbsp;·&nbsp; h(x) = (x−1)³(x+'+FR(1,3)+')',f:x=>x*x*x*x-8/3*x*x*x+2*x*x,k:-1/3,a:-1.3,b:1.8},
- {min:9,c:'β = 0 &nbsp;·&nbsp; h(x) = (x−1)x³',f:x=>x*x*x*x-x*x*x,k:1,a:-1,b:1.7},
- {min:9,c:'β = −3 &nbsp;·&nbsp; h(x) = (x−1)(x+3)³',f:x=>x*x*x*x+8*x*x*x+18*x*x,k:1,a:-4.2,b:1.5}];
+ {min:8,c:'α = −'+FR(1,3)+' &nbsp;·&nbsp; <span class="v fn">h</span>(<span class="v">x</span>) = (<span class="v">x</span>−1)³(<span class="v">x</span>+'+FR(1,3)+')',f:x=>x*x*x*x-8/3*x*x*x+2*x*x,k:-1/3,a:-1.3,b:1.8},
+ {min:9,c:'β = 0 &nbsp;·&nbsp; <span class="v fn">h</span>(<span class="v">x</span>) = (<span class="v">x</span>−1)<span class="v">x</span>³',f:x=>x*x*x*x-x*x*x,k:1,a:-1,b:1.7},
+ {min:9,c:'β = −3 &nbsp;·&nbsp; <span class="v fn">h</span>(<span class="v">x</span>) = (<span class="v">x</span>−1)(<span class="v">x</span>+3)³',f:x=>x*x*x*x+8*x*x*x+18*x*x,k:1,a:-4.2,b:1.9}];
 document.getElementById('sols').innerHTML=SOL.map((s,i)=>
- '<div class="srow" data-min="'+s.min+'"><div class="sc mline" style="justify-content:center">'+s.c+'</div>'+
+ '<div class="solrow" data-min="'+s.min+'"><div class="sc m">'+s.c+'</div>'+
  '<div class="twin"><div class="tw"><div id="c'+i+'a"></div></div>'+
  '<div class="tw"><div id="c'+i+'b"></div></div></div></div>').join('');
 SOL.forEach((s,i)=>{const f1=s.f(1);
-  pair('c'+i+'a','c'+i+'b',x=>s.f(x)-f1,s.a,s.b,315,224,[{x:s.k,c:'#fb7185',r:9,dy:30,t:'꺾임'}],
-       [{x:1,c:'#a78bfa'}]);});
+  pair('c'+i+'a','c'+i+'b',x=>s.f(x)-f1,s.a,s.b,286,156,[{x:s.k,c:C.coral,r:10}],
+       [{x:1,c:C.violet}],21);});
 
 render();
 </script>
