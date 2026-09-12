@@ -7,6 +7,30 @@
 <style>
 @charset "UTF-8";
 /* ============================================================================
+   수업용 인터랙티브 문제풀이 앱  ·  공통 스테이지 규격 v5
+   (이 파일을 다른 문항 앱의 지침/템플릿으로 사용)
+
+   [화면]
+   - 1600 x 900 (16:9) 고정 스테이지를 translate+scale 로 화면에 꽉 채운다
+   - 아이패드 확장 모니터로 16:9 TV 에 띄우는 것을 기준으로 한다
+   - 세로 4분할 : .topline(구분선) / #body2col(본문) / .app-foot(발판)
+
+   [본문 2단]
+   - 좌: #leftCol  단계별 풀이 카드. 넘치면 세로 스크롤, 현재 단계 자동 추적
+   - 우: #rightCol 그래프. 머리말·그래프·슬라이더 3단, 각 높이 고정
+
+   [조판 규칙]
+   - 한글 Noto Sans KR / 숫자·수식 STIX Two Text, 변수는 이탤릭
+   - 분수는 .frac (슬래시 금지), 근호는 .sq, 마이너스는 유니코드 −(U+2212)
+   - 연산자(⟹, =)는 줄 끝에 매달지 말고 다음 줄 머리로 내린 뒤 .ind 로 들여쓴다
+
+   [흔들림 방지]
+   - 값이 바뀌는 숫자칸은 min-width + tabular-nums 로 폭을 고정
+   - 머리말/슬라이더 줄은 고정 높이 → 그래프 칸 높이가 변하지 않는다
+   - SVG 는 크기가 실제로 변할 때만 viewBox 재설정
+============================================================================ */
+
+/* ----------------------------------------------------------------------------
    chalk-stage.css  v4 (16:9 / 확장 모니터용)
    - 스테이지 1600 x 900 고정 (아이패드 확장 모니터 -> 16:9 TV), translate+scale 로 아이패드 화면에 꽉 채움
    - 머리말 제거: 제목은 발판 왼쪽 아래 구석에 작게
@@ -50,7 +74,9 @@ body{color:var(--chalk);font-family:var(--f-en),var(--f-kr),system-ui,sans-serif
     radial-gradient(130% 110% at 50% 45%, rgba(0,0,0,0) 55%, rgba(0,0,0,.34) 100%)}
 
 .sheet{position:relative;z-index:1;width:100%;height:100%;
-  padding:30px 34px 22px;display:flex;flex-direction:column;gap:16px}
+  padding:14px 34px 16px;display:flex;flex-direction:column;gap:12px}
+/* 상단 구분선 — 화면 맨 위와 본문을 가르는 얇은 선 */
+.topline{flex:0 0 auto;height:2px;background:var(--line);margin-bottom:2px}
 
 /* ---------------- 본문 2단 ---------------- */
 #body2col{display:flex;flex-direction:row;align-items:stretch;gap:24px;flex:1 1 auto;min-height:0}
@@ -78,7 +104,6 @@ body{color:var(--chalk);font-family:var(--f-en),var(--f-kr),system-ui,sans-serif
 
 .ln{margin:0;font-size:var(--ls);line-height:1.42;word-break:keep-all}
 .ln + .ln{margin-top:6px}
-.ln.sm{font-size:var(--ls-sm);color:var(--chalk-soft)}
 .ln.ind{padding-left:1.5em}
 .sm2{font-size:var(--ls-sm);color:var(--chalk-soft)}
 .ln.q{font-size:var(--ls-q);color:var(--chalk-soft);line-height:1.5;
@@ -87,14 +112,19 @@ body{color:var(--chalk);font-family:var(--f-en),var(--f-kr),system-ui,sans-serif
 /* ---------------- 우측 그래프 ---------------- */
 #rightCol{flex:0 0 720px;display:flex;flex-direction:column;gap:12px;min-height:0;
   padding:20px 22px;background:var(--panel-2);border-color:var(--line-strong)}
-.ghead{display:flex;align-items:center;gap:12px;flex:0 0 auto;white-space:nowrap}
+.ghead{display:flex;align-items:center;gap:12px;flex:0 0 54px;white-space:nowrap}
 .ghead .ttl{font-size:30px;color:var(--chalk-soft);flex:1 1 auto;min-width:0;overflow:hidden}
-.ghead .tag{flex:0 0 auto;font-size:27px;padding:6px 18px}
+.ghead .tag{flex:0 0 auto;font-size:26px;padding:4px 18px;line-height:1.25}
 .gwrap{position:relative;flex:1 1 0;min-height:0}
 .gwrap svg{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
 
-.srow{flex:0 0 auto;display:flex;align-items:center;gap:18px}
-.srow .lab{font-size:38px;font-weight:700;white-space:nowrap;font-family:var(--f-en)}
+.srow{flex:0 0 48px;display:flex;align-items:center;gap:18px}
+.srow .lab{font-size:38px;font-weight:700;white-space:nowrap;font-family:var(--f-en);
+  flex:0 0 180px;font-variant-numeric:tabular-nums}
+/* a 를 움직여도 폭이 변하지 않도록 숫자칸을 고정한다 (레이아웃 흔들림 방지) */
+#cnt,#aval{display:inline-block;text-align:center;font-variant-numeric:tabular-nums}
+#cnt{min-width:1.2em}
+#aval{min-width:2em}
 .sldwrap{position:relative;flex:1;height:40px;display:flex;align-items:center}
 .band{position:absolute;height:12px;border-radius:6px;background:var(--teal-dim);
   border:1px solid rgba(73,209,192,.55);top:14px;pointer-events:none;opacity:0;transition:.4s}
@@ -107,21 +137,21 @@ input[type=range]::-moz-range-thumb{width:36px;height:36px;border-radius:50%;bac
   border:4px solid var(--bg);cursor:pointer}
 
 /* ---------------- 발판 ---------------- */
-.app-foot{flex:0 0 auto;display:flex;align-items:flex-end;justify-content:space-between;gap:20px;
-  padding-top:14px;border-top:2px solid var(--line)}
-.footL{display:flex;flex-direction:column;gap:10px;min-width:0}
-.appTitle{margin:0;font-size:24px;font-weight:500;color:var(--chalk-faint);letter-spacing:-.01em;
+.app-foot{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:20px;
+  padding-top:10px;border-top:2px solid var(--line)}
+.footL{display:flex;flex-direction:row;align-items:center;gap:18px;min-width:0}
+.appTitle{margin:0;font-size:22px;font-weight:500;color:var(--chalk-faint);letter-spacing:-.01em;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .appTitle .no19{color:var(--amber);font-weight:700;font-family:var(--f-en);margin-right:8px}
 
-.dots{display:flex;gap:13px;align-items:center}
-.dots i{width:16px;height:16px;border-radius:50%;background:var(--line-strong);
+.dots{display:flex;gap:11px;align-items:center;flex:0 0 auto}
+.dots i{width:14px;height:14px;border-radius:50%;background:var(--line-strong);
   transition:background .2s ease, transform .2s ease}
 .dots i.on{background:var(--amber);transform:scale(1.25)}
 
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;
-  padding:14px 28px;border:2px solid var(--line-strong);border-radius:999px;background:transparent;
-  color:var(--chalk);font-family:inherit;font-size:30px;font-weight:600;cursor:pointer;
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:9px 20px;border:2px solid var(--line-strong);border-radius:999px;background:transparent;
+  color:var(--chalk);font-family:inherit;font-size:25px;font-weight:600;cursor:pointer;
   transition:background .18s ease,border-color .18s ease,color .18s ease,opacity .18s ease}
 .btn:hover{background:rgba(255,255,255,.07)}
 .btn:active{transform:translateY(1px)}
@@ -131,7 +161,7 @@ input[type=range]::-moz-range-thumb{width:36px;height:36px;border-radius:50%;bac
 .btn--teal:hover{background:var(--teal-dim)}
 .btn[disabled]{opacity:.3;cursor:default}
 .btn[disabled]:hover{background:transparent}
-.btn svg{width:28px;height:28px;flex:none}
+.btn svg{width:22px;height:22px;flex:none}
 :where(button,[tabindex]):focus-visible{outline:3px solid var(--amber);outline-offset:4px}
 
 .row{display:flex;align-items:center}
@@ -147,6 +177,7 @@ input[type=range]::-moz-range-thumb{width:36px;height:36px;border-radius:50%;bac
 .m{font-family:var(--f-en),var(--f-kr),serif;font-variant-numeric:tabular-nums;
   white-space:nowrap;line-height:1.15;display:inline-block}
 .var,.v{font-style:italic;font-family:var(--f-en),serif}
+.v.fn{margin-right:.09em}
 /* 분수 — align-items:stretch 라 분수선이 분자·분모 중 넓은 쪽에 맞춰 그어진다 */
 .frac{display:inline-flex;flex-direction:column;align-items:stretch;text-align:center;
   vertical-align:middle;margin:0 .22em;transform:translateY(-.08em);line-height:1.06;font-size:.86em}
@@ -198,6 +229,8 @@ body.laser-on.has-mouse *{cursor:none !important}
   <div class="stage" id="stage">
     <div class="sheet">
 
+      <div class="topline"></div>
+
       <div id="body2col">
 
         <!-- ============ 좌측: 풀이 단계 ============ -->
@@ -212,11 +245,11 @@ body.laser-on.has-mouse *{cursor:none !important}
 
           <div class="panel stepCard" data-s="1"><span class="no">2</span>
             <p class="ln">양변을 제곱하면</p>
-            <p class="ln ind"><span class="m"><span class="v">n</span>⁶ = <span class="frac"><span class="num">9</span><span class="den">4</span></span>(−<span class="v">x</span>²+<span class="var-a">a</span><span class="v">x</span>) = <span class="hl-coral"><span class="v">f</span>(<span class="v">x</span>)</span></span></p>
+            <p class="ln ind"><span class="m"><span class="v">n</span>⁶ = <span class="frac"><span class="num">9</span><span class="den">4</span></span>(−<span class="v">x</span>²+<span class="var-a">a</span><span class="v">x</span>) = <span class="hl-coral"><span class="v fn">f</span>(<span class="v">x</span>)</span></span></p>
           </div>
 
           <div class="panel stepCard" data-s="2"><span class="no">3</span>
-            <p class="ln"><span class="m"><span class="hl-coral"><span class="v">f</span>(<span class="v">x</span>)</span> = −<span class="frac"><span class="num">9</span><span class="den">4</span></span>(<span class="v">x</span> − <span class="frac"><span class="num var-a">a</span><span class="den">2</span></span>)² + <span class="hl-amber"><span class="frac"><span class="num">9</span><span class="den">16</span></span><span class="var-a">a</span>²</span></span></p>
+            <p class="ln"><span class="m"><span class="hl-coral"><span class="v fn">f</span>(<span class="v">x</span>)</span> = −<span class="frac"><span class="num">9</span><span class="den">4</span></span>(<span class="v">x</span> − <span class="frac"><span class="num var-a">a</span><span class="den">2</span></span>)² + <span class="hl-amber"><span class="frac"><span class="num">9</span><span class="den">16</span></span><span class="var-a">a</span>²</span></span></p>
           </div>
 
           <div class="panel stepCard" data-s="3"><span class="no">4</span>
@@ -241,9 +274,8 @@ body.laser-on.has-mouse *{cursor:none !important}
         <!-- ============ 우측: 그래프 ============ -->
         <div class="panel" id="rightCol">
           <div class="ghead">
-            <span class="ttl"><span class="m"><span class="v">y</span> = <span class="v">f</span>(<span class="v">x</span>)</span> 와 <span class="m"><span class="v">y</span> = <span class="v">n</span>⁶</span> 의 교점</span>
-            <span class="tag is-amber" id="chipMax" style="visibility:hidden"><span class="m"><span class="frac"><span class="num">9</span><span class="den">16</span></span><span class="var-a">a</span>² = <b id="vmax">324</b></span></span>
-            <span class="tag is-teal" id="chipCnt" style="visibility:hidden">실근 <b id="cnt">4</b>개</span>
+            <span class="ttl"><span class="m"><span class="v">y</span> = <span class="v fn">f</span>(<span class="v">x</span>)</span> 와 <span class="m"><span class="v">y</span> = <span class="v">n</span>⁶</span> 의 교점</span>
+            <span class="tag is-amber" id="chipCnt" style="visibility:hidden">실근 <b id="cnt">4</b>개</span>
           </div>
           <div class="gwrap"><svg id="gr" preserveAspectRatio="xMidYMid meet"></svg></div>
           <div class="srow">
@@ -260,18 +292,10 @@ body.laser-on.has-mouse *{cursor:none !important}
       <!-- ============ 발판 ============ -->
       <footer class="app-foot">
         <div class="footL">
+          <p class="appTitle"><span class="no19">2-19</span>세제곱근이 자연수가 되는 <span class="v">x</span>의 개수</p>
           <div class="dots" id="dots"></div>
-          <p class="appTitle"><span class="no19">19</span>세제곱근이 자연수가 되는 x의 개수</p>
         </div>
         <div class="row g12">
-          <button class="btn" id="prevBtn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-            이전
-          </button>
-          <button class="btn btn--amber" id="nextBtn">
-            다음
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-          </button>
           <button class="btn" id="resetBtn">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 4v6h6"/><path d="M20 20v-6h-6"/><path d="M5.5 15a8 8 0 0013.9 3.3M18.5 9A8 8 0 004.6 5.7"/></svg>
             처음부터
@@ -279,6 +303,14 @@ body.laser-on.has-mouse *{cursor:none !important}
           <button class="btn btn--coral" id="lzBtn">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="3.4" fill="currentColor" stroke="none"/><path d="M12 2.5v3.4"/><path d="M12 18.1v3.4"/><path d="M2.5 12h3.4"/><path d="M18.1 12h3.4"/><path d="M5.3 5.3l2.4 2.4"/><path d="M16.3 16.3l2.4 2.4"/><path d="M18.7 5.3l-2.4 2.4"/><path d="M7.7 16.3l-2.4 2.4"/></svg>
             <span id="lzLabel">레이저</span>
+          </button>
+          <button class="btn" id="prevBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            이전
+          </button>
+          <button class="btn btn--amber" id="nextBtn">
+            다음
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
           </button>
           <button class="btn btn--teal" id="fsBtn">
             <svg id="fsIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
@@ -357,8 +389,41 @@ const PW = function(){ return P.W - P.l - P.r; };
 const PH = function(){ return P.H - P.t - P.b; };
 const BASE = function(){ return P.H - P.b; };
 const px = function(x){ return P.l + (x - X0) / (X1 - X0) * PW(); };
-const py = function(y){ return BASE() - Math.max(y,0) / YMAX * PH(); };
-const invy = function(p){ return YMAX * Math.max(0, Math.min(1, (BASE() - p) / PH())); };
+/* y축 표시 워프
+   y=1⁶(=1), y=2⁶(=64) 은 실제 눈금으로는 x축에 붙어버려 교점이 보이지 않는다.
+   그래서 라벨은 실제값 그대로 두고 '그려지는 높이'만 1.9⁶ · 2.5⁶ 자리로 끌어올린다.
+   구간별 직선으로 늘리면 이음매에서 곡선이 꺾이므로,
+   단조 3차 보간(Fritsch-Carlson)을 써서 기울기까지 연속이 되게 한다.
+   포물선·꼭짓점·수평선·드래그선 모두 같은 변환을 거치므로 교점 개수는 정확하다. */
+const WX = [0, 1, 64, 729, YMAX];
+const WY = [0, Math.pow(1.9, 6), Math.pow(2.5, 6), 729, YMAX];
+const WD = (function(){
+  const n = WX.length, h = [], d = [], m = new Array(n);
+  for (let i = 0; i < n - 1; i++){ h[i] = WX[i+1] - WX[i]; d[i] = (WY[i+1] - WY[i]) / h[i]; }
+  m[0] = d[0]; m[n-1] = d[n-2];
+  for (let i = 1; i < n - 1; i++){
+    if (d[i-1] * d[i] <= 0){ m[i] = 0; continue; }
+    const w1 = 2 * h[i] + h[i-1], w2 = h[i] + 2 * h[i-1];
+    m[i] = (w1 + w2) / (w1 / d[i-1] + w2 / d[i]);
+  }
+  return m;
+})();
+function warpY(y){
+  y = Math.max(0, Math.min(YMAX, y));
+  let i = 0;
+  while (i < WX.length - 2 && y > WX[i+1]) i++;
+  const h = WX[i+1] - WX[i], t = (y - WX[i]) / h, t2 = t * t, t3 = t2 * t;
+  return (2*t3 - 3*t2 + 1) * WY[i] + (t3 - 2*t2 + t) * h * WD[i]
+       + (-2*t3 + 3*t2) * WY[i+1] + (t3 - t2) * h * WD[i+1];
+}
+function unwarpY(dv){
+  dv = Math.max(0, Math.min(YMAX, dv));
+  let lo = 0, hi = YMAX;
+  for (let k = 0; k < 42; k++){ const mid = (lo + hi) / 2; if (warpY(mid) < dv) lo = mid; else hi = mid; }
+  return (lo + hi) / 2;
+}
+const py = function(y){ return BASE() - warpY(Math.max(y,0)) / YMAX * PH(); };
+const invy = function(p){ return unwarpY(YMAX * Math.max(0, Math.min(1, (BASE() - p) / PH()))); };
 const f = function(x){ return 2.25 * (-x * x + a * x); };
 const vmaxOf = function(){ return 9 / 16 * a * a; };
 
@@ -371,10 +436,14 @@ function xsAt(k){
 }
 
 const LV = [{n:1,k:1},{n:2,k:64},{n:3,k:729}];
+let lastW = 0, lastH = 0;
 
 function draw(){
   const w = Math.round(SV.clientWidth), h = Math.round(SV.clientHeight);
-  if (w > 40 && h > 40){ P.W = w; P.H = h; SV.setAttribute('viewBox', '0 0 ' + w + ' ' + h); }
+  if (w > 40 && h > 40){
+    P.W = w; P.H = h;
+    if (w !== lastW || h !== lastH){ lastW = w; lastH = h; SV.setAttribute('viewBox', '0 0 ' + w + ' ' + h); }
+  }
 
   const v = vmaxOf(), o = [], base = BASE();
   const A = function(x,y){ return x.toFixed(1) + ',' + y.toFixed(1); };
@@ -401,9 +470,9 @@ function draw(){
   /* 포물선 */
   if (step >= 1){
     let d = '';
-    for (let i = 0; i <= 240; i++){ const x = a*i/240; d += (i?'L':'M') + A(px(x), py(f(x))); }
+    for (let i = 0; i <= 420; i++){ const x = a*i/420; d += (i?'L':'M') + A(px(x), py(f(x))); }
     o.push('<path d="'+d+'" fill="none" stroke="#ff7d6a" stroke-width="5.2" stroke-linejoin="round"/>');
-    o.push('<text x="'+(px(0)+16)+'" y="'+(P.t+28)+'" fill="#ff7d6a" font-size="33" font-weight="700"><tspan font-style="italic">y</tspan> = <tspan font-style="italic">f</tspan>(<tspan font-style="italic">x</tspan>)</text>');
+    o.push('<text x="'+(px(0)+16)+'" y="'+(P.t+28)+'" fill="#ff7d6a" font-size="33" font-weight="700"><tspan font-style="italic">y</tspan> = <tspan font-style="italic">f</tspan><tspan dx="3">(</tspan><tspan font-style="italic">x</tspan>)</text>');
   }
 
   /* 꼭짓점 */
@@ -413,12 +482,13 @@ function draw(){
     o.push('<line x1="'+vx+'" y1="'+vy+'" x2="'+vx+'" y2="'+base+'" stroke="#f5b642" stroke-width="2.4" stroke-dasharray="7 7" opacity=".7"/>');
     o.push('<line x1="'+px(0)+'" y1="'+vy+'" x2="'+vx+'" y2="'+vy+'" stroke="#f5b642" stroke-width="2.4" stroke-dasharray="7 7" opacity=".7"/>');
     o.push('<circle cx="'+vx+'" cy="'+vy+'" r="11" fill="'+col+'" stroke="#0e1b2b" stroke-width="3.5"/>');
-    var fs = 30, fx = vx + 24, fw = 62;
+    /* 왼쪽 설명란과 같은 (9/16)a² 형태로 조판한다 (SVG 라 좌표로 직접 그린다) */
+    var fs = 30, fx = vx + 24, fw = 40;
     var cy = Math.min(Math.max(vy - 12, P.t + 46), base - 44);
-    o.push('<text x="'+(fx+fw/2)+'" y="'+(cy-10)+'" fill="'+col+'" font-size="'+fs+'" font-weight="700" text-anchor="middle">9<tspan font-style="italic">a</tspan>²</text>');
+    o.push('<text x="'+(fx+fw/2)+'" y="'+(cy-10)+'" fill="'+col+'" font-size="'+fs+'" font-weight="700" text-anchor="middle">9</text>');
     o.push('<line x1="'+fx+'" y1="'+cy+'" x2="'+(fx+fw)+'" y2="'+cy+'" stroke="'+col+'" stroke-width="2.6"/>');
     o.push('<text x="'+(fx+fw/2)+'" y="'+(cy+31)+'" fill="'+col+'" font-size="'+fs+'" font-weight="700" text-anchor="middle">16</text>');
-    o.push('<text x="'+(fx+fw+14)+'" y="'+(cy+11)+'" fill="'+col+'" font-size="'+fs+'" font-weight="700">= '+v.toFixed(v%1?2:0)+'</text>');
+    o.push('<text x="'+(fx+fw+10)+'" y="'+(cy+11)+'" fill="'+col+'" font-size="'+fs+'" font-weight="700"><tspan font-style="italic">a</tspan>² = '+v.toFixed(v%1?2:0)+'</text>');
   }
 
   /* y = n⁶ 수평선 + 끌 수 있는 보라선 */
@@ -449,7 +519,6 @@ function draw(){
   }
 
   SV.innerHTML = o.join('');
-  document.getElementById('vmax').textContent = (+v.toFixed(2)).toString();
   const tot = totalRoots();
   document.getElementById('cnt').textContent = tot;
   document.getElementById('aval').textContent = a;
@@ -498,7 +567,6 @@ function go(s){
   document.getElementById('prevBtn').disabled = step === 0;
   document.getElementById('nextBtn').disabled = step === NSTEP-1;
   document.getElementById('band').classList.toggle('show', step >= 4);
-  document.getElementById('chipMax').style.visibility = step >= 2 ? 'visible' : 'hidden';
   document.getElementById('chipCnt').style.visibility = step >= 3 ? 'visible' : 'hidden';
   /* 현재 단계가 스크롤 밖이면 보이는 데까지 끌어온다 */
   if (liveEl && leftCol.scrollHeight > leftCol.clientHeight + 1){
@@ -523,7 +591,12 @@ window.addEventListener('keydown', function(e){
   if (e.key === 'f' || e.key === 'F') toggleFullscreen();
   if (e.key === 'l' || e.key === 'L') document.getElementById('lzBtn').click();
 });
-document.getElementById('sld').addEventListener('input', function(e){ a = +e.target.value; draw(); });
+var aPend = false;
+document.getElementById('sld').addEventListener('input', function(e){
+  a = +e.target.value;
+  document.getElementById('aval').textContent = a;
+  if (!aPend){ aPend = true; requestAnimationFrame(function(){ aPend = false; draw(); }); }
+});
 
 (function(){
   const b = document.getElementById('band'), mn = 5, mx = 40;
@@ -532,7 +605,9 @@ document.getElementById('sld').addEventListener('input', function(e){ a = +e.tar
   b.style.width = 'calc(' + ((R-L)*100) + '% + 18px)';
 })();
 
-if (window.ResizeObserver) new ResizeObserver(function(){ draw(); }).observe(SV);
+if (window.ResizeObserver) new ResizeObserver(function(){
+  if (SV.clientWidth !== lastW || SV.clientHeight !== lastH) draw();
+}).observe(SV);
 
 
 /* ---------- 5) 레이저 포인터 ----------
