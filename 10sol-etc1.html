@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>두 구간이 만날 확률 · 확률과통계</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Space+Grotesk:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap');
+
+:root{
+  --bg-deep:#0a1420; --bg:#0e1b2b; --panel:#16283e; --panel-2:#1d3350;
+  --line:rgba(214,229,245,.18); --line-strong:rgba(214,229,245,.38);
+  --chalk:#eaf1f8; --chalk-soft:#b9cadd; --chalk-faint:#7d94ad;
+  --amber:#f5b642; --coral:#ff7d6a; --teal:#49d1c0; --violet:#9d8cf5;
+  --amber-dim:rgba(245,182,66,.16); --coral-dim:rgba(255,125,106,.16);
+  --teal-dim:rgba(73,209,192,.16); --violet-dim:rgba(157,140,245,.16);
+
+  --f-en:'Space Grotesk'; --f-kr:'Noto Sans KR'; --f-math:'STIX Two Text';
+  --t-title:54px; --t-h2:42px; --t-body:34px; --t-small:28px;
+
+  --r-s:10px; --r-m:18px; --r-l:26px;
+  --sheet-pad-x:38px; --sheet-pad-t:10px; --sheet-pad-b:16px; --sheet-gap:16px;
+}
+*{box-sizing:border-box;}
+[hidden]{display:none !important;}
+html,body{height:100%;margin:0;padding:0;overflow:hidden;background:var(--bg-deep);
+  overscroll-behavior:none;touch-action:manipulation;-webkit-text-size-adjust:100%;}
+body{color:var(--chalk);font-family:var(--f-en),var(--f-kr),system-ui,sans-serif;
+  font-size:var(--t-body);line-height:1.4;-webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:transparent;}
+.viewport{position:fixed;inset:0;overflow:hidden;background:var(--bg-deep);}
+.stage{position:absolute;top:0;left:0;width:1600px;height:900px;transform-origin:0 0;
+  will-change:transform;overflow:hidden;
+  background:radial-gradient(120% 90% at 18% 8%,#16273b 0%,rgba(22,39,59,0) 60%),
+             radial-gradient(100% 80% at 92% 96%,#142335 0%,rgba(20,35,53,0) 62%),var(--bg);}
+.stage::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(115deg,rgba(255,255,255,.014) 0 2px,rgba(255,255,255,0) 2px 7px),
+             radial-gradient(130% 110% at 50% 45%,rgba(0,0,0,0) 55%,rgba(0,0,0,.34) 100%);}
+.sheet{position:relative;z-index:1;width:100%;height:100%;
+  padding:var(--sheet-pad-t) var(--sheet-pad-x) var(--sheet-pad-b);
+  display:flex;flex-direction:column;gap:var(--sheet-gap);}
+
+.topline{flex:0 0 auto;height:2px;background:var(--line);margin-top:4px;}
+
+/* 상단 안내줄 + 풀이 선택 탭 */
+.headRow{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:24px;}
+.headText{font-size:36px;font-weight:600;white-space:nowrap;}
+.tabs{display:flex;gap:10px;}
+.tabBtn{padding:9px 22px;border:2px solid var(--line-strong);border-radius:999px;
+  background:transparent;color:var(--chalk-soft);font-family:var(--f-kr),sans-serif;
+  font-size:26px;font-weight:700;cursor:pointer;white-space:nowrap;
+  transition:background .16s ease,border-color .16s ease,color .16s ease;}
+.tabBtn:hover{background:rgba(255,255,255,.07);}
+.tabBtn.is-active{border-color:var(--amber);color:var(--amber);background:var(--amber-dim);}
+
+.panelWrap{display:flex;flex-direction:column;gap:var(--sheet-gap);flex:1 1 auto;min-height:0;}
+.panel{position:relative;padding:18px 24px;border:2px solid var(--line);
+  border-radius:var(--r-l);background:var(--panel);}
+.panel--flat{background:transparent;border:0;padding:0;}
+
+.result{padding:12px 26px;gap:44px;border:3px solid var(--line-strong);border-radius:var(--r-l);
+  background:transparent;font-size:var(--t-h2);font-weight:600;text-align:center;}
+.result.is-amber{border-color:var(--amber);background:var(--amber-dim);}
+.result.is-teal{border-color:var(--teal);background:var(--teal-dim);}
+.result.is-coral{border-color:var(--coral);background:var(--coral-dim);}
+
+/* 버튼 */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:11px 24px;
+  border:2px solid var(--line-strong);border-radius:999px;background:transparent;color:var(--chalk);
+  font-family:var(--f-en),var(--f-kr),sans-serif;font-size:var(--t-small);font-weight:600;cursor:pointer;
+  transition:background .18s ease,border-color .18s ease,color .18s ease,opacity .18s ease;}
+.btn:hover{background:rgba(255,255,255,.07);}
+.btn:active{transform:translateY(1px);}
+.btn--amber{border-color:var(--amber);color:var(--amber);}
+.btn--amber:hover{background:var(--amber-dim);}
+.btn--teal{border-color:var(--teal);color:var(--teal);}
+.btn--teal:hover{background:var(--teal-dim);}
+.btn--violet{border-color:var(--violet);color:var(--violet);}
+.btn--violet:hover{background:var(--violet-dim);}
+.btn[disabled]{opacity:.3;cursor:default;}
+.btn[disabled]:hover{background:transparent;}
+.btn svg{width:22px;height:22px;flex:none;}
+:where(button,[tabindex]):focus-visible{outline:3px solid var(--amber);outline-offset:4px;}
+
+/* 발판 */
+.app-foot{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;
+  gap:18px;padding-top:10px;border-top:2px solid var(--line);}
+.foot-title{display:flex;align-items:baseline;gap:12px;white-space:nowrap;}
+.foot-title .ttl{font-size:30px;font-weight:700;letter-spacing:-.02em;}
+.foot-title .sec{font-size:23px;color:var(--chalk-faint);}
+.stamp{color:var(--amber);font-size:30px;font-weight:700;}
+.dots{display:flex;gap:10px;align-items:center;}
+.dots i{width:13px;height:13px;border-radius:50%;background:var(--line-strong);
+  transition:background .2s ease,transform .2s ease;}
+.dots i.on{background:var(--amber);transform:scale(1.25);}
+
+/* 단계 노출 */
+.step{opacity:0;transform:translateY(10px);transition:opacity .3s ease,transform .3s ease;}
+.step.on{opacity:1;transform:none;}
+@keyframes pop{0%{transform:scale(1);}45%{transform:scale(1.16);}100%{transform:scale(1);}}
+.pop{animation:pop .42s ease;}
+
+/* ------------------------ 수식 (교과서 세리프 수식체) ------------------------ */
+.m{font-family:var(--f-math),var(--f-kr),serif;font-variant-numeric:tabular-nums;
+  white-space:nowrap;line-height:1.18;}
+.var{font-style:italic;}
+.op{margin:0 .2em;}
+.frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;
+  margin:0 .18em;transform:translateY(-.08em);line-height:1.02;}
+.frac>.num{padding:0 .3em .04em;}
+.frac>.den{padding:.06em .3em 0;border-top:.06em solid currentColor;}
+.sub{display:inline-block;font-size:.62em;font-style:italic;transform:translateY(.36em);}
+.sub.is-up{font-style:normal;}
+.sup{display:inline-block;font-size:.62em;transform:translateY(-.55em);}
+.comb{display:inline-flex;align-items:center;}
+.comb>.pre{font-size:.62em;transform:translateY(.36em);}
+.comb>.sym{font-size:1em;margin:0 .03em;}
+.comb>.post{font-size:.62em;transform:translateY(.36em);}
+.hl-amber{color:var(--amber);} .hl-coral{color:var(--coral);}
+.hl-teal{color:var(--teal);} .hl-violet{color:var(--violet);} .hl-dim{color:var(--chalk-faint);}
+
+/* 배치 */
+.row{display:flex;align-items:center;} .col{display:flex;flex-direction:column;}
+.between{justify-content:space-between;} .center{justify-content:center;align-items:center;}
+.grow{flex:1 1 auto;min-height:0;min-width:0;}
+.g8{gap:8px;} .g12{gap:12px;} .g16{gap:16px;} .g24{gap:24px;} .g32{gap:32px;}
+.cols-2{display:grid;grid-template-columns:1fr 1fr;gap:22px;min-height:0;}
+.cols-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;min-height:0;}
+.m0{margin:0;}
+
+/* 수직선 */
+.nlwrap{flex:1 1 auto;min-height:0;display:flex;}
+.nlwrap svg{width:100%;height:100%;display:block;}
+.nl-axis{stroke:var(--chalk-soft);stroke-width:4;stroke-linecap:round;}
+.nl-arrow{fill:var(--chalk-soft);}
+.nl-tick{stroke:var(--chalk-soft);stroke-width:4;}
+.nl-num{font-family:'STIX Two Text',serif;font-weight:600;fill:var(--chalk-soft);text-anchor:middle;}
+.nl-num.on{fill:var(--chalk);}
+.nl-lab{font-family:'STIX Two Text',serif;font-weight:700;text-anchor:middle;}
+.nl-guide{stroke:var(--line-strong);stroke-width:2;stroke-dasharray:6 8;}
+.nl-pick{cursor:pointer;}
+
+/* 경우 카드 */
+.caseCard{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  gap:4px;cursor:pointer;padding:14px 12px;opacity:.4;
+  transition:border-color .15s ease,box-shadow .15s ease,opacity .2s ease;}
+.caseCard:hover{border-color:var(--amber);}
+.caseCard.is-on{opacity:1;border-color:var(--coral);box-shadow:0 0 0 4px var(--coral-dim);}
+.caseCard.is-cur{border-color:var(--amber);box-shadow:0 0 0 5px var(--amber-dim);}
+.ccHead{font-size:46px;font-weight:700;margin-bottom:2px;}
+.ccLine{font-size:34px;color:var(--chalk-soft);text-align:center;}
+.ccCalc{font-size:34px;color:var(--chalk-soft);}
+.ccFoot{width:100%;margin-top:auto;padding-top:6px;border-top:1px dashed var(--line);
+  display:flex;align-items:baseline;justify-content:center;gap:9px;}
+.ccVal{font-family:var(--f-math),serif;font-weight:700;font-size:54px;color:var(--chalk-faint);}
+.caseCard.is-on .ccVal{color:var(--coral);}
+
+/* 15가지 미니 수직선 */
+.miniGrid{display:grid;grid-template-columns:repeat(5,1fr);gap:11px 14px;}
+.mini{display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 6px;
+  border:2px solid var(--line);border-radius:var(--r-m);background:var(--panel);}
+.miniLine{position:relative;display:flex;align-items:center;gap:9px;}
+.miniLine::before{content:"";position:absolute;left:0;right:0;top:50%;height:2px;background:var(--line-strong);}
+.md{position:relative;width:22px;height:22px;border-radius:50%;background:var(--bg);
+  border:2px solid var(--line-strong);}
+.md.is-a{background:var(--amber);border-color:var(--amber);}
+.md.is-b{background:var(--teal);border-color:var(--teal);}
+.miniTxt{font-family:var(--f-math),serif;font-size:21px;color:var(--chalk-faint);}
+.mini.is-hit{border-color:var(--amber);box-shadow:0 0 0 3px var(--amber-dim);}
+
+.finalBox{border:4px solid var(--teal);border-radius:var(--r-l);background:var(--teal-dim);
+  padding:12px 44px;}
+.cmpTitle{font-size:34px;font-weight:700;}
+</style>
+</head>
+<body>
+
+<div class="viewport">
+ <div class="stage" id="stage">
+  <div class="sheet">
+
+   <div class="topline"></div>
+
+   <div class="headRow">
+     <p class="headText m m0" id="headText">&nbsp;</p>
+     <div class="tabs">
+       <button class="tabBtn is-active" data-tab="1">여사건 이용 풀이</button>
+       <button class="tabBtn" data-tab="2">조합 이용 풀이</button>
+     </div>
+   </div>
+
+   <!-- ============ P1 : 겹친다 / 떨어진다 ============ -->
+   <div class="panelWrap" id="P1">
+     <div class="cols-2 grow">
+       <div class="panel col g8">
+         <p class="cmpTitle m m0 hl-teal" style="text-align:center;">겹친다 &nbsp; A ∩ B ≠ ∅</p>
+         <div class="nlwrap"><svg id="nlCmp1" viewBox="0 0 604 400" preserveAspectRatio="xMidYMid meet"></svg></div>
+         <p class="m m0" style="font-size:30px;text-align:center;color:var(--chalk-soft);">두 구간에 <span class="hl-violet">공통으로 들어가는 수</span>가 있다</p>
+       </div>
+       <div class="panel col g8">
+         <p class="cmpTitle m m0 hl-coral" style="text-align:center;">떨어진다 &nbsp; A ∩ B = ∅</p>
+         <div class="nlwrap"><svg id="nlCmp2" viewBox="0 0 604 400" preserveAspectRatio="xMidYMid meet"></svg></div>
+         <p class="m m0" style="font-size:30px;text-align:center;color:var(--chalk-soft);">한쪽이 <span class="hl-coral">완전히 끝난 뒤</span>에 다른 쪽이 시작한다</p>
+       </div>
+     </div>
+     <div class="result is-amber" style="flex:0 0 auto;">
+       <span class="m">구하는 확률 <span class="op">=</span> 1 <span class="op">−</span>
+       P(<span class="hl-coral">A ∩ B = ∅</span>) <span class="hl-dim">&nbsp;— 떨어지는 경우만 세면 된다</span></span>
+     </div>
+   </div>
+
+   <!-- ============ P2 : 경우 나누어 세기 ============ -->
+   <div class="panelWrap" id="P2" hidden>
+     <div class="nlwrap"><svg id="nlB" viewBox="0 0 1440 264" preserveAspectRatio="xMidYMid meet"></svg></div>
+
+     <div class="cols-4" style="flex:0 0 auto;height:262px;">
+       <div class="panel caseCard" data-v="2">
+         <p class="ccHead m m0"><span class="var">a</span><span class="sub is-up">2</span> = 2</p>
+         <p class="ccLine m m0"><span class="hl-amber"><span class="var">a</span><span class="sub is-up">1</span></span> : 1</p>
+         <p class="ccLine m m0"><span class="hl-teal"><span class="var">b</span><span class="sub is-up">1</span>, <span class="var">b</span><span class="sub is-up">2</span></span> : 3~6 중 2개</p>
+         <div class="ccFoot"><span class="m ccCalc">1 × <span class="comb"><span class="pre">4</span><span class="sym">C</span><span class="post">2</span></span> =</span><span class="ccVal">?</span><span class="m ccCalc">가지</span></div>
+       </div>
+       <div class="panel caseCard" data-v="3">
+         <p class="ccHead m m0"><span class="var">a</span><span class="sub is-up">2</span> = 3</p>
+         <p class="ccLine m m0"><span class="hl-amber"><span class="var">a</span><span class="sub is-up">1</span></span> : 1, 2</p>
+         <p class="ccLine m m0"><span class="hl-teal"><span class="var">b</span><span class="sub is-up">1</span>, <span class="var">b</span><span class="sub is-up">2</span></span> : 4~6 중 2개</p>
+         <div class="ccFoot"><span class="m ccCalc">2 × <span class="comb"><span class="pre">3</span><span class="sym">C</span><span class="post">2</span></span> =</span><span class="ccVal">?</span><span class="m ccCalc">가지</span></div>
+       </div>
+       <div class="panel caseCard" data-v="4">
+         <p class="ccHead m m0"><span class="var">a</span><span class="sub is-up">2</span> = 4</p>
+         <p class="ccLine m m0"><span class="hl-amber"><span class="var">a</span><span class="sub is-up">1</span></span> : 1, 2, 3</p>
+         <p class="ccLine m m0"><span class="hl-teal"><span class="var">b</span><span class="sub is-up">1</span>, <span class="var">b</span><span class="sub is-up">2</span></span> : 5, 6 뿐</p>
+         <div class="ccFoot"><span class="m ccCalc">3 × <span class="comb"><span class="pre">2</span><span class="sym">C</span><span class="post">2</span></span> =</span><span class="ccVal">?</span><span class="m ccCalc">가지</span></div>
+       </div>
+       <div class="panel caseCard" data-v="5">
+         <p class="ccHead m m0"><span class="var">a</span><span class="sub is-up">2</span> = 5</p>
+         <p class="ccLine m m0"><span class="hl-amber"><span class="var">a</span><span class="sub is-up">1</span></span> : 1, 2, 3, 4</p>
+         <p class="ccLine m m0 hl-coral"><span class="var">b</span><span class="sub is-up">1</span>, <span class="var">b</span><span class="sub is-up">2</span> : 6 하나뿐</p>
+         <div class="ccFoot"><span class="m ccCalc">4 × 0 =</span><span class="ccVal">?</span><span class="m ccCalc">가지</span></div>
+       </div>
+     </div>
+
+     <div class="result row between" id="resB" style="flex:0 0 auto;">
+       <p class="m m0" style="font-size:40px;">
+         <span class="hl-coral">i)</span>
+         <span class="var">a</span><span class="sub is-up">2</span> &lt; <span class="var">b</span><span class="sub is-up">1</span>
+         <span class="op">:</span> <span class="hl-coral" id="sumB">?</span>
+       </p>
+       <p class="m m0 step" id="symB" style="font-size:40px;">
+         <span class="hl-coral">ii)</span>
+         <span class="var">b</span><span class="sub is-up">2</span> &lt; <span class="var">a</span><span class="sub is-up">1</span>
+         <span class="op">:</span> 역시 <span class="hl-coral">15</span>가지
+         <span class="op">→</span> 합 <span class="hl-coral">30</span>가지
+       </p>
+     </div>
+   </div>
+
+   <!-- ============ P3 : 여사건 풀이 결론 ============ -->
+   <div class="panelWrap" id="P3" hidden>
+     <div class="grow col center g32">
+       <p class="m m0 step" id="a1" style="font-size:46px;">
+         전체 경우의 수 <span class="op">=</span>
+         <span class="comb"><span class="pre">6</span><span class="sym">C</span><span class="post">2</span></span>
+         <span class="op">×</span>
+         <span class="comb"><span class="pre">6</span><span class="sym">C</span><span class="post">2</span></span>
+         <span class="op">=</span> 15<span class="sup">2</span> <span class="op">=</span> <span class="hl-amber">225</span>
+       </p>
+       <p class="m m0 step" id="a2" style="font-size:46px;">
+         <span class="hl-coral">A ∩ B = ∅</span> 인 경우 <span class="op">=</span>
+         <span class="hl-dim">i)</span> <span class="hl-coral">15</span> <span class="op">+</span>
+         <span class="hl-dim">ii)</span> <span class="hl-coral">15</span>
+         <span class="op">=</span> <span class="hl-coral">30</span>
+       </p>
+       <p class="m m0 step" id="a3" style="font-size:50px;">
+         P(<span class="hl-coral">A ∩ B = ∅</span>) <span class="op">=</span>
+         <span class="frac hl-coral"><span class="num">30</span><span class="den">225</span></span>
+         <span class="op">=</span>
+         <span class="frac hl-coral"><span class="num">2</span><span class="den">15</span></span>
+       </p>
+       <div class="finalBox step" id="a4">
+         <p class="m m0" style="font-size:58px;">
+           P(<span class="hl-teal">A ∩ B ≠ ∅</span>) <span class="op">=</span> 1 <span class="op">−</span>
+           <span class="frac hl-coral"><span class="num">2</span><span class="den">15</span></span>
+           <span class="op">=</span>
+           <span class="frac hl-teal"><span class="num">13</span><span class="den">15</span></span>
+         </p>
+       </div>
+     </div>
+   </div>
+
+   <!-- ============ P4 : 조합 풀이 ============ -->
+   <div class="panelWrap" id="P4" hidden>
+     <div class="nlwrap" id="cPickWrap">
+       <svg id="nlC" viewBox="0 0 1440 520" preserveAspectRatio="xMidYMid meet"></svg>
+     </div>
+     <div class="step" id="cAllWrap" style="display:none;flex:0 0 auto;">
+       <div class="miniGrid" id="miniGrid"></div>
+     </div>
+     <div class="result row between" id="resC" style="flex:0 0 auto;">
+       <p class="m m0" id="cSel" style="font-size:40px;">네 수를 고르면 A와 B가 저절로 정해진다</p>
+       <p class="m m0 step" id="cCount" style="font-size:40px;">
+         <span class="comb hl-amber"><span class="pre">6</span><span class="sym">C</span><span class="post">4</span></span>
+         <span class="op">=</span> <span class="hl-amber">15</span>가지</p>
+     </div>
+   </div>
+
+   <!-- ============ P5 : 조합 풀이 결론 ============ -->
+   <div class="panelWrap" id="P5" hidden>
+     <div class="grow col center g32">
+       <p class="m m0 step" id="b1" style="font-size:46px;">
+         네 수를 고르는 방법 <span class="op">=</span>
+         <span class="comb"><span class="pre">6</span><span class="sym">C</span><span class="post">4</span></span>
+         <span class="op">=</span> <span class="hl-amber">15</span>
+         <span class="hl-dim">&nbsp;(A가 왼쪽)</span>
+       </p>
+       <p class="m m0 step" id="b2" style="font-size:46px;">
+         B가 왼쪽인 경우도 같으므로
+         <span class="hl-coral">15 × 2 = 30</span>,
+         전체는 15<span class="sup">2</span> = <span class="hl-amber">225</span>
+       </p>
+       <p class="m m0 step" id="b3" style="font-size:50px;">
+         P(<span class="hl-coral">A ∩ B = ∅</span>) <span class="op">=</span>
+         <span class="frac hl-coral"><span class="num">30</span><span class="den">225</span></span>
+         <span class="op">=</span>
+         <span class="frac hl-coral"><span class="num">2</span><span class="den">15</span></span>
+       </p>
+       <div class="finalBox step" id="b4">
+         <p class="m m0" style="font-size:58px;">
+           P(<span class="hl-teal">A ∩ B ≠ ∅</span>) <span class="op">=</span> 1 <span class="op">−</span>
+           <span class="frac hl-coral"><span class="num">2</span><span class="den">15</span></span>
+           <span class="op">=</span>
+           <span class="frac hl-teal"><span class="num">13</span><span class="den">15</span></span>
+         </p>
+       </div>
+     </div>
+   </div>
+
+   <!-- ============ 발판 ============ -->
+   <footer class="app-foot">
+     <div class="foot-title">
+       <span class="stamp">1</span>
+       <span class="ttl">두 구간이 만날 확률</span>
+       <span class="sec" id="secLabel"></span>
+     </div>
+     <div class="dots" id="dots"></div>
+     <div class="row g12">
+       <button class="btn" id="prevBtn">
+         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+         이전
+       </button>
+       <button class="btn btn--amber" id="nextBtn">
+         다음
+         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+       </button>
+       <button class="btn btn--violet" id="cycleBtn" hidden>
+         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 4v6h6"/><path d="M20 20v-6h-6"/><path d="M5.5 15a8 8 0 0013.9 3.3M18.5 9A8 8 0 004.6 5.7"/></svg>
+         다른 예
+       </button>
+       <button class="btn btn--teal" id="fsBtn">
+         <svg id="fsIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+         <span id="fsLabel">전체화면</span>
+       </button>
+     </div>
+   </footer>
+
+  </div>
+ </div>
+</div>
+
+<script>
+'use strict';
+
+/* ---------------------------- 16:9 스케일링 ---------------------------- */
+var STAGE_W = 1600, STAGE_H = 900;
+var stage = document.getElementById('stage');
+function fitStage(){
+  var vv = window.visualViewport;
+  var w = vv ? vv.width : window.innerWidth;
+  var h = vv ? vv.height : window.innerHeight;
+  var s = Math.min(w / STAGE_W, h / STAGE_H);
+  stage.style.transform = 'translate(' + Math.round((w - STAGE_W * s) / 2) + 'px, ' +
+                          Math.round((h - STAGE_H * s) / 2) + 'px) scale(' + s + ')';
+}
+function fitSoon(){ [0,60,300,700].forEach(function(t){ setTimeout(fitStage, t); }); }
+fitSoon();
+window.addEventListener('load', fitSoon);
+window.addEventListener('resize', fitStage);
+window.addEventListener('orientationchange', fitSoon);
+if (window.visualViewport){
+  visualViewport.addEventListener('resize', fitStage);
+  visualViewport.addEventListener('scroll', fitStage);
+}
+document.addEventListener('fullscreenchange', fitSoon);
+
+/* ---------------------------- 전체화면 ---------------------------- */
+var fsBtn = document.getElementById('fsBtn'), fsLabel = document.getElementById('fsLabel'),
+    fsIcon = document.getElementById('fsIcon');
+var ICON_ENTER = '<path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>';
+var ICON_EXIT  = '<path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M16 3v3a2 2 0 0 0 2 2h3"/><path d="M8 21v-3a2 2 0 0 0-2-2H3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/>';
+function isFs(){ return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+function syncFs(){ var on = isFs(); fsLabel.textContent = on ? '창으로' : '전체화면'; fsIcon.innerHTML = on ? ICON_EXIT : ICON_ENTER; }
+function toggleFs(){
+  if (!isFs()){ var el = document.documentElement; var r = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (r) Promise.resolve(r.call(el)).catch(function(){}); }
+  else { var x = document.exitFullscreen || document.webkitExitFullscreen;
+    if (x) Promise.resolve(x.call(document)).catch(function(){}); }
+  setTimeout(syncFs, 120);
+}
+fsBtn.addEventListener('click', toggleFs);
+document.addEventListener('fullscreenchange', syncFs);
+document.addEventListener('webkitfullscreenchange', syncFs);
+syncFs();
+
+/* ---------------------------- 수직선 공통 ---------------------------- */
+function X(n){ return 170 + (n - 1) * 228; }
+var AXIS_Y = 210, NUM_Y = 272;
+function setLay(ay, ny){ AXIS_Y = ay; NUM_Y = ny; }
+
+function noteSVG(x, y, txt, color, size){
+  return '<text x="' + x + '" y="' + y + '" text-anchor="middle" fill="var(--' + color + ')" ' +
+         'font-family="Noto Sans KR, STIX Two Text, sans-serif" font-size="' + (size || 28) + '" font-weight="700">' + txt + '</text>';
+}
+function symSVG(x, y, ch, idx, color, size){
+  size = size || 36;
+  return '<text x="' + x + '" y="' + y + '" text-anchor="middle" fill="var(--' + color + ')" ' +
+         'font-family="STIX Two Text, serif" font-size="' + size + '" font-weight="700">' +
+         '<tspan font-style="italic">' + ch + '</tspan>' +
+         '<tspan dy="' + Math.round(size * 0.2) + '" font-size="' + Math.round(size * 0.64) + '">' + idx + '</tspan></text>';
+}
+function axisSVG(activeSet, numSize){
+  numSize = numSize || 48;
+  var s = '<line class="nl-axis" x1="90" y1="' + AXIS_Y + '" x2="1392" y2="' + AXIS_Y + '"/>' +
+          '<path class="nl-arrow" d="M1404 ' + AXIS_Y + ' l-20 -10 l0 20 z"/>';
+  for (var n = 1; n <= 6; n++){
+    s += '<line class="nl-tick" x1="' + X(n) + '" y1="' + (AXIS_Y - 12) + '" x2="' + X(n) + '" y2="' + (AXIS_Y + 12) + '"/>';
+    s += '<text class="nl-num' + (activeSet && activeSet.indexOf(n) >= 0 ? ' on' : '') + '" x="' + X(n) +
+         '" y="' + NUM_Y + '" font-size="' + numSize + '">' + n + '</text>';
+  }
+  return s;
+}
+function barSVG(p, q, y, color, label, pos, dy){
+  var x1 = X(p), x2 = X(q), h = 26, s = '';
+  s += '<line class="nl-guide" x1="' + x1 + '" y1="' + (y + h) + '" x2="' + x1 + '" y2="' + (AXIS_Y - 14) + '"/>';
+  s += '<line class="nl-guide" x1="' + x2 + '" y1="' + (y + h) + '" x2="' + x2 + '" y2="' + (AXIS_Y - 14) + '"/>';
+  s += '<rect x="' + x1 + '" y="' + y + '" width="' + (x2 - x1) + '" height="' + h + '" rx="13" fill="var(--' + color + ')" opacity=".92"/>';
+  s += '<circle cx="' + x1 + '" cy="' + (y + h / 2) + '" r="16" fill="var(--' + color + ')"/>';
+  s += '<circle cx="' + x2 + '" cy="' + (y + h / 2) + '" r="16" fill="var(--' + color + ')"/>';
+  if (label){
+    if (pos === 'below') s += '<text class="nl-lab" x="' + ((x1 + x2) / 2) + '" y="' + (y + h + (dy || 52)) + '" font-size="42" fill="var(--' + color + ')">' + label + '</text>';
+    else s += '<text class="nl-lab" x="' + (x1 - 62) + '" y="' + (y + h / 2 + 15) + '" font-size="42" fill="var(--' + color + ')">' + label + '</text>';
+  }
+  return s;
+}
+
+/* ------------------- P1 : 겹친다 / 떨어진다 비교 수직선 ------------------- */
+function miniNl(a1, a2, b1, b2){
+  function mx(n){ return 46 + (n - 1) * 102; }
+  var AY = 286, s = '';
+  var lo = Math.max(a1, b1), hi = Math.min(a2, b2);
+  if (lo <= hi){
+    s += '<rect x="' + (mx(lo) - 16) + '" y="128" width="' + (mx(hi) - mx(lo) + 32) + '" height="' + (AY + 16 - 128) +
+         '" rx="14" fill="var(--violet-dim)" stroke="var(--violet)" stroke-width="3" stroke-dasharray="9 9"/>';
+    s += '<text x="' + ((mx(lo) + mx(hi)) / 2) + '" y="112" text-anchor="middle" fill="var(--violet)" font-family="STIX Two Text, serif" font-size="34" font-weight="700">A ∩ B</text>';
+  } else {
+    var g = (mx(Math.min(a2, b2)) + mx(Math.max(a1, b1))) / 2;
+    s += '<line x1="' + g + '" y1="128" x2="' + g + '" y2="' + (AY - 8) + '" stroke="var(--coral)" stroke-width="4" stroke-dasharray="11 9"/>';
+    s += '<text x="' + g + '" y="112" text-anchor="middle" fill="var(--coral)" font-family="Noto Sans KR, sans-serif" font-size="30" font-weight="700">떨어짐</text>';
+  }
+  s += '<line class="nl-axis" x1="14" y1="' + AY + '" x2="586" y2="' + AY + '"/>';
+  s += '<path class="nl-arrow" d="M598 ' + AY + ' l-18 -9 l0 18 z"/>';
+  for (var n = 1; n <= 6; n++){
+    s += '<line class="nl-tick" x1="' + mx(n) + '" y1="' + (AY - 10) + '" x2="' + mx(n) + '" y2="' + (AY + 10) + '"/>';
+    s += '<text class="nl-num" x="' + mx(n) + '" y="' + (AY + 56) + '" font-size="42">' + n + '</text>';
+  }
+  function mb(p, q, y, color, label){
+    var x1 = mx(p), x2 = mx(q), t = '';
+    t += '<rect x="' + x1 + '" y="' + y + '" width="' + (x2 - x1) + '" height="20" rx="10" fill="var(--' + color + ')" opacity=".92"/>';
+    t += '<circle cx="' + x1 + '" cy="' + (y + 10) + '" r="12" fill="var(--' + color + ')"/>';
+    t += '<circle cx="' + x2 + '" cy="' + (y + 10) + '" r="12" fill="var(--' + color + ')"/>';
+    t += '<text class="nl-lab" x="' + (x1 - 34) + '" y="' + (y + 21) + '" font-size="36" fill="var(--' + color + ')">' + label + '</text>';
+    return t;
+  }
+  s += mb(a1, a2, 160, 'amber', 'A');
+  s += mb(b1, b2, 222, 'teal', 'B');
+  return s;
+}
+
+/* ------------------- P2 : 경우 나누어 세기 ------------------- */
+var CASES = { 2:{a:1,b:6}, 3:{a:2,b:3}, 4:{a:3,b:1}, 5:{a:4,b:0} };
+var caseCards = [].slice.call(document.querySelectorAll('.caseCard'));
+
+function renderNlB(mode){
+  setLay(188, 248);
+  var el = document.getElementById('nlB'), s = '';
+  if (mode === 'sym'){
+    s += axisSVG([1,3,4,6]);
+    s += barSVG(1, 3, 104, 'teal', 'B');
+    s += barSVG(4, 6, 104, 'amber', 'A');
+    s += symSVG(X(3), 90, 'b', '2', 'teal');
+    s += symSVG(X(4), 90, 'a', '1', 'amber');
+    var m2 = (X(3) + X(4)) / 2;
+    s += '<line x1="' + m2 + '" y1="52" x2="' + m2 + '" y2="' + (AXIS_Y - 8) + '" stroke="var(--coral)" stroke-width="4" stroke-dasharray="12 10"/>';
+    s += noteSVG(m2, 38, 'A 와 B 의 자리만 바뀐다 — 개수는 똑같이 15가지', 'coral', 30);
+    el.innerHTML = s;
+    return;
+  }
+  var v = mode, c = CASES[v];
+  var RT = 38, RH = AXIS_Y + 26 - RT;
+  var rx1 = X(v) + 58, rx2 = X(6) + (c.b > 0 ? 58 : 86);
+  s += '<rect x="' + rx1 + '" y="' + RT + '" width="' + (rx2 - rx1) + '" height="' + RH +
+       '" rx="18" fill="var(--teal-dim)" stroke="var(--teal)" stroke-width="3" stroke-dasharray="10 10"/>';
+  s += (c.b > 0)
+     ? noteSVG((rx1 + rx2) / 2, 76, '이 중에서 2개 고르기 → ' + c.b + '가지', 'teal', 30)
+     : noteSVG((rx1 + rx2) / 2, 76, '2개를 고를 수 없다', 'coral', 26);
+  if (c.a > 0){
+    var lx1 = X(1) - 58, lx2 = X(v) - 58;
+    s += '<rect x="' + lx1 + '" y="' + RT + '" width="' + (lx2 - lx1) + '" height="' + RH +
+         '" rx="18" fill="var(--amber-dim)" stroke="var(--amber)" stroke-width="3" stroke-dasharray="10 10"/>';
+    s += '<text x="' + ((lx1 + lx2) / 2) + '" y="76" text-anchor="middle" fill="var(--amber)" ' +
+         'font-family="Noto Sans KR, STIX Two Text, sans-serif" font-size="26" font-weight="700">' +
+         '<tspan font-family="STIX Two Text, serif" font-style="italic">a</tspan><tspan dy="6" font-size="17">1</tspan>' +
+         '<tspan dy="-6" font-size="26"> 후보 → ' + c.a + '가지</tspan></text>';
+  }
+  s += axisSVG([v]);
+  s += '<line x1="' + X(v) + '" y1="126" x2="' + X(v) + '" y2="' + (AXIS_Y + 14) + '" stroke="var(--amber)" stroke-width="5"/>';
+  s += '<circle cx="' + X(v) + '" cy="' + AXIS_Y + '" r="20" fill="var(--amber)"/>';
+  s += symSVG(X(v), 116, 'a', '2', 'amber', 42);
+  for (var n = 1; n <= 6; n++){
+    if (n < v && c.a > 0) s += '<circle cx="' + X(n) + '" cy="' + AXIS_Y + '" r="15" fill="none" stroke="var(--amber)" stroke-width="4"/>';
+    if (n > v) s += '<circle cx="' + X(n) + '" cy="' + AXIS_Y + '" r="15" fill="none" stroke="var(--teal)" stroke-width="4"/>';
+  }
+  el.innerHTML = s;
+}
+
+function setCases(upto, showSym){
+  var order = [2,3,4,5], sum = 0, terms = [];
+  caseCards.forEach(function(card){
+    var v = +card.dataset.v, i = order.indexOf(v);
+    var on = i < upto;
+    card.classList.toggle('is-on', on);
+    card.classList.toggle('is-cur', i === upto - 1 && !showSym);
+    var val = card.querySelector('.ccVal'), c = CASES[v], n = c.a * c.b;
+    if (on){
+      if (val.textContent !== String(n)){
+        val.textContent = n;
+        val.classList.remove('pop'); void val.offsetWidth; val.classList.add('pop');
+      }
+      if (n > 0){ sum += n; terms.push(n); }
+    } else { val.textContent = '?'; val.classList.remove('pop'); }
+  });
+  document.getElementById('sumB').innerHTML = !terms.length ? '?'
+    : (terms.length === 1 ? terms[0] + '가지' : terms.join(' + ') + ' = ' + sum + '가지');
+  document.getElementById('symB').classList.toggle('on', !!showSym);
+  document.getElementById('resB').className = 'result row between' + (showSym ? ' is-coral' : '');
+}
+
+caseCards.forEach(function(card){
+  card.addEventListener('click', function(){
+    goTo(1, [2,3,4,5].indexOf(+card.dataset.v) + 1);
+  });
+});
+
+/* ------------------- P4 : 조합 풀이 ------------------- */
+var COMBOS = [];
+(function(){ for (var a=1;a<=6;a++) for (var b=a+1;b<=6;b++) for (var c=b+1;c<=6;c++) for (var d=c+1;d<=6;d++) COMBOS.push([a,b,c,d]); })();
+
+var picked = [], comboIdx = -1, cCompact = false;
+
+function renderNlC(){
+  var R  = cCompact ? 36 : 52;
+  var FS = cCompact ? 42 : 60;
+  var BY = cCompact ? 84 : 234;
+  var GT = cCompact ? 28 : 128;
+  var GY = cCompact ? 42 : 146;
+  setLay(cCompact ? 186 : 384, 0);
+  var el = document.getElementById('nlC');
+  el.setAttribute('viewBox', cCompact ? '0 0 1440 262' : '0 0 1440 466');
+
+  var s = '', done = picked.length === 4;
+  var q = picked.slice().sort(function(x, y){ return x - y; });
+  if (done){
+    var mid = (X(q[1]) + X(q[2])) / 2;
+    s += '<line x1="' + mid + '" y1="' + GY + '" x2="' + mid + '" y2="' + (AXIS_Y - R - 14) +
+         '" stroke="var(--coral)" stroke-width="4" stroke-dasharray="12 10"/>';
+    s += noteSVG(mid, GT, '떨어짐', 'coral', cCompact ? 26 : 32);
+    s += barSVG(q[0], q[1], BY, 'amber', cCompact ? null : 'A', 'below', 56);
+    s += barSVG(q[2], q[3], BY, 'teal',  cCompact ? null : 'B', 'below', 56);
+    s += symSVG(X(q[0]), BY - 16, 'a', '1', 'amber', cCompact ? 30 : 36);
+    s += symSVG(X(q[1]), BY - 16, 'a', '2', 'amber', cCompact ? 30 : 36);
+    s += symSVG(X(q[2]), BY - 16, 'b', '1', 'teal',  cCompact ? 30 : 36);
+    s += symSVG(X(q[3]), BY - 16, 'b', '2', 'teal',  cCompact ? 30 : 36);
+  }
+  s += '<line class="nl-axis" x1="90" y1="' + AXIS_Y + '" x2="1392" y2="' + AXIS_Y + '"/>' +
+       '<path class="nl-arrow" d="M1404 ' + AXIS_Y + ' l-20 -10 l0 20 z"/>';
+  for (var n = 1; n <= 6; n++){
+    var role = 'off';
+    if (done){
+      if (n === q[0] || n === q[1]) role = 'amber';
+      else if (n === q[2] || n === q[3]) role = 'teal';
+    } else if (picked.indexOf(n) >= 0) role = 'violet';
+    var fill = (role === 'off') ? 'var(--panel-2)' : 'var(--' + role + ')';
+    var strk = (role === 'off') ? 'var(--line-strong)' : 'var(--' + role + ')';
+    var tf   = (role === 'off') ? 'var(--chalk-soft)' : 'var(--bg)';
+    s += '<g class="nl-pick" data-n="' + n + '">' +
+         '<circle cx="' + X(n) + '" cy="' + AXIS_Y + '" r="' + R + '" fill="' + fill + '" stroke="' + strk + '" stroke-width="4"/>' +
+         '<text x="' + X(n) + '" y="' + (AXIS_Y + Math.round(FS * 0.34)) + '" text-anchor="middle" ' +
+         'font-family="STIX Two Text, serif" font-size="' + FS + '" font-weight="700" fill="' + tf + '">' + n + '</text></g>';
+  }
+  el.innerHTML = s;
+}
+
+document.getElementById('nlC').addEventListener('click', function(ev){
+  var g = ev.target.closest ? ev.target.closest('.nl-pick') : null;
+  if (!g) return;
+  var n = +g.dataset.n, at = picked.indexOf(n);
+  if (at >= 0) picked.splice(at, 1);
+  else { if (picked.length >= 4) picked.shift(); picked.push(n); }
+  comboIdx = -1;
+  updateC();
+});
+
+function updateC(){
+  renderNlC();
+  var q = picked.slice().sort(function(x, y){ return x - y; });
+  var done = picked.length === 4;
+  var sel = document.getElementById('cSel'), resC = document.getElementById('resC');
+  if (done){
+    sel.innerHTML = '{ ' + q.join(', ') + ' } <span class="op">→</span> ' +
+      '<span class="hl-amber">A = [' + q[0] + ', ' + q[1] + ']</span>, ' +
+      '<span class="hl-teal">B = [' + q[2] + ', ' + q[3] + ']</span> ' +
+      '<span class="op">→</span> <span class="hl-coral">A ∩ B = ∅</span>';
+  } else {
+    sel.innerHTML = '네 수를 고르면 A와 B가 저절로 정해진다';
+  }
+  var show = done || cCompact;
+  document.getElementById('cCount').classList.toggle('on', show);
+  resC.className = 'result row between' + (show ? ' is-amber' : '');
+
+  var minis = document.querySelectorAll('#miniGrid .mini');
+  for (var i = 0; i < minis.length; i++)
+    minis[i].classList.toggle('is-hit', done && minis[i].dataset.key === q.join(''));
+
+  if (tab === 2 && step === 0){
+    document.getElementById('headText').innerHTML = done
+      ? '작은 두 수가 <span class="hl-amber">A</span>, 큰 두 수가 <span class="hl-teal">B</span> 가 된다'
+      : '1~6 중 <span class="hl-amber">서로 다른 네 수</span>를 눌러 보세요 <span class="hl-dim">(' + picked.length + " / 4)</span>";
+  }
+}
+
+function buildMini(){
+  var g = document.getElementById('miniGrid');
+  g.innerHTML = '';
+  COMBOS.forEach(function(cb){
+    var d = document.createElement('div');
+    d.className = 'mini'; d.dataset.key = cb.join('');
+    var line = '<div class="miniLine">';
+    for (var n = 1; n <= 6; n++){
+      var cls = 'md';
+      if (n === cb[0] || n === cb[1]) cls += ' is-a';
+      else if (n === cb[2] || n === cb[3]) cls += ' is-b';
+      line += '<span class="' + cls + '"></span>';
+    }
+    line += '</div>';
+    d.innerHTML = line + '<div class="miniTxt">A[' + cb[0] + ',' + cb[1] + '] · B[' + cb[2] + ',' + cb[3] + ']</div>';
+    g.appendChild(d);
+  });
+}
+
+document.getElementById('cycleBtn').addEventListener('click', function(){
+  this.blur();
+  comboIdx = (comboIdx + 1) % COMBOS.length;
+  picked = COMBOS[comboIdx].slice();
+  updateC();
+});
+
+/* ---------------------------- 단계 / 탭 ---------------------------- */
+var TAB1 = [
+  { p:'P1', h:'두 구간이 <span class="hl-teal">만나는</span> 경우와 <span class="hl-coral">떨어지는</span> 경우', s:'여사건 · 무엇을 셀까' },
+  { p:'P2', h:'<span class="hl-coral">떨어지는</span> 경우를 <span class="m"><span class="var">a</span><span class="sub is-up">2</span></span> 값으로 나누어 센다', s:'여사건 · a₂ = 2' },
+  { p:'P2', h:'<span class="hl-coral">떨어지는</span> 경우를 <span class="m"><span class="var">a</span><span class="sub is-up">2</span></span> 값으로 나누어 센다', s:'여사건 · a₂ = 3' },
+  { p:'P2', h:'<span class="hl-coral">떨어지는</span> 경우를 <span class="m"><span class="var">a</span><span class="sub is-up">2</span></span> 값으로 나누어 센다', s:'여사건 · a₂ = 4' },
+  { p:'P2', h:'<span class="hl-coral">떨어지는</span> 경우를 <span class="m"><span class="var">a</span><span class="sub is-up">2</span></span> 값으로 나누어 센다', s:'여사건 · a₂ = 5' },
+  { p:'P2', h:'반대쪽으로 떨어지는 경우도 같은 개수', s:'여사건 · 대칭' },
+  { p:'P3', h:'여사건의 확률로 답을 구한다', s:'여사건 · 정답' }
+];
+var TAB2 = [
+  { p:'P4', h:'1~6 중 <span class="hl-amber">서로 다른 네 수</span>를 눌러 보세요', s:'조합 · 네 수 고르기' },
+  { p:'P4', h:'네 수를 고르는 방법은 모두 15가지', s:'조합 · 15가지' },
+  { p:'P5', h:'조합으로 센 여사건으로 답을 구한다', s:'조합 · 정답' }
+];
+var TABS = { 1:TAB1, 2:TAB2 };
+var tab = 1, step = 0;
+
+var panels = {};
+['P1','P2','P3','P4','P5'].forEach(function(k){ panels[k] = document.getElementById(k); });
+var dotsEl = document.getElementById('dots');
+var prevBtn = document.getElementById('prevBtn'), nextBtn = document.getElementById('nextBtn');
+var cycleBtn = document.getElementById('cycleBtn');
+var tabBtns = [].slice.call(document.querySelectorAll('.tabBtn'));
+
+function buildDots(){
+  dotsEl.innerHTML = '';
+  for (var i = 0; i < TABS[tab].length; i++) dotsEl.appendChild(document.createElement('i'));
+}
+
+function revealSeq(ids, last){
+  ids.forEach(function(id, i){
+    var el = document.getElementById(id);
+    setTimeout(function(){ el.classList.add('on'); }, 60 + i * 200);
+  });
+  var f = document.getElementById(last);
+  setTimeout(function(){ f.classList.add('on'); }, 60 + ids.length * 200);
+}
+
+function render(){
+  var cur = TABS[tab][step];
+  Object.keys(panels).forEach(function(k){ panels[k].hidden = (k !== cur.p); });
+  document.getElementById('headText').innerHTML = cur.h;
+  document.getElementById('secLabel').textContent = cur.s;
+  tabBtns.forEach(function(b){ b.classList.toggle('is-active', +b.dataset.tab === tab); });
+  [].slice.call(dotsEl.children).forEach(function(d, i){ d.classList.toggle('on', i <= step); });
+  prevBtn.disabled = (tab === 1 && step === 0);
+  nextBtn.disabled = (tab === 2 && step === TAB2.length - 1);
+  cycleBtn.hidden = (cur.p !== 'P4');
+
+  if (cur.p === 'P2'){
+    var sym = (step === 5);
+    renderNlB(sym ? 'sym' : step + 1);
+    setCases(sym ? 4 : step, sym);
+  }
+  if (cur.p === 'P4'){
+    cCompact = (step >= 1);
+    var all = document.getElementById('cAllWrap'), pick = document.getElementById('cPickWrap');
+    if (cCompact){
+      all.style.display = 'block';
+      setTimeout(function(){ all.classList.add('on'); }, 20);
+      pick.style.flex = '1 1 auto';
+    } else {
+      all.classList.remove('on'); all.style.display = 'none';
+      pick.style.flex = '1 1 auto';
+    }
+    updateC();
+  }
+  if (cur.p === 'P3') revealSeq(['a1','a2','a3'], 'a4');
+  if (cur.p === 'P5') revealSeq(['b1','b2','b3'], 'b4');
+}
+
+function resetTab(t){
+  if (t === 2){ picked = []; comboIdx = -1; cCompact = false; }
+}
+function goTo(t, n){
+  if (t !== tab){ tab = t; buildDots(); }
+  step = Math.max(0, Math.min(TABS[tab].length - 1, n));
+  render();
+}
+function goNext(){
+  if (step < TABS[tab].length - 1) goTo(tab, step + 1);
+  else if (tab === 1) goTo(2, 0);
+}
+function goPrev(){
+  if (step > 0) goTo(tab, step - 1);
+  else if (tab === 2) goTo(1, TAB1.length - 1);
+}
+prevBtn.addEventListener('click', function(){ this.blur(); goPrev(); });
+nextBtn.addEventListener('click', function(){ this.blur(); goNext(); });
+tabBtns.forEach(function(b){
+  b.addEventListener('click', function(){
+    this.blur();
+    var t = +b.dataset.tab;
+    resetTab(t);
+    goTo(t, 0);
+  });
+});
+
+document.addEventListener('keydown', function(e){
+  var k = e.key;
+  if (k === ' ' || k === 'ArrowRight' || k === 'ArrowDown' || k === 'PageDown' || k === 'Enter'){ e.preventDefault(); goNext(); }
+  else if (k === 'ArrowLeft' || k === 'ArrowUp' || k === 'PageUp' || k === 'Backspace'){ e.preventDefault(); goPrev(); }
+  else if (k === 'f' || k === 'F') toggleFs();
+  else if (k === '1'){ resetTab(1); goTo(1, 0); }
+  else if (k === '2'){ resetTab(2); goTo(2, 0); }
+});
+
+/* ---------------------------- init ---------------------------- */
+document.getElementById('nlCmp1').innerHTML = miniNl(2, 5, 4, 6);
+document.getElementById('nlCmp2').innerHTML = miniNl(1, 3, 4, 6);
+buildMini();
+buildDots();
+render();
+</script>
+</body>
+</html>
