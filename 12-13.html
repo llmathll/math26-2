@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>12-13 · 정확하게 진단할 확률</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400..700;1,400..700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-deep:#0a1420; --bg:#0e1b2b; --panel:#16283e; --panel-2:#1d3350;
+  --line:rgba(214,229,245,.16); --line-strong:rgba(214,229,245,.34);
+  --chalk:#eaf1f8; --chalk-soft:#b9cadd; --chalk-faint:#7d94ad;
+  --amber:#f5b642; --teal:#49d1c0; --violet:#9d8cf5; --coral:#ff7d6a;
+  --f-en:'STIX Two Text'; --f-kr:'Noto Sans KR';
+  --ls:44px; --ls-sm:29px; --ls-q:26px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--bg-deep);
+  overscroll-behavior:none;touch-action:manipulation;-webkit-text-size-adjust:100%}
+.viewport{position:fixed;inset:0}
+.stage{width:1600px;height:900px;transform-origin:0 0;background:var(--bg);color:var(--chalk)}
+.sheet{height:100%;display:flex;flex-direction:column;gap:12px;padding:16px 30px 14px}
+
+/* ── 본문 2단 ───────────────────────────────── */
+#body2col{flex:1 1 auto;min-height:0;display:flex;gap:18px}
+#leftCol{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:12px}
+#rightCol{flex:0 0 716px;display:flex;min-height:0}
+
+/* ── 문제 카드 ─────────────────────────────── */
+.qcard{flex:0 0 auto;background:var(--panel);border:1px solid var(--line);
+  border-radius:14px;padding:11px 18px 13px}
+.qhead{display:flex;align-items:center;gap:12px;cursor:pointer}
+.qnum{background:var(--amber);color:#141d26;font-family:var(--f-kr);font-weight:700;
+  font-size:20px;padding:2px 12px;border-radius:8px;white-space:nowrap}
+.qgist{flex:1;font-family:var(--f-kr);font-size:23px;font-weight:500;color:var(--amber);
+  word-break:keep-all}
+.qarrow{color:var(--chalk-faint);font-size:20px;transition:transform .2s}
+.qtext{font-family:var(--f-en),var(--f-kr),serif;font-size:var(--ls-q);line-height:1.5;
+  color:var(--chalk-soft);margin-top:9px;word-break:keep-all;
+  max-height:320px;overflow:hidden;transition:max-height .25s,margin-top .25s,opacity .2s}
+.qdef{margin-top:6px;color:var(--amber)}
+.qcard.folded .qtext{max-height:0;margin-top:0;opacity:0}
+.qcard.folded .qarrow{transform:rotate(-90deg)}
+
+/* ── 단계 누적 스크롤 ──────────────────────── */
+.flowWrap{position:relative;flex:1 1 auto;min-height:0}
+.flow{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;
+  touch-action:pan-y;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+  padding:2px 16px 130px 0}
+.flow::-webkit-scrollbar{width:10px}
+.flow::-webkit-scrollbar-thumb{background:rgba(214,229,245,.28);border-radius:6px}
+.fadeTop,.fadeBot{position:absolute;left:0;right:0;height:40px;pointer-events:none;
+  opacity:0;transition:opacity .15s}
+.fadeTop{top:0;background:linear-gradient(180deg,var(--bg) 20%,transparent)}
+.fadeBot{bottom:0;background:linear-gradient(0deg,var(--bg) 20%,transparent)}
+
+.blk{padding:9px 0 13px 16px;border-left:3px solid transparent;opacity:.55;cursor:pointer}
+.blk.cur{opacity:1;border-left-color:var(--amber)}
+.bhead{display:flex;align-items:center;gap:12px}
+.bno{flex:0 0 48px;width:48px;height:48px;border-radius:50%;display:grid;place-items:center;
+  font-family:var(--f-en);font-size:25px;font-weight:700;
+  border:2px solid var(--teal);color:var(--teal);background:transparent}
+.blk.cur .bno{background:var(--amber);border-color:var(--amber);color:#141d26}
+.btitle{font-family:var(--f-kr);font-size:var(--ls-sm);font-weight:700;color:var(--chalk);
+  word-break:keep-all}
+.bbody{padding-left:60px}
+.bsm{font-family:var(--f-kr);font-size:var(--ls-sm);line-height:1.42;color:var(--chalk-soft);
+  margin-top:7px;word-break:keep-all}
+.bsm b{color:var(--chalk);font-weight:700}
+.bmath{margin-top:11px}
+
+/* ── 수식 조판 ─────────────────────────────── */
+.m{font-family:var(--f-en),var(--f-kr),serif;font-variant-numeric:tabular-nums;
+  font-size:var(--ls);line-height:1.4;word-break:keep-all}
+.m+.m{margin-top:8px}
+.v{font-style:italic}
+.ind{padding-left:1.5em}
+.frac{display:inline-flex;flex-direction:column;align-items:stretch;text-align:center;
+  vertical-align:middle;margin:0 .2em;transform:translateY(-.1em);
+  line-height:1.06;font-size:.84em;white-space:nowrap}
+.frac>.num{padding:0 .22em .07em;border-bottom:.058em solid currentColor}
+.frac>.den{padding:.09em .22em 0}
+sup{font-size:.6em;position:relative;top:-.42em;margin-left:.02em}
+.hl{color:var(--amber);font-weight:700}
+.dim{opacity:.4}
+.ans{display:inline-flex;align-items:center;vertical-align:middle;transform:translateY(-.1em);
+  color:var(--amber);font-weight:700;padding:.05em .24em;border:2px solid var(--amber);
+  border-radius:.18em;box-shadow:0 0 20px rgba(245,182,66,.2)}
+
+/* ── 오른쪽 패널 ───────────────────────────── */
+.gpanel{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px;
+  background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:11px 14px 12px}
+.mbanner{flex:0 0 auto;border-bottom:1px solid var(--line);padding-bottom:8px}
+.mbanner .t{font-family:var(--f-kr);font-size:24px;font-weight:700;color:var(--amber)}
+.mbanner .s{font-family:var(--f-kr);font-size:19px;color:var(--chalk-soft);margin-top:1px;
+  word-break:keep-all}
+.gwrap{flex:1 1 0;min-height:0;position:relative}
+.gwrap svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.srow{flex:0 0 44px;display:flex;align-items:center;gap:10px}
+.stip{flex:1;min-width:0;font-family:var(--f-kr);font-size:21px;color:var(--chalk-soft);
+  word-break:keep-all}
+.cnt{display:inline-flex;align-items:center;justify-content:center;min-width:96px;
+  font-family:var(--f-en);font-size:21px;font-variant-numeric:tabular-nums;color:var(--chalk);
+  background:var(--panel-2);border:1px solid var(--line-strong);border-radius:9px;padding:5px 10px}
+.cnt[hidden]{display:none}
+.gbtn{font-family:var(--f-kr);font-size:19px;font-weight:700;color:var(--chalk);cursor:pointer;
+  background:rgba(157,140,245,.14);border:1.5px solid var(--violet);border-radius:10px;
+  padding:7px 15px;white-space:nowrap}
+.gbtn:active{transform:scale(.97)}
+.gbtn[hidden]{display:none}
+
+/* ── 발판 ──────────────────────────────────── */
+.foot{flex:0 0 46px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.fmeta{font-family:var(--f-kr);font-size:18px;color:var(--chalk-faint);white-space:nowrap}
+.fmeta b{color:var(--chalk-soft);font-weight:700}
+.fbtns{display:flex;gap:8px}
+.fbtn{font-family:var(--f-kr);font-size:22px;font-weight:700;color:var(--chalk);cursor:pointer;
+  background:var(--panel-2);border:1.5px solid var(--line-strong);border-radius:10px;
+  padding:8px 20px;white-space:nowrap}
+.fbtn:hover{border-color:var(--chalk-soft)}
+.fbtn:active{transform:scale(.97)}
+.fbtn.primary{background:linear-gradient(180deg,#f5b642,#e09e28);color:#141d26;border-color:transparent}
+.fbtn:disabled{opacity:.3;cursor:default;transform:none}
+
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+}
+</style>
+</head>
+<body>
+<div class="viewport"><div class="stage" id="stage"><div class="sheet">
+
+  <div id="body2col">
+    <div id="leftCol">
+
+      <div class="qcard" id="qcard">
+        <div class="qhead" id="qhead">
+          <span class="qnum">12-13</span>
+          <span class="qgist">전문가가 정확하게 진단할 확률</span>
+          <span class="qarrow" id="qarrow">▾</span>
+        </div>
+        <div class="qtext">
+          우리나라 아동 중에서 7&#37;가 주의력 결핍 과잉 행동 장애(ADHD)가 있다고 한다.
+          전문가가 ADHD가 있는 아동을 ‘있음’으로 진단할 확률이 0.8이고,
+          ADHD가 없는 아동을 ‘없음’으로 진단할 확률이 0.7이라고 한다.
+          어느 아동이 ADHD가 있는지 알아보기 위해 전문가에게 검사를 받을 때,
+          전문가가 그 아동을 정확하게 진단할 확률을 구하시오.
+          <div class="qdef">실제 ADHD가 있는 사건을 <span class="v">A</span>,
+            정확하게 진단하는 사건을 <span class="v">B</span>라 하자.</div>
+        </div>
+      </div>
+
+      <div class="flowWrap">
+        <div class="flow" id="flow"></div>
+        <div class="fadeTop" id="fadeTop"></div>
+        <div class="fadeBot" id="fadeBot"></div>
+      </div>
+    </div>
+
+    <div id="rightCol">
+      <div class="gpanel">
+        <div class="mbanner">
+          <div class="t">두 갈래로 나눈 뒤 더하기</div>
+          <div class="s">ADHD 있음·없음으로 나누고, 맞히는 두 길의 확률을 곱해서 더한다</div>
+        </div>
+        <div class="gwrap" id="gwrap"><svg id="gsvg"></svg></div>
+        <div class="srow">
+          <div class="stip" id="stip"></div>
+          <div class="cnt" id="cnt" hidden>0 / 2</div>
+          <button class="gbtn" id="gbtn" hidden></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <div class="fmeta" id="pos"></div>
+    <div class="fbtns">
+      <button class="fbtn" id="resetBtn">처음부터</button>
+      <button class="fbtn" id="prevBtn">◀ 이전</button>
+      <button class="fbtn primary" id="nextBtn">풀이 보기</button>
+      <button class="fbtn" id="fsBtn">전체화면</button>
+    </div>
+  </div>
+
+</div></div></div>
+
+<script>
+/* ═══ 1. 스테이지 스케일링 ═══════════════════════════════ */
+const STAGE_W=1600, STAGE_H=900, stage=document.getElementById('stage');
+function fitStage(){
+  const vv=window.visualViewport;
+  const w=vv?vv.width:innerWidth, h=vv?vv.height:innerHeight;
+  const s=Math.min(w/STAGE_W,h/STAGE_H);
+  stage.style.transform=`translate(${Math.round((w-STAGE_W*s)/2)}px,${Math.round((h-STAGE_H*s)/2)}px) scale(${s})`;
+}
+addEventListener('resize',fitStage);
+if(window.visualViewport) visualViewport.addEventListener('resize',fitStage);
+[0,60,300,700].forEach(t=>setTimeout(fitStage,t));
+
+/* ═══ 2. 수식 조각 ═══════════════════════════════════════ */
+const F =(a,b)=>`<span class="frac"><span class="num">${a}</span><span class="den">${b}</span></span>`;
+const V =s=>`<span class="v">${s}</span>`;
+const Pf=V('P'), Af=V('A'), Bf=V('B'), Acf=V('A')+'<sup>c</sup>';
+const ANS=s=>`<span class="ans">${s}</span>`;
+const DOTS='<div class="m dim">…</div>';
+
+/* ═══ 3. 상태 ═══════════════════════════════════════════ */
+const S={ step:1, shown:[],
+          b1:[false,false],                 /* P(A) · P(Aᶜ) */
+          lf:[false,false,false,false],     /* 가지 끝 조건부확률 */
+          pr:[false,false],                 /* 맞히는 두 길의 곱 */
+          sum:false, folded:false };
+
+const STEPS=[
+ { t:'두 갈래로 나누기', short:'전체',
+   sm:'아동은 ADHD가 <b>있거나 없거나</b> 둘 중 하나. 여기서 갈라진다.',
+   hint:'갈래 상자를 눌러 확률을 확인하세요',
+   f:()=>{ let h='';
+     if(S.b1[0]) h+=`<div class="m">${Pf}(${Af}) = ${F(7,100)}</div>`;
+     if(S.b1[1]) h+=`<div class="m">${Pf}(${Acf}) = 1 − ${F(7,100)} = ${F(93,100)}</div>`;
+     return h||DOTS; } },
+
+ { t:'맞히는 길은 둘', short:'두 길',
+   sm:'<b>있는 아이를 ‘있음’</b>으로, <b>없는 아이를 ‘없음’</b>으로 맞혀야 정확한 진단.',
+   hint:'가지 끝을 눌러 조건부확률을 확인하세요',
+   f:()=>{ let h='';
+     if(S.lf[1]) h+=`<div class="m">${Pf}(${Bf}|${Af}) = ${F(8,10)}</div>`;
+     if(S.lf[2]) h+=`<div class="m">${Pf}(${Bf}|${Acf}) = ${F(7,10)}</div>`;
+     return h||DOTS; } },
+
+ { t:'각 길의 확률', short:'곱셈',
+   sm:'한 길을 끝까지 가려면 두 갈래를 <b>연달아</b> 거친다. 그래서 곱한다.',
+   hint:'‘정확한 진단’ 상자나 가지 끝을 누르세요',
+   f:()=>{ let h='';
+     if(S.pr[0]) h+=`<div class="m">${Pf}(${Af} ∩ ${Bf}) = ${Pf}(${Af}) × ${Pf}(${Bf}|${Af})</div>`
+                   +`<div class="m ind">= ${F(7,100)} × ${F(8,10)} = <span class="hl">${F(56,1000)}</span></div>`;
+     if(S.pr[1]) h+=`<div class="m">${Pf}(${Acf} ∩ ${Bf}) = ${Pf}(${Acf}) × ${Pf}(${Bf}|${Acf})</div>`
+                   +`<div class="m ind">= ${F(93,100)} × ${F(7,10)} = <span class="hl">${F(651,1000)}</span></div>`;
+     return h||DOTS; } },
+
+ { t:'두 길을 더한다', short:'답',
+   sm:'두 길은 <b>동시에 일어날 수 없다</b>. 그래서 각각의 확률을 그대로 더한다.',
+   hint:'가운데 합 상자를 누르세요',
+   f:()=>{ let h=`<div class="m">${Pf}(${Bf}) = ${Pf}(${Af} ∩ ${Bf}) + ${Pf}(${Acf} ∩ ${Bf})</div>`;
+     if(S.sum) h+=`<div class="m ind">= ${F(56,1000)} + ${F(651,1000)} = ${F(707,1000)}</div>`
+                 +`<div class="m">${Pf}(${Bf}) = ${ANS('0.707')}</div>`;
+     return h; } }
+];
+const N=STEPS.length;
+
+/* ═══ 4. 왼쪽 그리기 ════════════════════════════════════ */
+const flow=document.getElementById('flow'), fadeTop=document.getElementById('fadeTop'),
+      fadeBot=document.getElementById('fadeBot');
+let scrollTarget=null;
+
+function paintFlow(scrollTo){
+  let h='';
+  for(let i=1;i<=S.step;i++){
+    const st=STEPS[i-1], cur=i===S.step;
+    h+=`<div class="blk${cur?' cur':''}" id="blk${i}" data-jump="${i}">
+          <div class="bhead"><div class="bno">${i}</div><div class="btitle">${st.t}</div></div>
+          <div class="bbody">
+            <div class="bsm">${st.sm}</div>
+            ${(cur? S.shown[i-1] : true) ? `<div class="bmath">${st.f()}</div>`:''}
+          </div>
+        </div>`;
+  }
+  flow.innerHTML=h;
+  if(scrollTo!==false){
+    const el=document.getElementById('blk'+S.step);
+    if(el){ scrollTarget=Math.max(0,el.offsetTop-6);
+            flow.scrollTo({top:scrollTarget,behavior:'smooth'}); }
+  }
+  updFade();
+}
+function updFade(){
+  fadeTop.style.opacity = flow.scrollTop>6 ? 1 : 0;
+  fadeBot.style.opacity = (flow.scrollHeight-flow.clientHeight-flow.scrollTop)>10 ? 1 : 0;
+}
+flow.addEventListener('scroll',updFade,{passive:true});
+
+let downTop=0;
+flow.addEventListener('pointerdown',()=>{ downTop=flow.scrollTop; scrollTarget=null; });
+flow.addEventListener('click',e=>{
+  if(Math.abs(flow.scrollTop-downTop)>4) return;
+  const b=e.target.closest('[data-jump]');
+  if(b && +b.dataset.jump!==S.step) jump(+b.dataset.jump);
+});
+
+/* ═══ 5. SVG 도구 ═══════════════════════════════════════ */
+const SER="'STIX Two Text',serif", KR="'Noto Sans KR',sans-serif";
+function txt(x,y,s,size,fill,opt){
+  opt=opt||{};
+  return `<text x="${x}" y="${y}" text-anchor="${opt.anchor||'middle'}" dominant-baseline="central"
+    font-family="${opt.kr?KR:SER}" font-size="${size}" font-weight="${opt.w||500}"
+    fill="${fill}"${opt.op?` fill-opacity="${opt.op}"`:''}${opt.it?' font-style="italic"':''}>${s}</text>`;
+}
+function txtMix(x,y,parts,size,fill,opt){
+  opt=opt||{};
+  const inner=parts.map(p=>`<tspan font-family="${p.kr?KR:SER}">${p.s}</tspan>`).join('');
+  return `<text x="${x}" y="${y}" text-anchor="${opt.anchor||'middle'}" dominant-baseline="central"
+    font-size="${size}" font-weight="${opt.w||600}" fill="${fill}"${opt.op?` fill-opacity="${opt.op}"`:''}>${inner}</text>`;
+}
+const CSS=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const gsvg=document.getElementById('gsvg'), gwrap=document.getElementById('gwrap');
+let W=0,H=0;
+new ResizeObserver(()=>{
+  const w=Math.round(gwrap.clientWidth), h=Math.round(gwrap.clientHeight);
+  if(w===W&&h===H) return;
+  W=w; H=h; gsvg.setAttribute('viewBox',`0 0 ${W} ${H}`); draw();
+}).observe(gwrap);
+
+/* ═══ 6. 그림 — 수형도 ══════════════════════════════════ */
+const CP=[[2,10],[8,10],[7,10],[3,10]];        /* 가지 끝 조건부확률 */
+const BP=[[7,100],[93,100]];                   /* 첫 갈래 확률 */
+const LEAF=['‘없음’','‘있음’','‘없음’','‘있음’'];
+const PRODV=[[56,1000],[651,1000]];            /* 맞히는 두 길의 곱 */
+
+function svgFrac(x,y,a,b,size,fill,op){
+  const w=Math.max(String(a).length,String(b).length)*size*0.58;
+  return txt(x,y-size*0.62,a,size,fill,{w:700,op:op})
+    +`<line x1="${x-w/2}" y1="${y}" x2="${x+w/2}" y2="${y}" stroke="${fill}"
+      stroke-width="2.5"${op?` stroke-opacity="${op}"`:''}/>`
+    +txt(x,y+size*0.66,b,size,fill,{w:700,op:op});
+}
+
+function draw(){
+  if(!W) return;
+  const AM=CSS('--amber'), TE=CSS('--teal'), VI=CSS('--violet'),
+        CH=CSS('--chalk'), FA=CSS('--chalk-faint'), CO=CSS('--coral'),
+        LS=CSS('--line-strong');
+  const o=[], hit=[];
+  const cy=H/2;
+  const half=Math.min(H*0.40,268), inner=Math.min(H*0.175,120);
+  const LY=[cy-half,cy-inner,cy+inner,cy+half];
+  const NY=[(LY[0]+LY[1])/2,(LY[2]+LY[3])/2];
+  const rx=6, rw=Math.max(56,W*0.088), rh=Math.min(112,H*0.17);
+  const ax=W*0.262, aw=W*0.219, ah=Math.min(100,H*0.152);
+  const lx=W*0.625, lw=W*0.195, lh=Math.min(88,H*0.133);
+  const vx=W*0.905;
+  const gx=lx-14, gw=W-gx-5, gy0=LY[1]-lh/2-16, gy1=LY[2]+lh/2+16;
+  const sw=W-lx-24, sx=lx+10, sh=Math.min(80,H*0.12);
+
+  const box=(x,y,w,h,col,fill,dash,op)=>`<rect x="${x}" y="${y-h/2}" width="${w}" height="${h}"
+    rx="14" fill="${fill}" stroke="${col}" stroke-width="3"${dash?' stroke-dasharray="10 8"':''}${op?` opacity="${op}"`:''}/>`;
+  const seg=(x1,y1,x2,y2,col,op)=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"
+    stroke="${col}" stroke-width="3" stroke-linecap="round" stroke-opacity="${op}"/>`;
+  const hb=(x,y,w,h,k,v)=>`<rect x="${x}" y="${y-h/2}" width="${w}" height="${h}"
+    fill="transparent" data-${k}="${v}" style="cursor:pointer"/>`;
+  const ev=(x,y,s,sup,size,col)=>txt(x-(sup?size*0.16:0),y,s,size,col,{it:1,w:700})
+    +(sup?txt(x+size*0.30,y-size*0.32,'c',Math.round(size*0.62),col,{w:700}):'');
+
+  /* 선 옆으로 비켜 앉는 라벨 자리 */
+  const side=(x1,y1,x2,y2,t,k,s)=>{
+    const dx=x2-x1, dy=y2-y1, L=Math.hypot(dx,dy)||1;
+    return [x1+t*dx + s*k*dy/L, y1+t*dy - s*k*dx/L];
+  };
+
+  /* ── 1단계 가지 ── */
+  for(let i=0;i<2;i++){
+    const on=S.b1[i], col=on?TE:(S.step===1?VI:FA);
+    o.push(seg(rx+rw,cy,ax,NY[i],col,on?1:.5));
+    if(on){ const p=side(rx+rw,cy,ax,NY[i],0.52,54,i?-1:1);
+      o.push(svgFrac(p[0],p[1],BP[i][0],BP[i][1],28,TE)); }
+  }
+  /* ── 2단계 가지 ── */
+  for(let k=0;k<4;k++){
+    const i=k<2?0:1, on=S.lf[k], good=(k===1||k===2);
+    const col=on?(good?TE:FA):(S.step>=2?VI:FA);
+    o.push(seg(ax+aw,NY[i],lx,LY[k],col,on?1:(S.step>=2?.55:.25)));
+    if(on){ const p=side(ax+aw,NY[i],lx,LY[k],0.5,40,k%2?-1:1);
+      o.push(svgFrac(p[0],p[1],CP[k][0],CP[k][1],26,good?TE:FA)); }
+  }
+
+  /* ── 묶음 상자 : 정확한 진단 ── */
+  if(S.step>=2){
+    const done=S.step>=3 ? (S.pr[0]&&S.pr[1]) : (S.lf[1]&&S.lf[2]);
+    const gc=done?AM:VI;
+    o.push(`<rect x="${gx}" y="${gy0}" width="${gw}" height="${gy1-gy0}" rx="18"
+      fill="${done?'rgba(245,182,66,.07)':'rgba(157,140,245,.07)'}" stroke="${gc}"
+      stroke-width="3"${done?'':' stroke-dasharray="10 8"'}/>`);
+    o.push(txt(gx+gw/2,gy0-19,'정확한 진단',28,gc,{kr:1,w:700}));
+  }
+
+  /* ── 뿌리 ── */
+  const rootOn=S.b1[0]&&S.b1[1];
+  o.push(box(rx,cy,rw,rh,rootOn||S.step>1?LS:VI,'rgba(214,229,245,.05)',!(rootOn||S.step>1)));
+  o.push(txt(rx+rw/2,cy,'아동',26,CH,{kr:1,w:700}));
+
+  /* ── 1단계 상자 ── */
+  for(let i=0;i<2;i++){
+    const on=S.b1[i], col=on?TE:(S.step===1?VI:FA);
+    o.push(box(ax,NY[i],aw,ah,col,on?'rgba(73,209,192,.12)':'rgba(157,140,245,.07)',!on&&S.step===1));
+    o.push(ev(ax+aw/2,NY[i]-ah*0.20,'A',i===1,34,col));
+    o.push(txtMix(ax+aw/2,NY[i]+ah*0.22,[{s:'ADHD '},{s:i?'없음':'있음',kr:1}],24,on?CH:FA,{w:700}));
+  }
+
+  /* ── 가지 끝 상자 ── */
+  for(let k=0;k<4;k++){
+    const on=S.lf[k], good=(k===1||k===2);
+    const col=on?(good?TE:FA):(S.step>=2?VI:FA);
+    o.push(box(lx,LY[k],lw,lh,col,on?(good?'rgba(73,209,192,.14)':'rgba(214,229,245,.04)'):'rgba(157,140,245,.06)',
+      !on&&S.step>=2, on?1:(S.step>=2?1:.3)));
+    const op=on?1:(S.step>=2?.75:.3);
+    o.push(txt(lx+lw*0.20,LY[k],good?'✓':'✗',28,good?TE:CO,{w:700,op:op}));
+    o.push(txt(lx+lw*0.62,LY[k],LEAF[k],28,on?(good?TE:CH):(S.step>=2?CH:FA),{kr:1,w:700,op:op}));
+    if(good&&S.step>=3&&S.pr[k-1])
+      o.push(svgFrac(vx,LY[k],PRODV[k-1][0],PRODV[k-1][1],29,AM));
+  }
+
+  /* ── 합 상자 ── */
+  if(S.step>=4){
+    o.push(box(sx,cy,sw,sh,S.sum?AM:VI,S.sum?'rgba(245,182,66,.14)':'rgba(157,140,245,.07)',!S.sum));
+    o.push(S.sum ? txtMix(sx+sw/2,cy,[{s:'합 ',kr:1},{s:'0.707'}],36,AM,{w:700})
+                 : txt(sx+sw/2,cy,'합 구하기',28,VI,{kr:1,w:700}));
+  }
+
+  /* ── 누를 자리 (그림 위에 얹는다) ── */
+  if(S.step>=2) hit.push(`<rect x="${gx}" y="${gy0}" width="${gw}" height="${gy1-gy0}"
+    fill="transparent" data-grp="1" style="cursor:pointer"/>`);
+  hit.push(hb(rx,cy,rw,rh,'root','1'));
+  for(let i=0;i<2;i++) hit.push(hb(ax,NY[i],aw,ah,'n1',i));
+  for(let k=0;k<4;k++) hit.push(hb(lx,LY[k],lw,lh,'lf',k));
+  if(S.step>=4) hit.push(hb(sx,cy,sw,sh,'sum','1'));
+
+  gsvg.innerHTML=o.join('')+hit.join('');
+}
+
+gsvg.addEventListener('click',e=>{
+  const d=e.target.dataset||{};
+  if(d.root!==undefined){ const all=S.b1[0]&&S.b1[1]; S.b1=[!all,!all]; }
+  else if(d.n1!==undefined){ const i=+d.n1;
+    if(S.step<=1) S.b1[i]=!S.b1[i];
+    else{ const a=i*2, b=a+1, all=S.lf[a]&&S.lf[b]; S.lf[a]=S.lf[b]=!all; } }
+  else if(d.lf!==undefined){ const k=+d.lf;
+    if(S.step>=3&&(k===1||k===2)){ S.lf[k]=true; S.pr[k-1]=!S.pr[k-1]; }
+    else S.lf[k]=!S.lf[k]; }
+  else if(d.grp!==undefined){
+    if(S.step>=3){ const all=S.pr[0]&&S.pr[1]; S.pr=[!all,!all]; if(!all) S.lf[1]=S.lf[2]=true; }
+    else{ const all=S.lf[1]&&S.lf[2]; S.lf[1]=S.lf[2]=!all; } }
+  else if(d.sum!==undefined){ S.sum=!S.sum; if(S.sum) S.pr=[true,true]; }
+  else return;
+  after();
+});
+function after(){ draw(); paint(false); updSrow(); }
+
+function revealAllOfStep(n){
+  if(n>=1) S.b1=[true,true];
+  if(n>=2) S.lf=[true,true,true,true];
+  if(n>=3) S.pr=[true,true];
+  if(n>=4) S.sum=true;
+}
+
+/* ═══ 7. 안내줄 · 발판 ══════════════════════════════════ */
+const stip=document.getElementById('stip'), cnt=document.getElementById('cnt'),
+      gbtn=document.getElementById('gbtn'), pos=document.getElementById('pos'),
+      nextBtn=document.getElementById('nextBtn'), prevBtn=document.getElementById('prevBtn');
+
+function updSrow(){
+  const st=STEPS[S.step-1];
+  stip.textContent=st.hint||'';
+  const c=[`${S.b1.filter(Boolean).length} / 2`,
+           `${S.lf.filter(Boolean).length} / 4`,
+           `${S.pr.filter(Boolean).length} / 2`, null][S.step-1];
+  cnt.hidden = c===null;
+  if(c) cnt.textContent=c;
+  gbtn.hidden=false;
+  gbtn.textContent=['두 갈래 모두','네 가지 모두','둘 다 계산','더하기'][S.step-1];
+}
+gbtn.addEventListener('click',()=>{
+  if(S.step===1) S.b1=[true,true];
+  else if(S.step===2) S.lf=[true,true,true,true];
+  else if(S.step===3){ S.lf[1]=S.lf[2]=true; S.pr=[true,true]; }
+  else { S.pr=[true,true]; S.sum=true; }
+  after();
+});
+
+function paint(scrollTo){
+  const keep=(scrollTarget!==null&&Math.abs(flow.scrollTop-scrollTarget)>2)?scrollTarget:flow.scrollTop;
+  paintFlow(scrollTo);
+  if(scrollTo===false) flow.scrollTop=keep;
+  pos.innerHTML=`<b>${S.step}</b> / ${N} · ${STEPS[S.step-1].short}`;
+  prevBtn.disabled=S.step===1;
+  const opened=!!S.shown[S.step-1];
+  nextBtn.textContent = !opened ? '풀이 보기' : (S.step<N ? '다음 ▶' : '완료');
+  nextBtn.disabled = opened && S.step===N;
+  updSrow(); draw();
+}
+function next(){
+  const i=S.step-1;
+  if(!S.shown[i]){ revealAllOfStep(S.step); S.shown[i]=true; paint(false); return; }
+  jump(S.step+1);
+}
+function jump(n){
+  n=Math.max(1,Math.min(N,n));
+  for(let k=1;k<n;k++){ S.shown[k-1]=true; revealAllOfStep(k); }
+  S.step=n;
+  /* 계산이 길어지는 3단계부터 문제 카드를 한 번 접어 자리를 낸다 (다시 펼칠 수 있음) */
+  if(n>=3&&!S.folded){ S.folded=true; document.getElementById('qcard').classList.add('folded'); }
+  paint();
+}
+function reset(){
+  S.step=1; S.shown=[]; S.b1=[false,false]; S.lf=[false,false,false,false];
+  S.pr=[false,false]; S.sum=false; S.folded=false;
+  document.getElementById('qcard').classList.remove('folded');
+  flow.scrollTop=0; scrollTarget=null; paint();
+}
+nextBtn.onclick=next;
+prevBtn.onclick=()=>jump(S.step-1);
+document.getElementById('resetBtn').onclick=reset;
+document.getElementById('fsBtn').onclick=()=>{
+  if(document.fullscreenElement) document.exitFullscreen();
+  else document.documentElement.requestFullscreen?.();
+};
+document.getElementById('qhead').onclick=()=>document.getElementById('qcard').classList.toggle('folded');
+addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' '){ e.preventDefault(); next(); }
+  else if(e.key==='ArrowLeft') jump(S.step-1);
+  else if(e.key==='r'||e.key==='R') reset();
+  else if(e.key==='f'||e.key==='F') document.getElementById('fsBtn').click();
+});
+
+paint();
+</script>
+</body>
+</html>

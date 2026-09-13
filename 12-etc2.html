@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>12-etc2 · 조건부확률 — 주머니 A, B</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400..700;1,400..700&family=Noto+Sans+KR:wght@400;500;700&display=swap');
+
+:root{
+  --bg-deep:#0a1420;  --bg:#0e1b2b;  --panel:#16283e;  --panel-2:#1d3350;
+  --line:rgba(214,229,245,.16);  --line-strong:rgba(214,229,245,.34);
+  --chalk:#eaf1f8;  --chalk-soft:#b9cadd;  --chalk-faint:#7d94ad;
+  --amber:#f5b642;   /* 핵심 값, 정답, 현재 단계 */
+  --teal:#49d1c0;    /* 확정된 것, 지나온 단계 */
+  --violet:#9d8cf5;  /* 지금 눌러야 하는 것 */
+  --coral:#ff7d6a;   /* 조건에 어긋난 칸 (순간 표시) */
+
+  --f-en:'STIX Two Text'; --f-kr:'Noto Sans KR';
+  --ls:44px;     /* 수식 */
+  --ls-sm:29px;  /* 단계 설명 */
+  --ls-q:26px;   /* 문제 원문 */
+}
+
+*{ box-sizing:border-box; }
+html,body{
+  height:100%; margin:0; padding:0; overflow:hidden;
+  background:var(--bg-deep); overscroll-behavior:none; touch-action:manipulation;
+  -webkit-text-size-adjust:100%;
+}
+body{ color:var(--chalk); font-family:var(--f-kr),system-ui,sans-serif;
+      -webkit-font-smoothing:antialiased; -webkit-tap-highlight-color:transparent; }
+
+.viewport{ position:fixed; inset:0; overflow:hidden; background:var(--bg-deep); }
+.stage{
+  position:absolute; top:0; left:0; width:1600px; height:900px;
+  transform-origin:0 0; will-change:transform; overflow:hidden;
+  background:
+    radial-gradient(120% 90% at 18% 8%, #16273b 0%, rgba(22,39,59,0) 60%),
+    radial-gradient(100% 80% at 92% 96%, #142335 0%, rgba(20,35,53,0) 62%),
+    var(--bg);
+}
+.stage::before{
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background:
+    repeating-linear-gradient(115deg, rgba(255,255,255,.013) 0 2px, rgba(255,255,255,0) 2px 7px),
+    radial-gradient(130% 110% at 50% 45%, rgba(0,0,0,0) 55%, rgba(0,0,0,.34) 100%);
+}
+.sheet{ position:relative; z-index:1; width:100%; height:100%;
+        padding:16px 30px 14px; display:flex; flex-direction:column; gap:12px; }
+#body2col{ display:flex; gap:18px; flex:1 1 auto; min-height:0; }
+#leftCol{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:10px; }
+#rightCol{ flex:0 0 716px; display:flex; min-height:0; }
+
+/* ===== 조판 ===== */
+.m{ font-family:var(--f-en),var(--f-kr),serif; font-variant-numeric:tabular-nums;
+    font-size:var(--ls); line-height:1.4; word-break:keep-all; }
+.m + .m{ margin-top:8px; }
+.v{ font-style:italic; }
+.mi{ font-family:var(--f-en),var(--f-kr),serif; }   /* 설명문·문제 안의 수식 조각 */
+.frac{ display:inline-flex; flex-direction:column; align-items:stretch; text-align:center;
+       vertical-align:middle; margin:0 .2em; transform:translateY(-.1em);
+       line-height:1.06; font-size:.84em; white-space:nowrap; }
+.frac>.num{ padding:0 .22em .07em; border-bottom:.058em solid currentColor; }
+.frac>.den{ padding:.09em .22em 0; }
+.hl{ color:var(--amber); font-weight:700; }
+.ans{ display:inline-flex; align-items:center; vertical-align:middle; transform:translateY(-.1em);
+      color:var(--amber); font-weight:700; padding:.05em .24em;
+      border:2px solid var(--amber); border-radius:.18em; box-shadow:0 0 20px rgba(245,182,66,.2); }
+.ans>.frac{ transform:none; margin:0 .06em; }
+
+/* ===== 문제 ===== */
+.qcard{ flex:0 0 auto; background:var(--panel); border:2px solid var(--line);
+        border-radius:16px; padding:10px 16px; }
+.qhead{ display:flex; align-items:center; gap:12px; cursor:pointer; user-select:none; }
+.qbadge{ flex:0 0 auto; background:var(--amber); color:#12202f; font-weight:700;
+         font-size:20px; padding:3px 12px; border-radius:8px; }
+.qgist{ flex:1 1 auto; color:var(--amber); font-size:23px; font-weight:500;
+        white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.3; }
+.qarrow{ flex:0 0 auto; width:26px; height:26px; color:var(--chalk-faint);
+         transition:transform .25s ease; }
+.qcard.open .qarrow{ transform:rotate(180deg); }
+.qtext{ max-height:0; overflow:hidden; transition:max-height .3s ease, margin .3s ease;
+        color:var(--chalk-soft); font-size:var(--ls-q); line-height:1.55; word-break:keep-all; }
+.qcard.open .qtext{ max-height:340px; margin-top:10px; }
+
+/* ===== 단계 스크롤 ===== */
+.flowWrap{ position:relative; flex:1 1 auto; min-height:0; }
+.flow{
+  position:absolute; inset:0; overflow-y:auto; overflow-x:hidden;
+  touch-action:pan-y; overscroll-behavior:contain; -webkit-overflow-scrolling:touch;
+  padding:2px 16px 130px 0;
+}
+.flow::-webkit-scrollbar{ width:10px; }
+.flow::-webkit-scrollbar-track{ background:rgba(255,255,255,.04); border-radius:6px; }
+.flow::-webkit-scrollbar-thumb{ background:rgba(214,229,245,.28); border-radius:6px; }
+.fadeBot{ position:absolute; left:0; right:10px; bottom:0; height:70px; pointer-events:none;
+          background:linear-gradient(to bottom, rgba(14,27,43,0), var(--bg) 85%); }
+.fadeTop{ position:absolute; left:0; right:10px; top:0; height:34px; pointer-events:none;
+          background:linear-gradient(to top, rgba(14,27,43,0), var(--bg) 88%);
+          opacity:0; transition:opacity .2s; }
+.fadeTop.on{ opacity:1; }
+
+.blk{ position:relative; padding:14px 0 20px 24px; border-left:4px solid transparent;
+      cursor:pointer; transition:opacity .2s, border-color .2s; }
+.blk + .blk{ margin-top:6px; border-top:1px solid var(--line); padding-top:22px; }
+.blk.past{ opacity:.6; }
+.blk.past:hover{ opacity:.85; }
+.blk.live{ border-left-color:var(--amber); }
+.bhead{ display:flex; align-items:center; gap:14px; margin-bottom:12px; }
+.bnum{ flex:0 0 auto; width:48px; height:48px; border-radius:50%; display:flex;
+       align-items:center; justify-content:center; font-family:var(--f-en),serif;
+       font-size:25px; font-weight:700; background:var(--line-strong); color:var(--chalk); }
+.blk.live .bnum{ background:var(--amber); color:#12202f; }
+.blk.past .bnum{ background:var(--teal); color:#0a1420; }
+.btitle{ font-size:29px; font-weight:700; letter-spacing:-.01em; }
+.bsm{ font-size:var(--ls-sm); line-height:1.5; color:var(--chalk-soft); word-break:keep-all;
+      margin-bottom:14px; }
+.bsm b{ color:var(--chalk); font-weight:700; }
+.bhint{ font-size:var(--ls-sm); color:var(--violet); display:flex; align-items:center; gap:10px;
+        word-break:keep-all; margin-top:12px; }
+.bhint svg{ width:28px; height:28px; flex:none; }
+
+/* ===== 오른쪽 ===== */
+.gpanel{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:10px;
+         background:var(--panel); border:2px solid var(--line); border-radius:20px;
+         padding:12px 14px; }
+.mbanner{ flex:0 0 auto; border:2px solid var(--amber); background:rgba(245,182,66,.1);
+          border-radius:14px; padding:8px 16px; }
+.mbanner .t{ font-size:24px; font-weight:700; color:var(--amber); }
+.mbanner .s{ font-size:19px; color:var(--chalk-soft); margin-top:2px; word-break:keep-all; }
+.gwrap{ position:relative; flex:1 1 0; min-height:0; }
+.gwrap svg{ position:absolute; inset:0; width:100%; height:100%; }
+:where(button,[tabindex]):focus-visible{ outline:3px solid var(--amber); outline-offset:3px; }
+
+/* 발판 */
+.foot{ flex:0 0 46px; display:flex; align-items:center; justify-content:space-between; gap:14px; }
+.fmeta{ font-family:var(--f-kr); font-size:18px; color:var(--chalk-faint); white-space:nowrap; }
+.fmeta b{ color:var(--chalk-soft); font-weight:700; }
+.fbtns{ display:flex; gap:8px; }
+.fbtn{ font-family:var(--f-kr); font-size:22px; font-weight:700; color:var(--chalk); cursor:pointer;
+       background:var(--panel-2); border:1.5px solid var(--line-strong); border-radius:10px;
+       padding:8px 20px; white-space:nowrap; }
+.fbtn:hover{ border-color:var(--chalk-soft); }
+.fbtn:active{ transform:scale(.97); }
+.fbtn.primary{ background:linear-gradient(180deg,#f5b642,#e09e28); color:#141d26; border-color:transparent; }
+.fbtn:disabled{ opacity:.3; cursor:default; transform:none; }
+
+/* SVG 움직임 */
+.popG{ transform-box:fill-box; transform-origin:50% 50%; animation:popG .32s ease; }
+@keyframes popG{ 0%{transform:scale(1);} 45%{transform:scale(1.13);} 100%{transform:scale(1);} }
+.shakeX{ transform-box:fill-box; transform-origin:50% 50%; animation:shakeX .34s ease; }
+@keyframes shakeX{ 0%,100%{transform:translateX(0);} 25%{transform:translateX(-7px);} 75%{transform:translateX(7px);} }
+@media (prefers-reduced-motion:reduce){ *{ animation-duration:.01ms !important; transition-duration:.01ms !important; } }
+</style>
+</head>
+<body>
+<div class="viewport">
+<div class="stage" id="stage">
+<div class="sheet">
+
+  <div id="body2col">
+    <!-- ===== 왼쪽 ===== -->
+    <div id="leftCol">
+      <div class="qcard" id="qcard">
+        <div class="qhead" id="qhead">
+          <span class="qbadge">12-etc2</span>
+          <span class="qgist"><span class="mi"><span class="v">a</span>₁ ≥ 3</span>일 때 <span class="mi"><span class="v">a</span>₁<span class="v">b</span>₁ &lt; <span class="v">a</span>₂<span class="v">b</span>₂</span>일 확률 — <span class="mi"><span class="v">p</span> + <span class="v">q</span></span>의 값 구하기</span>
+          <svg class="qarrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+        <div class="qtext">
+          주머니 A에는 1, 2, 3, 4, 5가 하나씩 적힌 공 5개가 들어 있고, 주머니 B에는 1이 적힌 공 2개와 2가 적힌 공 3개가 들어 있다.
+          주머니 A에서 임의로 공을 한 개씩 두 번 꺼내 나온 수를 차례로 <span class="mi"><span class="v">a</span>₁</span>, <span class="mi"><span class="v">a</span>₂</span>라 하고,
+          주머니 B에서 임의로 공을 한 개씩 두 번 꺼내 나온 수를 차례로 <span class="mi"><span class="v">b</span>₁</span>, <span class="mi"><span class="v">b</span>₂</span>라 하자. (꺼낸 공은 다시 넣지 않는다.)
+          <span class="mi"><span class="v">a</span>₁ ≥ 3</span>일 때 <span class="mi"><span class="v">a</span>₁<span class="v">b</span>₁ &lt; <span class="v">a</span>₂<span class="v">b</span>₂</span>일 확률이
+          <span class="mi"><span class="frac" style="font-size:.82em;"><span class="num"><span class="v">q</span></span><span class="den"><span class="v">p</span></span></span></span>
+          이다. <span class="mi"><span class="v">p</span> + <span class="v">q</span></span>의 값을 구하시오.
+          (단, <span class="mi"><span class="v">p</span></span>와 <span class="mi"><span class="v">q</span></span>는 서로소인 자연수이다.)
+        </div>
+      </div>
+
+      <div class="flowWrap">
+        <div class="flow" id="flow"></div>
+        <div class="fadeTop" id="fadeTop"></div>
+        <div class="fadeBot"></div>
+      </div>
+    </div>
+
+    <!-- ===== 오른쪽 ===== -->
+    <div id="rightCol">
+      <div class="gpanel">
+        <div class="mbanner">
+          <div class="t">조건부확률 공식으로 풀기</div>
+          <div class="s"><span class="mi"><span class="v">P</span>(<span class="v">C</span>)</span>는 바로 나오고, <span class="mi"><span class="v">P</span>(<span class="v">C</span> ∩ <span class="v">D</span>)</span>는 남은 16칸을 세어 구한다</div>
+        </div>
+        <div class="gwrap" id="gwrap"><svg id="svg" xmlns="http://www.w3.org/2000/svg"></svg></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 발판 ===== -->
+  <div class="foot">
+    <div class="fmeta" id="pos"></div>
+    <div class="fbtns">
+      <button class="fbtn" id="resetBtn">처음부터</button>
+      <button class="fbtn" id="prevBtn">◀ 이전</button>
+      <button class="fbtn primary" id="nextBtn">풀이 보기</button>
+      <button class="fbtn" id="fsBtn">전체화면</button>
+    </div>
+  </div>
+
+</div>
+</div>
+</div>
+
+<script>
+'use strict';
+
+/* ===== 16:9 스테이지 ===== */
+const STAGE_W = 1600, STAGE_H = 900;
+const stage = document.getElementById('stage');
+function fitStage(){
+  const vv = window.visualViewport;
+  const w = vv ? vv.width : innerWidth, h = vv ? vv.height : innerHeight;
+  const s = Math.min(w / STAGE_W, h / STAGE_H);
+  stage.style.transform = 'translate(' + Math.round((w - STAGE_W*s)/2) + 'px,' +
+                                         Math.round((h - STAGE_H*s)/2) + 'px) scale(' + s + ')';
+}
+function fitSoon(){ [0,60,300,700].forEach(t => setTimeout(fitStage, t)); }
+fitSoon();
+addEventListener('load', fitSoon);
+addEventListener('resize', fitStage);
+addEventListener('orientationchange', fitSoon);
+if (window.visualViewport){
+  visualViewport.addEventListener('resize', fitStage);
+  visualViewport.addEventListener('scroll', fitStage);
+}
+document.addEventListener('fullscreenchange', fitSoon);
+
+/* ===== 수식 조각 (HTML) ===== */
+const F  = (a,b) => `<span class="frac"><span class="num">${a}</span><span class="den">${b}</span></span>`;
+const A1 = '<span class="mi"><span class="v">a</span>₁</span>', A2 = '<span class="mi"><span class="v">a</span>₂</span>';
+const B1 = '<span class="mi"><span class="v">b</span>₁</span>', B2 = '<span class="mi"><span class="v">b</span>₂</span>';
+const Pf = '<span class="mi"><span class="v">P</span></span>';
+const Cv = '<span class="mi"><span class="v">C</span></span>',  Dv = '<span class="mi"><span class="v">D</span></span>';
+const pv = '<span class="v">p</span>',  qv = '<span class="v">q</span>';
+
+/* ===== 문제 데이터 =====
+   A = {1,2,3,4,5}, B = {1,1,2,2,2}
+   사건 C : a₁ ≥ 3     사건 D : a₁b₁ < a₂b₂
+   (a₁, b₁) = (3,1),(3,2),(4,1),(4,2),(5,1),(5,2) 의 6가지
+   각 경우마다 남은 A 4개 × 남은 B 4개 = 16칸
+========================================= */
+const BAG_A = [1,2,3,4,5];
+const BAG_B = [1,1,2,2,2];
+const A1_LIST = [3,4,5];
+const B1_LIST = [1,2];
+const B1_NUM = { 1:2, 2:3 };          /* b₁ = 1 일 확률 2/5, b₁ = 2 일 확률 3/5 */
+
+const COMBOS = [];
+A1_LIST.forEach(a => {
+  B1_LIST.forEach(b => {
+    const remA = BAG_A.filter(x => x !== a);
+    const remB = BAG_B.slice(); remB.splice(remB.indexOf(b), 1);
+    const thr = a * b, hit = [];
+    remA.forEach(a2 => remB.forEach(b2 => hit.push(a2 * b2 > thr)));
+    COMBOS.push({ a1:a, b1:b, remA:remA, remB:remB, thr:thr, hit:hit,
+                  total: hit.filter(Boolean).length });
+  });
+});
+const NC = COMBOS.length;
+const NUM_OF  = i => 2 * COMBOS[i*2].total + 3 * COMBOS[i*2+1].total;   /* 행별 분자 */
+const NUM_SUM = NUM_OF(0) + NUM_OF(1) + NUM_OF(2);                      /* = 66 */
+
+/* ===== 상태 ===== */
+const LAST = 4, CNT = 2;                  /* CNT : 칸 세기 단계 */
+const S = {
+  step: 1,
+  shown: [false,false,false,false],
+  cur:   0,                               /* 칸 세기 단계에서 보고 있는 경우 */
+  found: COMBOS.map(c => c.hit.map(() => false)),
+  done:  COMBOS.map(() => false),
+  sums:  [false,false,false],             /* 합치기 단계 : 행별 분자 */
+  flash: null, pop: null
+};
+const nFound = i => S.found[i].filter(Boolean).length;
+
+/* ===== 단계 (4개) ===== */
+const STEPS = [
+{
+  t:'사건 C, D와 공식을 세운다',
+  sm:`A의 첫 공이 <b>3, 4, 5</b>일 때만 따진다.<br>분모는 바로 나오므로 <b>${Pf}(${Cv} ∩ ${Dv})</b>만 구하면 된다.`,
+  hint:'“풀이 보기”를 눌러 식을 세우세요',
+  f:() => `<div class="m">${Cv} : ${A1} ≥ 3</div>
+           <div class="m">${Dv} : ${A1}${B1} &lt; ${A2}${B2}</div>
+           <div class="m">${Pf}(${Cv}) = ${F(3,5)}</div>
+           <div class="m">${Pf}(${Dv} | ${Cv}) = ${F(Pf+'('+Cv+' ∩ '+Dv+')', Pf+'('+Cv+')')}</div>`
+},
+{
+  t:'경우마다 조건 만족하는 경우의 수',
+  sm:`( ${A1}, ${B1} ) = ( 3, 1 ), ( 3, 2 ), … , ( 5, 2 ) 의 <b>6가지</b>.<br>
+      이 6가지마다 남은 16칸에서 <b>${A2}${B2} &gt; ${A1}${B1}</b>을 만족하는 경우의 수를 센다.`,
+  hint:'칸을 직접 누르거나, “풀이 보기”로 한 경우씩 보세요',
+  f:() => COMBOS.map((C,i) => S.done[i]
+      ? `<div class="m">( ${C.a1}, ${C.b1} ) &nbsp;→&nbsp; <span class="hl">${C.total}</span></div>` : '').join('')
+},
+{
+  t:'여섯 경우를 하나로 합친다',
+  sm:`한 경우의 확률은 ${A1} 확률 × ${B1} 확률 × 칸 비율.<br>분모를 <b>400</b>으로 맞추면 분자만 더하면 된다.`,
+  hint:'오른쪽 확률 칸을 눌러 한 줄씩 확인하세요',
+  f:() => `<div class="m">5 × 5 × 16 = <span class="hl">400</span></div>
+           <div class="m">${NUM_OF(0)} + ${NUM_OF(1)} + ${NUM_OF(2)} = <span class="hl">${NUM_SUM}</span></div>
+           <div class="m">${Pf}(${Cv} ∩ ${Dv}) = <span class="hl">${F(NUM_SUM,400)}</span></div>`
+},
+{
+  t:'나누어 답을 얻는다',
+  sm:`분자 합 <b>${NUM_SUM}</b>이 ${Pf}(${Cv} ∩ ${Dv})의 분자.<br>이것을 ${Pf}(${Cv}) = ${F(3,5)} 으로 나눈다.`,
+  hint:'“풀이 보기”를 눌러 마무리하세요',
+  f:() => `<div class="m">${Pf}(${Cv} ∩ ${Dv}) = ${F(66,400)} = ${F(33,200)}</div>
+           <div class="m">${Pf}(${Dv} | ${Cv}) = ${F(33,200)} ÷ ${F(3,5)} = ${F(11,40)}</div>
+           <div class="m">${pv} + ${qv} = 40 + 11 = <span class="ans">51</span></div>`
+}
+];
+
+/* ===== 왼쪽 : 단계 스크롤 ===== */
+const flow = document.getElementById('flow');
+const HAND = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11V6a2 2 0 1 1 4 0v5"/><path d="M13 11V4.5a2 2 0 1 1 4 0V13"/><path d="M17 12a2 2 0 1 1 4 0v3a6 6 0 0 1-6 6h-2a7 7 0 0 1-7-7v-3a2 2 0 1 1 4 0"/></svg>';
+let scrollTarget = null;
+function paintFlow(scrollTo){
+  let html = '';
+  for (let i = 0; i < S.step; i++){
+    const st = STEPS[i], n = i + 1, live = (n === S.step);
+    let body = S.shown[i] ? st.f() : '';
+    /* 칸 세기 단계는 다 끝나기 전까지 안내를 함께 둔다 */
+    const needHint = !S.shown[i] || (n === CNT && !S.done.every(Boolean) && live);
+    if (needHint) body += `<div class="bhint">${HAND}${st.hint}</div>`;
+    html += `<div class="blk ${live?'live':'past'}" data-jump="${n}" id="blk${n}">
+      <div class="bhead"><span class="bnum">${n}</span><span class="btitle">${st.t}</span></div>
+      <div class="bsm">${st.sm}</div><div>${body}</div></div>`;
+  }
+  flow.innerHTML = html;
+  if (scrollTo !== false){
+    const el = document.getElementById('blk' + S.step);
+    if (el){
+      scrollTarget = Math.max(0, el.offsetTop - 6);
+      flow.scrollTo({ top: scrollTarget, behavior: 'smooth' });
+    }
+  }
+}
+
+/* ===== SVG 공통 ===== */
+const gwrap = document.getElementById('gwrap');
+const svg   = document.getElementById('svg');
+let lastW = 0, lastH = 0;
+const BLUE='#7fb2ff', GOLD='#f5b642', AMB='#f5b642', TEAL='#49d1c0',
+      VIO='#9d8cf5', CORAL='#ff7d6a', FAINT='#7d94ad', CHALK='#eaf1f8', SOFT='#b9cadd';
+const SER = "'STIX Two Text',serif";
+const KR  = "'Noto Sans KR',sans-serif";
+const VS  = (c,s) => `<tspan font-style="italic">${c}</tspan>${s?`<tspan>${s}</tspan>`:''}`;
+const sA1 = VS('a','₁'), sA2 = VS('a','₂'), sB1 = VS('b','₁'), sB2 = VS('b','₂');
+
+/* 세리프 한 줄 (숫자·수식 전용) */
+function txt(x,y,s,size,fill,opt){
+  opt = opt || {};
+  return `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="central"
+    font-family="${SER}" font-size="${size}" font-weight="${opt.w||500}"
+    fill="${fill}"${opt.op?` fill-opacity="${opt.op}"`:''}>${s}</text>`;
+}
+/* 한글은 고딕, 숫자·수식은 세리프로 섞어 쓰는 한 줄 */
+function txtMix(x,y,parts,size,fill,opt){
+  opt = opt || {};
+  const inner = parts.map(p =>
+    `<tspan font-family="${p.kr?KR:SER}"${p.fill?` fill="${p.fill}"`:''}>${p.s}</tspan>`).join('');
+  return `<text x="${x}" y="${y}" text-anchor="${opt.anchor||'middle'}" dominant-baseline="central"
+    font-size="${size}" font-weight="${opt.w||600}" fill="${fill}"
+    ${opt.op?`fill-opacity="${opt.op}"`:''}>${inner}</text>`;
+}
+/* 세로 분수 (슬래시 금지) */
+function fracS(x,y,num,den,size,fill,op){
+  const w = Math.max(String(num).length, String(den).length) * size * 0.60 + size * 0.34;
+  const o = op ? ` fill-opacity="${op}" stroke-opacity="${op}"` : '';
+  return `<g${o}>${txt(x, y - size*0.60, num, size, fill, {w:700})}
+    <line x1="${x-w/2}" y1="${y}" x2="${x+w/2}" y2="${y}" stroke="${fill}" stroke-width="${Math.max(2, size*0.06)}"/>
+    ${txt(x, y + size*0.62, den, size, fill, {w:700})}</g>`;
+}
+
+/* ===== 그림 1 : 주머니 두 개 ===== */
+function drawBags(o, W, H){
+  const boxH = 262, gap = 48;
+  const y0 = (H - (boxH*2 + gap))/2;
+  bagBox(o, y0,              W, boxH, 'A', BAG_A, BLUE, true);
+  bagBox(o, y0 + boxH + gap, W, boxH, 'B', BAG_B, GOLD, false);
+}
+function bagBox(o, y, W, h, name, vals, col, isA){
+  o.push(`<rect x="3" y="${y}" width="${W-6}" height="${h}" rx="26"
+    fill="${col}" fill-opacity=".05" stroke="${col}" stroke-opacity=".45" stroke-width="2.5"/>`);
+  o.push(txtMix(26, y + 36, [{s:'주머니 ', kr:1}, {s:name}], 31, col, {anchor:'start', w:700}));
+  if (isA) o.push(txtMix(W - 26, y + 36, [{s:'사건 ', kr:1}, {s:VS('C','') + ' : ' + sA1 + ' ≥ 3'}],
+                         29, AMB, {anchor:'end', w:700}));
+  const pad = 22, g = 15, n = vals.length, top = y + 62;
+  const d  = Math.min((W - 2*pad - (n-1)*g)/n, h - 90);
+  const x0 = (W - (d*n + g*(n-1)))/2, cy = top + (h - 62)/2;
+  vals.forEach((v,i) => {
+    const cx  = x0 + i*(d+g) + d/2;
+    const on  = isA && v >= 3;
+    const dim = isA && v < 3;
+    const fill   = on ? AMB : '#e7eefa';
+    const stroke = on ? '#ffd98a' : col;
+    const tcol   = on ? '#2a1c05' : '#10192a';
+    o.push(`<g opacity="${dim?.38:1}">
+      <circle cx="${cx}" cy="${cy}" r="${d/2}" fill="${fill}" stroke="${stroke}" stroke-width="3.5"/>
+      ${txt(cx, cy, v, Math.round(d*0.5), tcol, {w:700})}</g>`);
+  });
+}
+
+/* ===== 그림 2 : 16칸 격자 ===== */
+function drawGrid(o, W, H){
+  const capY = 18, chipY = 42, chipH = 88;
+  const cg = 8, cwid = (W - cg*(NC-1))/NC;
+
+  o.push(txtMix(W/2, capY, [{s:'경우 ', kr:1}, {s:'( ' + sA1 + ' , ' + sB1 + ' )'}], 30, FAINT, {w:600}));
+  COMBOS.forEach((C,i) => {
+    const x = i*(cwid+cg), cur = (i === S.cur), dn = S.done[i];
+    const col = dn ? TEAL : (cur ? AMB : FAINT);
+    o.push(`<g onclick="setCase(${i})" style="cursor:pointer">`);
+    o.push(`<rect x="${x}" y="${chipY}" width="${cwid}" height="${chipH}" rx="14"
+      fill="${col}" fill-opacity="${cur?.16:(dn?.10:.05)}" stroke="${col}"
+      stroke-width="${cur?3:1.8}" stroke-opacity="${cur||dn?1:.5}"/>`);
+    o.push(txt(x + cwid/2, chipY + 30, C.a1 + ' , ' + C.b1, 36, col, {w:700}));
+    o.push(txtMix(x + cwid/2, chipY + 64, dn ? [{s:String(C.total)},{s:'가지',kr:1}] : [{s:'?'}],
+                  27, col, {w:600}));
+    o.push('</g>');
+  });
+
+  const C = COMBOS[S.cur];
+  const condY = chipY + chipH + 42;
+  o.push(txtMix(W/2, condY, [
+    {s: sA2 + sB2 + ' &gt; '},
+    {s: sA1 + sB1 + ' = '},
+    {s: C.a1 + ' × ' + C.b1 + ' = '},
+    {s: String(C.thr), fill: AMB}
+  ], 38, CHALK, {w:700}));
+
+  const gTop = condY + 44, hw = 122, hh = 78;
+  const cw = (W - hw)/4, chh = (H - gTop - hh)/4;
+
+  o.push(txtMix(hw/2 - 3, gTop + hh/2, [{s: sA2 + ' ＼ ' + sB2}], 28, SOFT, {w:600}));
+  C.remB.forEach((b2,j) => o.push(txt(hw + j*cw + cw/2, gTop + hh/2, b2, 44, GOLD, {w:700})));
+
+  C.remA.forEach((a2,i) => {
+    const ry = gTop + hh + i*chh;
+    o.push(`<rect x="3" y="${ry+4}" width="${hw-10}" height="${chh-8}" rx="12"
+      fill="${BLUE}" fill-opacity=".08" stroke="${BLUE}" stroke-opacity=".55" stroke-width="1.6"/>`);
+    o.push(txt(hw/2 - 3, ry + chh/2, a2, 46, BLUE, {w:700}));
+
+    C.remB.forEach((b2,j) => {
+      const k = i*4 + j, x = hw + j*cw;
+      const got = S.found[S.cur][k];
+      const bad = (S.flash === 'c' + k);
+      const dim = S.done[S.cur] && !C.hit[k];
+      const cls = bad ? ' class="shakeX"' : (S.pop === 'c'+k ? ' class="popG"' : '');
+      const bg  = got ? 'rgba(73,209,192,.16)' : (bad ? 'rgba(255,125,106,.16)' : 'rgba(255,255,255,.035)');
+      const st  = got ? TEAL : (bad ? CORAL : 'rgba(214,229,245,.22)');
+      o.push(`<g${cls} opacity="${dim?.4:1}" onclick="tapCell(${k})"
+          style="cursor:${S.done[S.cur]?'default':'pointer'}">
+        <rect x="${x+4}" y="${ry+4}" width="${cw-8}" height="${chh-8}" rx="12" fill="${bg}"
+          stroke="${st}" stroke-width="${got?3:1.6}"/>
+        ${txt(x + cw/2, ry + chh/2, a2*b2, 46, got ? TEAL : (bad ? CORAL : CHALK), {w:700})}</g>`);
+    });
+  });
+}
+
+/* ===== 그림 3 : 여섯 경우 판 ===== */
+function drawBoard(o, W, H){
+  const hw = 152, hh = 112;
+  const cw = (W - hw)/3, ch = (H - hh)/3;
+
+  B1_LIST.forEach((b,j) => {
+    const cx = hw + j*cw + cw/2;
+    o.push(txtMix(cx, hh*0.32, [{s: sB1 + ' = ' + b}], 32, GOLD, {w:700}));
+    o.push(fracS(cx, hh*0.72, B1_NUM[b], 5, 24, GOLD, .9));
+  });
+  const nx = hw + 2*cw + cw/2;
+  o.push(txtMix(nx, hh*0.32, [{s:'확률', kr:1}], 32, AMB, {w:700}));
+  o.push(txtMix(nx, hh*0.72, [{s:'( 분모 ', kr:1}, {s:'400'}, {s:' )', kr:1}], 23, AMB, {w:500, op:.85}));
+
+  A1_LIST.forEach((a,i) => {
+    const ry = hh + i*ch;
+    o.push(`<rect x="3" y="${ry+6}" width="${hw-12}" height="${ch-12}" rx="16"
+      fill="${BLUE}" fill-opacity=".07" stroke="${BLUE}" stroke-opacity=".55" stroke-width="1.6"/>`);
+    o.push(txtMix(hw/2 - 3, ry + ch*0.36, [{s: sA1 + ' = ' + a}], 32, BLUE, {w:700}));
+    o.push(fracS(hw/2 - 3, ry + ch*0.74, 1, 5, 24, BLUE, .9));
+
+    B1_LIST.forEach((b,j) => {
+      const ci = i*2 + j, x = hw + j*cw;
+      o.push(`<rect x="${x+6}" y="${ry+6}" width="${cw-12}" height="${ch-12}" rx="16"
+        fill="${TEAL}" fill-opacity=".10" stroke="${TEAL}" stroke-opacity=".8" stroke-width="1.8"/>`);
+      o.push(fracS(x + cw/2, ry + ch/2, COMBOS[ci].total, 16, 42, TEAL));
+    });
+
+    const x = hw + 2*cw, on = S.sums[i];
+    const cls = (S.pop === 'sum'+i) ? ' class="popG"' : '';
+    o.push(`<g${cls} onclick="openSum(${i})" style="cursor:${on?'default':'pointer'}">
+      <rect x="${x+6}" y="${ry+6}" width="${cw-12}" height="${ch-12}" rx="16"
+        fill="${on?'rgba(245,182,66,.12)':'rgba(157,140,245,.07)'}"
+        stroke="${on?AMB:VIO}" stroke-width="${on?2.6:2.4}"
+        ${on?'':'stroke-dasharray="9 6"'}/>`);
+    if (on){
+      o.push(txt(x + cw/2, ry + ch*0.26, '2×' + COMBOS[i*2].total + ' + 3×' + COMBOS[i*2+1].total, 26, SOFT, {w:600}));
+      o.push(fracS(x + cw/2, ry + ch*0.64, NUM_OF(i), 400, 40, AMB));
+    } else {
+      o.push(txt(x + cw/2, ry + ch*0.52, '?', 56, VIO, {w:700}));
+    }
+    o.push('</g>');
+  });
+}
+
+function draw(){
+  const W = Math.round(gwrap.clientWidth), H = Math.round(gwrap.clientHeight);
+  if (!W || !H) return;
+  if (W !== lastW || H !== lastH){ svg.setAttribute('viewBox', `0 0 ${W} ${H}`); lastW = W; lastH = H; }
+  const o = [];
+  if (S.step === 1) drawBags(o, W, H);
+  else if (S.step === CNT) drawGrid(o, W, H);
+  else drawBoard(o, W, H);
+  svg.innerHTML = o.join('');
+  S.pop = null;
+}
+new ResizeObserver(draw).observe(gwrap);
+
+/* ===== 조작 ===== */
+function flash(id){
+  S.flash = id; draw();
+  setTimeout(() => { S.flash = null; draw(); }, 420);
+}
+function resetCase(i){ S.found[i] = COMBOS[i].hit.map(() => false); S.done[i] = false; }
+/* 경우 버튼 : 그 경우로 옮기고 "세기 전" 상태로 되돌린다 */
+function setCase(i){
+  if (S.step !== CNT) return;
+  S.cur = i; resetCase(i);
+  syncShown(); paint(false);
+}
+function tapCell(k){
+  if (S.step !== CNT) return;
+  const ci = S.cur, C = COMBOS[ci];
+  if (S.done[ci]) return;
+  if (C.hit[k]){
+    if (S.found[ci][k]) return;
+    S.found[ci][k] = true; S.pop = 'c' + k;
+    if (nFound(ci) === C.total) S.done[ci] = true;
+    syncShown(); paint(false);
+  } else flash('c' + k);
+}
+function revealCase(i){
+  S.found[i] = COMBOS[i].hit.slice();
+  S.done[i] = true;
+  syncShown(); paint(false);
+}
+function openSum(i){ if (S.step !== 3) return; S.sums[i] = true; S.pop = 'sum'+i; syncShown(); paint(false); }
+
+/* ===== 진행 ===== */
+function syncShown(){
+  S.shown[CNT-1] = S.done.some(Boolean);
+  if (S.sums.every(Boolean)) S.shown[2] = true;
+}
+function revealStep(n){
+  if (n === CNT) COMBOS.forEach((c,i) => { S.found[i] = c.hit.slice(); S.done[i] = true; });
+  else if (n === 3) S.sums = [true,true,true];
+}
+function jump(n){
+  const t = Math.max(1, Math.min(LAST, n));
+  if (t === S.step) return;
+  S.step = t;
+  for (let k = 1; k < t; k++){ revealStep(k); S.shown[k-1] = true; }
+  syncShown();
+  paint(true);
+}
+function next(){
+  if (S.step === CNT){
+    if (!S.done[S.cur]){ revealCase(S.cur); return; }
+    if (S.cur < NC - 1){ S.cur++; revealCase(S.cur); return; }
+    jump(S.step + 1); return;
+  }
+  const i = S.step - 1;
+  if (!S.shown[i]){ revealStep(S.step); S.shown[i] = true; paint(false); return; }
+  jump(S.step + 1);
+}
+/* 칸 세기 단계에서는 "다음"의 정확한 역순으로 한 경우씩 되돌아간다 */
+function prev(){
+  if (S.step === CNT){
+    if (S.done[S.cur]){
+      resetCase(S.cur);
+      if (S.cur > 0) S.cur--;
+      syncShown(); paint(false); return;
+    }
+    if (S.cur > 0){ S.cur--; paint(false); return; }
+  }
+  jump(S.step - 1);
+}
+function resetAll(){
+  S.step = 1;
+  S.shown = [false,false,false,false];
+  S.cur = 0;
+  S.found = COMBOS.map(c => c.hit.map(() => false));
+  S.done = COMBOS.map(() => false);
+  S.sums = [false,false,false];
+  paint(true);
+}
+
+const nextBtn = document.getElementById('nextBtn');
+const prevBtn = document.getElementById('prevBtn');
+document.getElementById('resetBtn').addEventListener('click', resetAll);
+prevBtn.addEventListener('click', prev);
+nextBtn.addEventListener('click', next);
+document.getElementById('qhead').addEventListener('click', () =>
+  document.getElementById('qcard').classList.toggle('open'));
+
+let downTop = 0;
+flow.addEventListener('pointerdown', () => { downTop = flow.scrollTop; scrollTarget = null; });
+flow.addEventListener('wheel', () => { scrollTarget = null; }, { passive:true });
+flow.addEventListener('click', e => {
+  if (Math.abs(flow.scrollTop - downTop) > 4) return;
+  const b = e.target.closest('[data-jump]');
+  if (b && +b.dataset.jump !== S.step) jump(+b.dataset.jump);
+});
+const fadeTop = document.getElementById('fadeTop');
+flow.addEventListener('scroll', () => fadeTop.classList.toggle('on', flow.scrollTop > 6));
+
+addEventListener('keydown', e => {
+  const k = e.key;
+  if (k === 'ArrowRight' || k === ' '){ e.preventDefault(); next(); }
+  else if (k === 'ArrowLeft'){ e.preventDefault(); prev(); }
+  else if (k === 'r' || k === 'R') resetAll();
+  else if (k === 'f' || k === 'F') toggleFullscreen();
+});
+
+/* 전체화면 */
+const fsBtn = document.getElementById('fsBtn');
+function isFs(){ return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+function syncFs(){ fsBtn.textContent = isFs() ? '창으로' : '전체화면'; }
+function toggleFullscreen(){
+  if (!isFs()){ const el = document.documentElement;
+    const req = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (req) Promise.resolve(req.call(el)).catch(()=>{});
+  } else { const ex = document.exitFullscreen || document.webkitExitFullscreen;
+    if (ex) Promise.resolve(ex.call(document)).catch(()=>{}); }
+  setTimeout(syncFs, 120);
+}
+fsBtn.addEventListener('click', toggleFullscreen);
+document.addEventListener('fullscreenchange', syncFs);
+document.addEventListener('webkitfullscreenchange', syncFs);
+syncFs();
+
+/* ===== 전체 그리기 ===== */
+function paint(scrollTo){
+  const keep = (scrollTarget !== null && Math.abs(flow.scrollTop - scrollTarget) > 2)
+    ? scrollTarget : flow.scrollTop;
+  paintFlow(scrollTo);
+  if (scrollTo === false) flow.scrollTop = keep;
+  draw();
+
+  let meta = `<b>${S.step}</b> / ${LAST} &nbsp;·&nbsp; ${STEPS[S.step-1].t}`;
+  if (S.step === CNT){
+    const C = COMBOS[S.cur];
+    meta += ` &nbsp;·&nbsp; ( ${C.a1}, ${C.b1} ) &nbsp;<b>${S.done.filter(Boolean).length}</b> / ${NC}`;
+  }
+  document.getElementById('pos').innerHTML = meta;
+
+  prevBtn.disabled = (S.step === 1);
+  prevBtn.textContent = (S.step === CNT && (S.done[S.cur] || S.cur > 0)) ? '◀ 이전 경우' : '◀ 이전';
+  if (S.step === CNT){
+    nextBtn.textContent = !S.done[S.cur] ? '풀이 보기'
+                        : (S.cur < NC - 1 ? '다음 경우 ▶' : '다음 ▶');
+    nextBtn.disabled = false;
+  } else {
+    const opened = S.shown[S.step-1];
+    nextBtn.textContent = !opened ? '풀이 보기' : (S.step === LAST ? '완료' : '다음 ▶');
+    nextBtn.disabled = (S.step === LAST && opened);
+  }
+}
+paint(true);
+</script>
+</body>
+</html>
