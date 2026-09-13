@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>일의 자리의 수가 모두 다를 확률</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400..700;1,400..700&family=Noto+Sans+KR:wght@400;500;700&display=swap');
+
+:root{
+  --bg-deep:#0a1420;  --bg:#0e1b2b;  --panel:#16283e;  --panel-2:#1d3350;
+  --line:rgba(214,229,245,.16);  --line-strong:rgba(214,229,245,.34);
+  --chalk:#eaf1f8;  --chalk-soft:#b9cadd;  --chalk-faint:#7d94ad;
+  --amber:#f5b642;  --teal:#49d1c0;  --violet:#9d8cf5;
+
+  --f-en:'STIX Two Text';  --f-kr:'Noto Sans KR';
+
+  --ls:46px;      /* 수식 */
+  --ls-sm:25px;   /* 설명 */
+  --ls-q:26px;    /* 문제 원문 */
+}
+
+*{ box-sizing:border-box; }
+html,body{ margin:0; padding:0; width:100%; height:100%; background:var(--bg-deep);
+           overflow:hidden; overscroll-behavior:none; touch-action:manipulation; }
+body{ font-family:var(--f-en), var(--f-kr), system-ui, sans-serif; color:var(--chalk); -webkit-font-smoothing:antialiased; }
+button{ font-family:inherit; }
+
+@media (prefers-reduced-motion: reduce){
+  *{ animation-duration:.001ms !important; transition-duration:.001ms !important; }
+}
+
+/* ── 스테이지 ───────────────────────────────── */
+.viewport{ position:fixed; inset:0; background:var(--bg-deep); }
+.stage{ position:absolute; left:0; top:0; width:1600px; height:900px; transform-origin:0 0;
+        background:radial-gradient(1500px 900px at 28% -15%, #11263e 0%, var(--bg) 58%, var(--bg-deep) 100%); }
+.sheet{ width:1600px; height:900px; padding:16px 30px 14px; display:flex; flex-direction:column; gap:12px; }
+
+#body2col{ flex:1 1 auto; min-height:0; display:flex; gap:24px; }
+#leftCol{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:12px; min-height:0; }
+#rightCol{ flex:0 0 716px; display:flex; flex-direction:column; min-height:0; }
+
+/* ── 문제 (접기/펼치기) ─────────────────────── */
+.qcard{ flex:0 0 auto; background:linear-gradient(180deg, rgba(29,51,80,.85), rgba(22,40,62,.85));
+        border:1px solid var(--line); border-radius:14px; padding:11px 16px 12px; }
+.qhead{ display:flex; align-items:center; gap:12px; cursor:pointer; user-select:none; }
+.qnum{ flex:0 0 auto; background:var(--amber); color:#141d26; font-family:var(--f-en),var(--f-kr);
+       font-size:20px; font-weight:700; padding:3px 12px; border-radius:7px; }
+.qgist{ flex:1 1 auto; min-width:0; font-family:var(--f-kr); font-size:23px; font-weight:700;
+        color:var(--amber); word-break:keep-all; }
+.qchev{ flex:0 0 auto; font-size:14px; color:var(--chalk-faint); transition:transform .22s ease; }
+.qcard.collapsed .qchev{ transform:rotate(-90deg); }
+.qtext{ font-family:var(--f-kr); font-size:var(--ls-q); line-height:1.44; color:var(--chalk-soft);
+        word-break:keep-all; margin-top:9px; max-height:200px; overflow:hidden;
+        transition:max-height .24s ease, opacity .2s ease, margin-top .24s ease; }
+.qcard.collapsed .qtext{ max-height:0; opacity:0; margin-top:0; }
+
+/* ── 지난 단계 요약칩 ───────────────────────── */
+.trail{ flex:0 0 auto; display:flex; flex-wrap:wrap; gap:7px; }
+.tchip{ display:flex; align-items:center; gap:7px; padding:5px 12px; border-radius:9px; cursor:pointer;
+        background:rgba(255,255,255,.03); border:1.5px solid var(--line); min-height:38px;
+        font-family:var(--f-kr); font-size:18px; line-height:1.1; color:var(--chalk-faint); white-space:nowrap;
+        transition:border-color .18s, color .18s, background .18s; }
+.tchip .tn{ font-family:var(--f-en); font-size:15px; font-weight:700; opacity:.75; }
+.tchip.done{ color:var(--chalk-soft); border-color:var(--line-strong); background:rgba(73,209,192,.06); }
+.tchip.done .tn{ color:var(--teal); opacity:1; }
+.tchip.live{ color:var(--chalk); border-color:var(--amber); background:rgba(245,182,66,.12); }
+.tchip.live .tn{ color:var(--amber); opacity:1; }
+.tchip.todo{ opacity:.42; }
+.tchip:hover{ border-color:var(--chalk-faint); }
+
+/* ── 현재 단계 ──────────────────────────────── */
+.focus{ flex:1 1 auto; min-height:0; overflow-y:auto; border-radius:16px; padding:20px 26px 22px;
+        display:flex; flex-direction:column; justify-content:center;
+        background:linear-gradient(180deg, rgba(245,182,66,.07), rgba(22,40,62,.55));
+        border:1.5px solid rgba(245,182,66,.45);
+        box-shadow:0 0 34px rgba(245,182,66,.07), 0 10px 30px rgba(0,0,0,.22);
+        animation:rise .26s ease both; }
+@keyframes rise{ from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:none; } }
+.focus::-webkit-scrollbar{ width:7px; }
+.focus::-webkit-scrollbar-thumb{ background:var(--line-strong); border-radius:7px; }
+
+.fhead{ display:flex; align-items:center; gap:13px; margin-bottom:10px; }
+.fnum{ flex:0 0 46px; width:46px; height:46px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+       font-family:var(--f-en); font-size:24px; font-weight:700; color:#141d26; background:var(--amber); }
+.ftitle{ font-family:var(--f-kr); font-size:27px; font-weight:700; color:var(--chalk); word-break:keep-all; }
+.fsm{ font-family:var(--f-kr); font-size:var(--ls-sm); line-height:1.46; color:var(--chalk-soft);
+      word-break:keep-all; margin-bottom:16px; }
+.fhint{ font-family:var(--f-kr); font-size:20px; color:var(--violet); font-weight:500; }
+.fhint::before{ content:'↓ '; opacity:.7; }
+
+/* ── 수식 조판 ──────────────────────────────── */
+.m{ font-family:var(--f-en),var(--f-kr),serif; font-variant-numeric:tabular-nums; font-size:var(--ls);
+    word-break:keep-all; line-height:1.4; color:var(--chalk); }
+.m + .m{ margin-top:10px; }
+.v{ font-style:italic; }
+
+.frac{ display:inline-flex; flex-direction:column; align-items:stretch; text-align:center; white-space:nowrap;
+       vertical-align:middle; margin:0 .2em; transform:translateY(-.1em); line-height:1.06; font-size:.84em; }
+.frac>.num{ padding:0 .22em .07em; border-bottom:.058em solid currentColor; }
+.frac>.den{ padding:.09em .22em 0; }
+
+.comb{ display:inline-flex; align-items:baseline; white-space:nowrap; margin:0 .08em; }
+.comb .cn{ font-size:.58em; position:relative; top:.32em; margin-right:.06em; }
+.comb .cc{ font-weight:600; }
+.comb .cr{ font-size:.58em; position:relative; top:.32em; margin-left:.03em; }
+sup{ font-size:.7em; position:relative; top:-.48em; }
+
+.hl{ color:var(--amber); font-weight:700; }
+/* 정답 상자 — 맨 분수와 같은 높이에 오도록 .frac 과 같은 보정 */
+.ans{ display:inline-flex; align-items:center; vertical-align:middle; transform:translateY(-.1em);
+      color:var(--amber); font-weight:700; padding:.05em .24em;
+      border:2px solid var(--amber); border-radius:.18em; box-shadow:0 0 20px rgba(245,182,66,.2); }
+.ans>.frac{ transform:none; margin:0 .06em; }
+
+/* ── 오른쪽 패널 ────────────────────────────── */
+.gpanel{ flex:1 1 auto; min-height:0; display:flex; flex-direction:column; gap:10px; min-width:0;
+         background:linear-gradient(180deg, var(--panel), var(--panel-2)); border:1px solid var(--line);
+         border-radius:16px; padding:10px 12px; box-shadow:0 8px 24px rgba(0,0,0,.26) inset; }
+
+.mtabs{ flex:0 0 auto; display:flex; gap:9px; }
+.mtab{ flex:1 1 0; padding:9px 10px 10px; border-radius:12px; cursor:pointer; text-align:center;
+       background:rgba(255,255,255,.03); border:1.5px solid var(--line); color:var(--chalk-faint);
+       font-family:var(--f-kr); transition:border-color .16s, color .16s, background .16s, transform .1s; }
+.mtab .mt1{ font-size:23px; font-weight:700; line-height:1.15; }
+.mtab .mt2{ font-size:18px; font-weight:500; margin-top:2px; opacity:.85; }
+.mtab:hover{ border-color:var(--line-strong); }
+.mtab:active{ transform:scale(.985); }
+.mtab.active{ color:var(--chalk); border-color:var(--amber);
+              background:linear-gradient(180deg, rgba(245,182,66,.2), rgba(245,182,66,.07)); }
+.mtab.active .mt2{ color:var(--amber); opacity:1; }
+
+.gwrap{ flex:1 1 0; position:relative; min-height:0; }
+.gwrap svg{ position:absolute; inset:0; width:100%; height:100%; }
+
+.srow{ flex:0 0 44px; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:0 4px; }
+.ghint{ font-family:var(--f-kr); font-size:20px; color:var(--chalk-soft); word-break:keep-all; }
+.ghint b{ color:var(--amber); font-weight:700; }
+.gcount{ font-family:var(--f-en); font-variant-numeric:tabular-nums; color:var(--violet); font-weight:700;
+         display:inline-block; min-width:2.6em; text-align:right; }
+.gbtn{ flex:0 0 auto; font-size:19px; font-weight:700; color:var(--chalk); white-space:nowrap; cursor:pointer;
+       background:rgba(157,140,245,.14); border:1.5px solid var(--violet); border-radius:10px; padding:8px 16px;
+       font-family:var(--f-kr); transition:background .16s, transform .1s; }
+.gbtn:hover{ background:rgba(157,140,245,.24); }
+.gbtn:active{ transform:scale(.97); }
+
+/* ── 발판 ───────────────────────────────────── */
+.foot{ flex:0 0 46px; display:flex; align-items:center; justify-content:space-between; gap:14px; }
+.fmeta{ font-family:var(--f-kr); font-size:18px; color:var(--chalk-faint); white-space:nowrap; }
+.fmeta b{ color:var(--chalk-soft); font-weight:700; }
+.fbtns{ display:flex; gap:8px; }
+.fbtn{ font-family:var(--f-kr); font-size:22px; font-weight:700; color:var(--chalk); cursor:pointer;
+       background:var(--panel-2); border:1.5px solid var(--line-strong); border-radius:10px; padding:8px 20px; white-space:nowrap; }
+.fbtn:hover{ border-color:var(--chalk-soft); }
+.fbtn:active{ transform:scale(.97); }
+.fbtn.primary{ background:linear-gradient(180deg, #f5b642, #e09e28); color:#141d26; border-color:transparent; }
+.fbtn:disabled{ opacity:.3; cursor:default; transform:none; }
+</style>
+</head>
+<body>
+<div class="viewport">
+  <div class="stage" id="stage">
+    <div class="sheet">
+
+      <div id="body2col">
+        <div id="leftCol">
+          <div class="qcard" id="qcard">
+            <div class="qhead" onclick="toggleQ()">
+              <div class="qnum">10-11</div>
+              <div class="qgist">일의 자리의 수가 모두 다를 확률</div>
+              <div class="qchev" id="qchev">▾</div>
+            </div>
+            <div class="qtext">1부터 20까지의 자연수가 각각 적힌 20개의 공 중에서 임의로 공 3개를 동시에 꺼낼 때, 공에 적힌 수의 일의 자리의 수가 모두 다를 확률을 구하시오.</div>
+          </div>
+
+          <div class="trail" id="trail"></div>
+          <div class="focus" id="focus"></div>
+        </div>
+
+        <div id="rightCol">
+          <div class="gpanel">
+            <div class="mtabs">
+              <div class="mtab" id="tab1" onclick="setTab(1)">
+                <div class="mt1">방법 1</div><div class="mt2">서로 다른 자리에서 뽑기</div>
+              </div>
+              <div class="mtab" id="tab2" onclick="setTab(2)">
+                <div class="mt1">방법 2</div><div class="mt2">여사건 이용</div>
+              </div>
+            </div>
+            <div class="gwrap" id="gwrap"><svg id="svg"></svg></div>
+            <div class="srow">
+              <div class="ghint" id="ghint"></div>
+              <button class="gbtn" id="gbtn" style="display:none"></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="foot">
+        <div class="fmeta" id="fmeta"></div>
+        <div class="fbtns">
+          <button class="fbtn" onclick="resetTab()">처음부터</button>
+          <button class="fbtn" id="prevBtn" onclick="prev()">◀ 이전</button>
+          <button class="fbtn primary" id="nextBtn" onclick="next()">다음 ▶</button>
+          <button class="fbtn" onclick="toggleFull()">전체화면</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── 스테이지 스케일링 ─────────────────────── */
+const STAGE_W = 1600, STAGE_H = 900;
+const stage = document.getElementById('stage');
+function fitStage(){
+  const vv = window.visualViewport;
+  const w = vv ? vv.width : innerWidth, h = vv ? vv.height : innerHeight;
+  const s = Math.min(w / STAGE_W, h / STAGE_H);
+  stage.style.transform = `translate(${Math.round((w-STAGE_W*s)/2)}px, ${Math.round((h-STAGE_H*s)/2)}px) scale(${s})`;
+}
+addEventListener('resize', fitStage);
+addEventListener('orientationchange', fitStage);
+visualViewport?.addEventListener('resize', fitStage);
+[0,60,300,700].forEach(t => setTimeout(fitStage, t));
+
+/* ── 수식 조각 ─────────────────────────────── */
+const C = (n,r) => `<span class="comb"><span class="cn">${n}</span><span class="cc">C</span><span class="cr">${r}</span></span>`;
+const F = (a,b) => `<span class="frac"><span class="num">${a}</span><span class="den">${b}</span></span>`;
+const A  = '<span class="v">A</span>';
+const Ac = '<span class="v">A</span><sup>c</sup>';
+const P  = '<span class="v">P</span>';
+
+/* ── 단계 데이터 ───────────────────────────── */
+const STEPS = {
+  1:[
+    { t:'전체 경우의 수', s:'전체', chip:'1140가지',
+      sm:'20개의 공에서 3개를 동시에 꺼내는 모든 경우의 수를 셉니다. 꺼낸 순서는 생각하지 않습니다.',
+      hint:'공을 아무거나 3개 눌러 보세요.',
+      f:`<div class="m">${C(20,3)} = <span class="hl">1140</span></div>` },
+    { t:'일의 자리별로 묶기', s:'묶기', chip:'10그룹 × 2개',
+      sm:'일의 자리가 같은 공끼리 묶으면 0부터 9까지 10개의 그룹이 되고, 그룹마다 공이 2개씩 들어갑니다.',
+      hint:'“그룹 묶기”를 눌러 보세요.',
+      f:`<div class="m">{1, 11}, {2, 12}, ⋯ , {10, 20}</div><div class="m">→ <span class="hl">10</span>개 그룹, 그룹마다 공 <span class="hl">2</span>개</div>` },
+    { t:'서로 다른 그룹 3개 고르기', s:'그룹 3개', chip:'120가지',
+      sm:'일의 자리가 모두 다르려면 세 공이 서로 다른 그룹에서 하나씩 나와야 합니다.',
+      hint:'서로 다른 그룹을 3개 눌러 보세요.',
+      f:`<div class="m">${C(10,3)} = <span class="hl">120</span></div>` },
+    { t:'각 그룹에서 공 1개씩 고르기', s:'공 1개씩', chip:'8가지',
+      sm:'고른 세 그룹은 각각 공이 2개이므로, 그룹마다 어느 공을 꺼낼지 2가지씩 정할 수 있습니다.',
+      hint:'고른 세 그룹에서 공을 하나씩 눌러 보세요.',
+      f:`<div class="m">2 × 2 × 2 = 2³ = <span class="hl">8</span></div>` },
+    { t:'경우의 수와 확률', s:'확률', chip:F(16,19),
+      sm:'그룹을 고르는 경우의 수와 공을 고르는 경우의 수를 곱한 뒤, 전체 경우의 수로 나눕니다.',
+      hint:'“다른 경우 보기”로 여러 조합을 확인해 보세요.',
+      f:`<div class="m">${C(10,3)} × 2³ = 120 × 8 = <span class="hl">960</span></div>
+         <div class="m">구하는 확률 = ${F(960,1140)} = <span class="ans">${F(16,19)}</span></div>` },
+  ],
+  2:[
+    { t:'전체 경우의 수', s:'전체', chip:'1140가지',
+      sm:'20개의 공에서 3개를 동시에 꺼내는 모든 경우의 수를 셉니다. 꺼낸 순서는 생각하지 않습니다.',
+      hint:'공을 아무거나 3개 눌러 보세요.',
+      f:`<div class="m">${C(20,3)} = <span class="hl">1140</span></div>` },
+    { t:'여사건 세우기', s:'여사건', chip:'여사건 이용',
+      sm:`사건 ${A}를 “일의 자리가 모두 다르다”로 두면, 여사건 ${Ac}는 “일의 자리가 같은 공이 들어 있다”입니다. 경우의 수가 훨씬 적어 세기 쉽습니다.`,
+      hint:'“여사건 보기”로 두 경우를 비교해 보세요.',
+      f:`<div class="m">${P}(${A}) = 1 − ${P}(${Ac})</div>` },
+    { t:'같은 일의 자리 그룹 정하기', s:'그룹 1개', chip:'10가지',
+      sm:'일의 자리가 같아질 그룹을 하나 정하고, 그 그룹의 공 2개를 모두 꺼냅니다.',
+      hint:'그룹을 하나 눌러 보세요.',
+      f:`<div class="m">${C(10,1)} = <span class="hl">10</span>가지</div>` },
+    { t:'남은 18개에서 1개 꺼내기', s:'남은 1개', chip:'180가지',
+      sm:'고른 그룹의 공 2개를 빼면 18개가 남습니다. 이 가운데 1개를 더 꺼냅니다.',
+      hint:'남은 공 가운데 1개를 눌러 보세요.',
+      f:`<div class="m">${C(18,1)} = <span class="hl">18</span>가지</div>
+         <div class="m">10 × 18 = <span class="hl">180</span></div>` },
+    { t:'여사건의 확률과 구하는 확률', s:'확률', chip:F(16,19),
+      sm:'여사건의 확률을 구한 뒤, 전체 확률 1에서 빼면 구하는 확률이 됩니다.',
+      hint:'“다시 뽑기”로 다른 조합도 확인해 보세요.',
+      f:`<div class="m">${P}(${Ac}) = ${F(180,1140)} = <span class="hl">${F(3,19)}</span></div>
+         <div class="m">${P}(${A}) = 1 − ${F(3,19)} = <span class="ans">${F(16,19)}</span></div>` },
+  ]
+};
+
+/* ── 상태 ──────────────────────────────────── */
+const blank = () => ({ step:1, shown:[false,false,false,false,false],
+                       sample:[], grouped:false, groups:[], picks:{},
+                       side:'A', pair:null, extra:null });
+const state = { tab:1, 1:blank(), 2:blank() };
+const S = () => state[state.tab];
+const last = () => STEPS[state.tab].length;
+
+const colOf = i => i % 10;
+const rowOf = i => i < 10 ? 0 : 1;
+const idxOf = (c,row) => row ? c+10 : c;
+
+/* ── 왼쪽 렌더 ─────────────────────────────── */
+const $trail = document.getElementById('trail');
+const $focus = document.getElementById('focus');
+
+function renderLeft(){
+  const s = S(), list = STEPS[state.tab], n = s.step, open = s.shown[n-1];
+
+  $trail.innerHTML = list.map((d,i)=>{
+    const k = i+1;
+    const cls = k < n ? 'done' : (k === n ? 'live' : 'todo');
+    return `<div class="tchip ${cls}" onclick="jump(${k})"><span class="tn">${k}</span>${k <= n ? d.chip : d.s}</div>`;
+  }).join('');
+
+  const d = list[n-1];
+  $focus.innerHTML =
+    `<div class="fhead"><div class="fnum">${n}</div><div class="ftitle">${d.t}</div></div>
+     <div class="fsm">${d.sm}</div>
+     ${ open ? d.f : (d.hint ? `<div class="fhint">${d.hint}</div>` : '') }`;
+
+  const $next = document.getElementById('nextBtn');
+  document.getElementById('prevBtn').disabled = n <= 1;
+  $next.disabled = open && n >= last();
+  $next.textContent = !open ? '풀이 보기' : (n >= last() ? '완료' : '다음 ▶');
+
+  document.getElementById('tab1').classList.toggle('active', state.tab===1);
+  document.getElementById('tab2').classList.toggle('active', state.tab===2);
+  document.getElementById('fmeta').innerHTML =
+    `${state.tab===1 ? '방법 1 · 서로 다른 자리에서 뽑기' : '방법 2 · 여사건 이용'} &nbsp;·&nbsp; <b>${n}</b> / ${last()} 단계`;
+}
+
+/* ── 오른쪽 렌더 (SVG) ─────────────────────── */
+const svg = document.getElementById('svg');
+const gwrap = document.getElementById('gwrap');
+let vw = 0, vh = 0;
+
+const CLR = { line:'rgba(214,229,245,.22)', edge:'rgba(214,229,245,.5)', text:'#eaf1f8',
+              amber:'#f5b642', teal:'#49d1c0', violet:'#9d8cf5' };
+
+function resizeSvg(){
+  const w = gwrap.clientWidth, h = gwrap.clientHeight;
+  if (w > 40 && h > 40 && (w !== vw || h !== vh)){
+    vw = w; vh = h; svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+    draw();
+  }
+}
+new ResizeObserver(resizeSvg).observe(gwrap);
+
+/* 그룹(열) 캡슐 */
+function groupLook(c){
+  const s = S(), n = s.step;
+  if (state.tab === 1){
+    if (n >= 3 && s.groups.includes(c)) return { show:true, color:CLR.violet, strong:true };
+    if (n >= 2 && s.grouped)            return { show:true, color:CLR.line,   strong:false };
+  } else {
+    if (n === 2)                        return { show:s.side==='Ac' && c===0, color:CLR.amber, strong:true };
+    if (n >= 3 && s.pair === c)         return { show:true, color:CLR.teal,   strong:true };
+    if (n >= 3)                         return { show:true, color:CLR.line,   strong:false };
+  }
+  return { show:false };
+}
+
+/* 공 */
+function ballLook(i){
+  const s = S(), n = s.step, c = colOf(i);
+  let fill='url(#ball)', edge=CLR.edge, w=2, text=CLR.text, dim=1;
+
+  if (state.tab === 1){
+    if (n===1){ if (s.sample.includes(i)) { edge=CLR.amber; w=4; } }
+    else if (n===3){ if (s.groups.includes(c)) { edge=CLR.violet; w=4; } }
+    else if (n>=4){
+      if (s.groups.includes(c)){
+        edge=CLR.violet; w=3;
+        const p = s.picks[c];
+        if (p !== undefined) (p===i) ? (fill=CLR.teal, edge=CLR.teal, w=4, text='#06251f') : dim=.3;
+      } else if (n>=5) dim=.5;
+    }
+  } else {
+    if (n===1){ if (s.sample.includes(i)) { edge=CLR.amber; w=4; } }
+    else if (n===2){
+      if (s.side==='A'  && c<3 && rowOf(i)===0)                  { edge=CLR.teal;  w=4; }
+      if (s.side==='Ac' && (c===0 || (c===1 && rowOf(i)===0)))    { edge=CLR.amber; w=4; }
+    }
+    else if (n===3){ if (s.pair===c) { fill=CLR.teal; edge=CLR.teal; w=4; text='#06251f'; } }
+    else if (n>=4){
+      if (s.pair===c)       { fill=CLR.teal;  edge=CLR.teal;  w=4; text='#06251f'; }
+      else if (s.extra===i) { fill=CLR.amber; edge=CLR.amber; w=4; text='#2a1c02'; }
+      else if (s.extra===null && n===4) { edge=CLR.violet; w=3; }   // 남은 18개 후보
+      else dim=.45;
+    }
+  }
+  return { fill, edge, w, text, dim };
+}
+
+function draw(){
+  const W = vw || gwrap.clientWidth, H = vh || gwrap.clientHeight;
+  if (W < 40 || H < 40) return;
+
+  /* 그룹 10개를 5열 × 2블록으로 — 공을 최대한 크게 */
+  const padX = 14, pad = 6, blockGap = 26;
+  const colW = (W - padX*2) / 5;
+  const r = Math.max(20, Math.min((colW - 2*pad - 10)/2, (H - blockGap - 4*pad - 16)/4.9, 54));
+  const pairGap = r * 0.9;
+  const d = 2*r + pairGap;
+  const blockH = d + 2*(r + pad);
+  const top0 = (H - (2*blockH + blockGap)) / 2;
+  const fs = Math.round(r * 0.92);
+  const cxOf = c => padX + colW*((c % 5) + 0.5);
+  const cyOf = (c, row) => top0 + Math.floor(c/5)*(blockH + blockGap) + pad + r + (row ? d : 0);
+
+  const o = [`<defs>
+    <linearGradient id="ball" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#26425f"/><stop offset="100%" stop-color="#1a2f49"/>
+    </linearGradient>
+    <filter id="glow" x="-70%" y="-70%" width="240%" height="240%">
+      <feGaussianBlur stdDeviation="7" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>`];
+
+  // 그룹 캡슐 (공 뒤)
+  for (let c=0; c<10; c++){
+    const g = groupLook(c);
+    if (!g.show) continue;
+    const cx = cxOf(c), yTop = cyOf(c,0), yBot = cyOf(c,1);
+    const cw = 2*(r+pad), ch = d + 2*(r+pad);
+    if (g.strong){
+      o.push(`<rect x="${cx-cw/2}" y="${yTop-r-pad}" width="${cw}" height="${ch}" rx="${cw/2}"
+               fill="${g.color}" fill-opacity=".13" stroke="${g.color}" stroke-width="2.5" stroke-opacity=".8" filter="url(#glow)"/>`);
+      o.push(`<line x1="${cx}" y1="${yTop}" x2="${cx}" y2="${yBot}" stroke="${g.color}" stroke-width="${r*0.45}"
+               stroke-linecap="round" stroke-opacity=".45"/>`);
+    } else {
+      o.push(`<rect x="${cx-cw/2}" y="${yTop-r-pad}" width="${cw}" height="${ch}" rx="${cw/2}"
+               fill="rgba(255,255,255,.022)" stroke="${g.color}" stroke-width="1.4"/>`);
+    }
+  }
+
+  // 공
+  for (let i=0; i<20; i++){
+    const cx = cxOf(colOf(i)), cy = cyOf(colOf(i), rowOf(i));
+    const b = ballLook(i);
+    o.push(`<g opacity="${b.dim}" class="hit" data-i="${i}" style="cursor:pointer">
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="${b.fill}" stroke="${b.edge}" stroke-width="${b.w}"/>
+      <text x="${cx}" y="${cy + fs*0.34}" text-anchor="middle" font-size="${fs}" font-weight="700"
+            fill="${b.text}" font-family="STIX Two Text, serif">${i+1}</text></g>`);
+  }
+
+  svg.innerHTML = o.join('');
+  svg.querySelectorAll('.hit').forEach(g => g.addEventListener('click', () => hitBall(+g.dataset.i)));
+  renderHint();
+}
+
+/* ── 안내 문구 / 보조 버튼 ─────────────────── */
+function renderHint(){
+  const s = S(), n = s.step;
+  const $h = document.getElementById('ghint'), $b = document.getElementById('gbtn');
+  $b.style.display = 'none';
+  const cnt = (a,b) => `<span class="gcount">${a} / ${b}</span>`;
+  const btn = (label, fn) => { $b.style.display=''; $b.textContent=label; $b.onclick=fn; };
+
+  if (state.tab === 1){
+    if (n===1) $h.innerHTML = `공을 아무거나 <b>3개</b> 눌러 보세요 ${cnt(s.sample.length,3)}`;
+    else if (n===2){ $h.innerHTML = '일의 자리가 같은 공끼리 묶어 봅시다.'; btn('그룹 묶기', groupToggle); }
+    else if (n===3) $h.innerHTML = `서로 다른 <b>그룹 3개</b>를 눌러 보세요 ${cnt(s.groups.length,3)}`;
+    else if (n===4) $h.innerHTML = `고른 그룹에서 공을 <b>하나씩</b> 눌러 보세요 ${cnt(s.groups.filter(c=>s.picks[c]!==undefined).length,3)}`;
+    else { $h.innerHTML = '이런 선택이 모두 <b>960가지</b> 있습니다.'; btn('다른 경우 보기 ↻', shuffle); }
+  } else {
+    if (n===1) $h.innerHTML = `공을 아무거나 <b>3개</b> 눌러 보세요 ${cnt(s.sample.length,3)}`;
+    else if (n===2){ $h.innerHTML = s.side==='A' ? `모두 다른 경우 <b>${A}</b>` : `같은 자리가 있는 경우 <b>${Ac}</b>`;
+                     btn(s.side==='A' ? '여사건 보기' : '사건 A 보기', sideToggle); }
+    else if (n===3) $h.innerHTML = s.pair===null ? '<b>그룹</b>을 하나 눌러 보세요.' : '이 그룹의 공 <b>2개</b>를 모두 꺼냅니다.';
+    else if (n===4) $h.innerHTML = s.extra===null ? '남은 <b>18개</b> 가운데 1개를 눌러 보세요.' : '이런 경우가 모두 <b>180가지</b> 있습니다.';
+    else { $h.innerHTML = '두 방법의 결과가 같음을 확인했습니다.'; btn('다시 뽑기 ↻', shuffle); }
+  }
+}
+
+/* ── 상호작용 (자동 진행 없음) ─────────────── */
+function hitBall(i){
+  const s = S(), c = colOf(i), n = s.step;
+
+  const pickSample = () => {
+    const k = s.sample.indexOf(i);
+    if (k >= 0) s.sample.splice(k,1);
+    else { if (s.sample.length >= 3) s.sample.shift(); s.sample.push(i); }
+    if (s.sample.length === 3) reveal();
+  };
+
+  if (state.tab === 1){
+    if (n===1) pickSample();
+    else if (n===3){
+      const k = s.groups.indexOf(c);
+      if (k >= 0) s.groups.splice(k,1);
+      else { if (s.groups.length >= 3) s.groups.shift(); s.groups.push(c); s.picks = {}; }
+      if (s.groups.length === 3) reveal();
+    }
+    else if (n===4 && s.groups.includes(c)){
+      s.picks[c] = i;
+      if (s.groups.every(g => s.picks[g] !== undefined)) reveal();
+    }
+  } else {
+    if (n===1) pickSample();
+    else if (n===3){ s.pair = (s.pair === c) ? null : c; s.extra = null; if (s.pair !== null) reveal(); }
+    else if (n===4){
+      if (s.pair === null) s.pair = c;
+      else if (c !== s.pair) { s.extra = i; reveal(); }
+    }
+  }
+  paint();
+}
+
+function groupToggle(){ S().grouped = true; reveal(); paint(); }
+function sideToggle(){ const s = S(); s.side = s.side==='A' ? 'Ac' : 'A'; reveal(); paint(); }
+
+function shuffle(){
+  const s = S();
+  if (state.tab === 1){
+    const cols = [...Array(10).keys()].sort(() => Math.random()-0.5).slice(0,3).sort((a,b)=>a-b);
+    s.groups = cols;
+    s.picks = {};
+    cols.forEach(c => s.picks[c] = idxOf(c, Math.random()<0.5 ? 0 : 1));
+  } else {
+    s.pair = Math.floor(Math.random()*10);
+    do { s.extra = Math.floor(Math.random()*20); } while (colOf(s.extra) === s.pair);
+  }
+  paint();
+}
+
+/* 조작하면 그 자리에서 풀이가 열린다 — 단계는 교사가 넘긴다 */
+function reveal(){ S().shown[S().step-1] = true; }
+
+/* ── 내비게이션 ────────────────────────────── */
+function paint(){ draw(); renderLeft(); }
+
+function jump(k){
+  const s = S();
+  if (k < 1 || k > last() || k === s.step) return;
+  s.step = k;
+  paint();
+}
+function prev(){ jump(S().step - 1); }
+
+/* 다음: 풀이가 아직 닫혀 있으면 먼저 열고, 열려 있으면 다음 단계로 */
+function next(){
+  const s = S();
+  if (!s.shown[s.step-1]){ s.shown[s.step-1] = true; paint(); return; }
+  jump(s.step + 1);
+}
+
+function setTab(n){ if (state.tab !== n){ state.tab = n; paint(); } }
+function resetTab(){ state[state.tab] = blank(); paint(); }
+
+function toggleQ(){
+  const q = document.getElementById('qcard');
+  q.classList.toggle('collapsed');
+  document.getElementById('qchev').textContent = q.classList.contains('collapsed') ? '▸' : '▾';
+}
+function toggleFull(){
+  document.fullscreenElement ? document.exitFullscreen?.() : document.documentElement.requestFullscreen?.();
+}
+
+addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); next(); }
+  else if (e.key === 'ArrowLeft')  { e.preventDefault(); prev(); }
+  else if (e.key === 'r' || e.key === 'R') resetTab();
+  else if (e.key === 'f' || e.key === 'F') toggleFull();
+  else if (e.key === '1') setTab(1);
+  else if (e.key === '2') setTab(2);
+});
+
+resizeSvg();
+paint();
+</script>
+</body>
+</html>
