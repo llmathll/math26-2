@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>14-10 정사각형 위의 점 P</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400..700;1,400..700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-deep:#0a1420; --bg:#0e1b2b; --panel:#16283e; --panel-2:#1d3350;
+  --line:rgba(214,229,245,.16); --line-strong:rgba(214,229,245,.34);
+  --chalk:#eaf1f8; --chalk-soft:#b9cadd; --chalk-faint:#7d94ad;
+  --amber:#f5b642; --teal:#49d1c0; --violet:#9d8cf5;
+  --f-en:'STIX Two Text'; --f-kr:'Noto Sans KR';
+  --ls:44px; --ls-sm:29px; --ls-q:26px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--bg-deep);
+  overscroll-behavior:none;touch-action:manipulation;-webkit-text-size-adjust:100%}
+.viewport{position:fixed;inset:0}
+.stage{width:1600px;height:900px;transform-origin:0 0;background:var(--bg);color:var(--chalk)}
+.sheet{height:100%;display:flex;flex-direction:column;gap:12px;padding:16px 30px 14px}
+
+#body2col{flex:1 1 auto;min-height:0;display:flex;gap:18px}
+#leftCol{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:12px}
+#rightCol{flex:0 0 716px;display:flex;min-height:0}
+
+.qcard{flex:0 0 auto;background:var(--panel);border:1px solid var(--line);
+  border-radius:14px;padding:11px 18px 13px}
+.qhead{display:flex;align-items:center;gap:12px;cursor:pointer}
+.qnum{background:var(--amber);color:#141d26;font-family:var(--f-kr);font-weight:700;
+  font-size:20px;padding:2px 12px;border-radius:8px;white-space:nowrap}
+.qgist{flex:1;font-family:var(--f-kr);font-size:23px;font-weight:500;color:var(--amber);
+  word-break:keep-all}
+.qarrow{color:var(--chalk-faint);font-size:20px;transition:transform .2s}
+.qtext{font-family:var(--f-en),var(--f-kr),serif;
+  font-size:var(--ls-q);line-height:1.5;color:var(--chalk-soft);margin-top:9px;
+  max-height:360px;overflow:hidden;transition:max-height .25s,margin-top .25s,opacity .2s}
+.qtext .rule{display:block;margin-top:5px;padding-left:8px}
+.qcard.folded .qtext{max-height:0;margin-top:0;opacity:0}
+.qcard.folded .qarrow{transform:rotate(-90deg)}
+
+.flowWrap{position:relative;flex:1 1 auto;min-height:0}
+.flow{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;
+  touch-action:pan-y;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+  padding:2px 16px 130px 0}
+.flow::-webkit-scrollbar{width:10px}
+.flow::-webkit-scrollbar-thumb{background:rgba(214,229,245,.28);border-radius:6px}
+.fadeTop,.fadeBot{position:absolute;left:0;right:0;height:40px;pointer-events:none;
+  opacity:0;transition:opacity .15s}
+.fadeTop{top:0;background:linear-gradient(180deg,var(--bg) 20%,transparent)}
+.fadeBot{bottom:0;background:linear-gradient(0deg,var(--bg) 20%,transparent)}
+
+.blk{padding:9px 0 13px 16px;border-left:3px solid transparent;opacity:.55;cursor:pointer}
+.blk.cur{opacity:1;border-left-color:var(--amber)}
+.bhead{display:flex;align-items:center;gap:12px}
+.bno{flex:0 0 48px;width:48px;height:48px;border-radius:50%;display:grid;place-items:center;
+  font-family:var(--f-en);font-size:25px;font-weight:700;
+  border:2px solid var(--teal);color:var(--teal);background:transparent}
+.blk.cur .bno{background:var(--amber);border-color:var(--amber);color:#141d26}
+.btitle{font-family:var(--f-kr);font-size:var(--ls-sm);font-weight:700;color:var(--chalk);
+  word-break:keep-all}
+.bbody{padding-left:60px}
+.bsm{font-family:var(--f-kr);font-size:var(--ls-sm);line-height:1.42;color:var(--chalk-soft);
+  margin-top:7px;word-break:keep-all}
+.bsm b{color:var(--chalk);font-weight:700}
+.bmath{margin-top:11px}
+
+.m{font-family:var(--f-en),var(--f-kr),serif;font-variant-numeric:tabular-nums;
+  font-size:var(--ls);line-height:1.4;word-break:keep-all}
+.m+.m{margin-top:8px}
+.v{font-style:italic}
+.frac{display:inline-flex;flex-direction:column;align-items:stretch;text-align:center;
+  vertical-align:middle;margin:0 .2em;transform:translateY(-.1em);
+  line-height:1.06;font-size:.84em;white-space:nowrap}
+.frac>.num{padding:0 .22em .07em;border-bottom:.058em solid currentColor}
+.frac>.den{padding:.17em .22em 0}
+.comb{display:inline-flex;align-items:baseline;white-space:nowrap;margin:0 .08em}
+.comb .cn{font-size:.58em;position:relative;top:.32em;margin-right:.06em}
+.comb .cc{font-weight:600}
+.comb .cr{font-size:.58em;position:relative;top:.32em;margin-left:.03em}
+.ex{display:inline-block;font-size:.6em;font-weight:600;line-height:1;
+  vertical-align:.62em;margin-left:.05em;font-style:normal}
+.sqrt{display:inline-flex;align-items:flex-start;white-space:nowrap}
+.sqrt>.rs{line-height:1;transform:scaleY(1.06);transform-origin:bottom}
+.sqrt>.rv{line-height:1;border-top:.07em solid currentColor;padding:.13em .16em 0 .01em;
+  margin-left:-.05em}
+.pn{display:inline-block;transform:scaleY(1.55);margin:0 .05em;font-weight:400}
+.hl{color:var(--amber);font-weight:700}
+.ans{display:inline-flex;align-items:center;vertical-align:middle;transform:translateY(-.1em);
+  color:var(--amber);font-weight:700;padding:.05em .24em;border:2px solid var(--amber);
+  border-radius:.18em;box-shadow:0 0 20px rgba(245,182,66,.2)}
+.ans>.frac{transform:none;margin:0 .06em}
+
+.gpanel{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px;
+  background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:11px 14px 12px}
+.mbanner{flex:0 0 auto;border-bottom:1px solid var(--line);padding-bottom:8px}
+.mbanner .t{font-family:var(--f-kr);font-size:24px;font-weight:700;color:var(--amber)}
+.mbanner .s{font-family:var(--f-kr);font-size:19px;color:var(--chalk-soft);margin-top:1px;
+  word-break:keep-all}
+.gwrap{flex:1 1 0;min-height:0;position:relative}
+.gwrap svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.foot{flex:0 0 46px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.fmeta{font-family:var(--f-kr);font-size:18px;color:var(--chalk-faint);white-space:nowrap}
+.fmeta b{color:var(--chalk-soft);font-weight:700}
+.fbtns{display:flex;gap:8px}
+.fbtn{font-family:var(--f-kr);font-size:22px;font-weight:700;color:var(--chalk);cursor:pointer;
+  background:var(--panel-2);border:1.5px solid var(--line-strong);border-radius:10px;
+  padding:8px 20px;white-space:nowrap}
+.fbtn:hover{border-color:var(--chalk-soft)}
+.fbtn:active{transform:scale(.97)}
+.fbtn.primary{background:linear-gradient(180deg,#f5b642,#e09e28);color:#141d26;border-color:transparent}
+.fbtn:disabled{opacity:.3;cursor:default;transform:none}
+
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+}
+</style>
+</head>
+<body>
+<div class="viewport"><div class="stage" id="stage"><div class="sheet">
+
+  <div id="body2col">
+    <div id="leftCol">
+
+      <div class="qcard" id="qcard">
+        <div class="qhead" id="qhead">
+          <span class="qnum">14-10</span>
+          <span class="qgist">정사각형 위의 점 <span class="v">P</span> · 주사위 6번 뒤 꼭짓점 A에 있을 확률</span>
+          <span class="qarrow" id="qarrow">▾</span>
+        </div>
+        <div class="qtext">
+          한 변의 길이가 1인 정사각형 ABCD의 꼭짓점 A에서 출발하여 다음과 같은 규칙으로 움직이는 점 <span class="v">P</span>가 있다.
+          <span class="rule">(가) 주사위를 던져 1 또는 6의 눈이 나오면 대각선을 따라 <span class="sqrt"><span class="rs">√</span><span class="rv">2</span></span> 만큼 움직인다.</span>
+          <span class="rule">(나) 1 또는 6의 눈이 나오지 않으면 변을 따라 시계방향으로 1만큼 움직인다.</span>
+          <span class="rule">주사위 1개를 6번 던진 후 점 <span class="v">P</span>가 꼭짓점 A에 도착할 확률을 구하시오.</span>
+        </div>
+      </div>
+
+      <div class="flowWrap">
+        <div class="flow" id="flow"></div>
+        <div class="fadeTop" id="fadeTop"></div>
+        <div class="fadeBot" id="fadeBot"></div>
+      </div>
+    </div>
+
+    <div id="rightCol">
+      <div class="gpanel">
+        <div class="mbanner">
+          <div class="t">이동을 칸수로 바꿔 세기</div>
+          <div class="s">대각선은 2칸, 변은 1칸 — 총 칸수가 4의 배수일 때만 A</div>
+        </div>
+        <div class="gwrap" id="gwrap"><svg id="gsvg"></svg></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <div class="fmeta" id="pos"></div>
+    <div class="fbtns">
+      <button class="fbtn" id="resetBtn">처음부터</button>
+      <button class="fbtn" id="prevBtn">◀ 이전</button>
+      <button class="fbtn primary" id="nextBtn">풀이 보기</button>
+      <button class="fbtn" id="fsBtn">전체화면</button>
+    </div>
+  </div>
+
+</div></div></div>
+
+<script>
+/* ═══ 1. 스테이지 스케일링 ═══════════════════════════════ */
+const STAGE_W=1600, STAGE_H=900, stage=document.getElementById('stage');
+function fitStage(){
+  const vv=window.visualViewport;
+  const w=vv?vv.width:innerWidth, h=vv?vv.height:innerHeight;
+  const s=Math.min(w/STAGE_W,h/STAGE_H);
+  stage.style.transform=`translate(${Math.round((w-STAGE_W*s)/2)}px,${Math.round((h-STAGE_H*s)/2)}px) scale(${s})`;
+}
+addEventListener('resize',fitStage);
+if(window.visualViewport) visualViewport.addEventListener('resize',fitStage);
+[0,60,300,700].forEach(t=>setTimeout(fitStage,t));
+
+/* ═══ 2. 수식 조각 ═══════════════════════════════════════ */
+const F =(a,b)=>`<span class="frac"><span class="num">${a}</span><span class="den">${b}</span></span>`;
+const C =(n,r)=>`<span class="comb"><span class="cn">${n}</span><span class="cc">C</span><span class="cr">${r}</span></span>`;
+const V =s=>`<span class="v">${s}</span>`;
+const E =n=>`<sup class="ex">${n}</sup>`;
+const T6=`3${E(6)}`;
+const PW=s=>`<span class="pn">(</span>${s}<span class="pn">)</span>`;
+const Pf=V('P');
+const ANS=s=>`<span class="ans">${s}</span>`;
+
+/* ═══ 3. 상태 ═══════════════════════════════════════════ */
+const NM=['A','D','C','B'];          /* 시계방향 0·1·2·3 */
+const S={ step:1, shown:[], tot:0, demo:false,
+          rows:[false,false,false,false,false,false,false],
+          pr:[false,false], only:false };
+
+const STEPS=[
+ { t:'이동을 칸수로 바꾸기', short:'칸수',
+   sm:'꼭짓점을 시계방향으로 <b>A → D → C → B</b>. 대각선은 <b>2칸</b>, 변은 <b>1칸</b> 건너뛴다.',
+   f:()=>`<div class="m">${Pf}(대각선) = ${F('2','6')} = ${F('1','3')}</div>`
+        +`<div class="m">${Pf}(변) = ${F('4','6')} = ${F('2','3')}</div>` },
+
+ { t:'A로 돌아오는 조건', short:'4의 배수',
+   sm:'4칸이면 <b>제자리</b>. 그러니 A에 있으려면 총 이동 칸수가 <b>4의 배수</b>여야 한다.',
+   f:()=>`<div class="m">총 이동 칸수 = 4의 배수 → ${Pf}는 A</div>`
+        +`<div class="m">6 ≤ 총 이동 칸수 ≤ 12</div>` },
+
+ { t:'대각선 횟수마다 칸수 세기', short:'표',
+   sm:'대각선이 한 번 늘 때마다 총 칸수도 <b>1씩</b> 커진다. 일곱 경우 중 4의 배수는 <b>둘뿐</b>.',
+   f:()=>{ let h='';
+           if(S.rows[2]) h+=`<div class="m">대각선 <span class="hl">2번</span> → 8칸 → A</div>`;
+           if(S.rows[6]) h+=`<div class="m">대각선 <span class="hl">6번</span> → 12칸 → A</div>`;
+           return h||`<div class="m" style="opacity:.4">…</div>`; } },
+
+ { t:'두 경우의 확률', short:'확률',
+   sm:'대각선 2번은 <b>여섯 번 중 두 번</b>을 고르는 것. 6번은 고를 것이 없다.',
+   f:()=>{ let h='';
+           if(S.pr[0]) h+=`<div class="m">${C(6,2)}${PW(F('1','3'))}${E(2)}${PW(F('2','3'))}${E(4)} = ${F('15 × 16',T6)}</div>`;
+           if(S.pr[1]) h+=`<div class="m">${C(6,6)}${PW(F('1','3'))}${E(6)} = ${F('1',T6)}</div>`;
+           return h||`<div class="m" style="opacity:.4">…</div>`; } },
+
+ { t:'두 확률 더하기', short:'답',
+   sm:'두 경우는 <b>동시에 일어날 수 없다</b>. 분모가 같으니 분자만 더하면 된다.',
+   f:()=>`<div class="m">${F('15 × 16','729')} + ${F('1','729')} = ${ANS(F('241','729'))}</div>` }
+];
+const N=STEPS.length;
+
+/* ═══ 4. 왼쪽 그리기 ════════════════════════════════════ */
+const flow=document.getElementById('flow'), fadeTop=document.getElementById('fadeTop'),
+      fadeBot=document.getElementById('fadeBot');
+let scrollTarget=null;
+
+function paintFlow(scrollTo){
+  let h='';
+  for(let i=1;i<=S.step;i++){
+    const st=STEPS[i-1], cur=i===S.step;
+    h+=`<div class="blk${cur?' cur':''}" id="blk${i}" data-jump="${i}">
+          <div class="bhead"><div class="bno">${i}</div><div class="btitle">${st.t}</div></div>
+          <div class="bbody">
+            <div class="bsm">${st.sm}</div>
+            ${(cur? S.shown[i-1] : true) ? `<div class="bmath">${st.f()}</div>`:''}
+          </div>
+        </div>`;
+  }
+  flow.innerHTML=h;
+  if(scrollTo!==false){
+    const el=document.getElementById('blk'+S.step);
+    if(el){ scrollTarget=Math.max(0,el.offsetTop-6);
+            flow.scrollTo({top:scrollTarget,behavior:'smooth'}); }
+  }
+  updFade();
+}
+function updFade(){
+  fadeTop.style.opacity = flow.scrollTop>6 ? 1 : 0;
+  fadeBot.style.opacity = (flow.scrollHeight-flow.clientHeight-flow.scrollTop)>10 ? 1 : 0;
+}
+flow.addEventListener('scroll',updFade,{passive:true});
+
+let downTop=0;
+flow.addEventListener('pointerdown',()=>{ downTop=flow.scrollTop; scrollTarget=null; });
+flow.addEventListener('click',e=>{
+  if(Math.abs(flow.scrollTop-downTop)>4) return;
+  const b=e.target.closest('[data-jump]');
+  if(b && +b.dataset.jump!==S.step) jump(+b.dataset.jump);
+});
+
+/* ═══ 5. SVG 도구 ═══════════════════════════════════════ */
+const SER="'STIX Two Text',serif", KR="'Noto Sans KR',sans-serif";
+function txt(x,y,s,size,fill,opt){
+  opt=opt||{};
+  return `<text x="${x}" y="${y}" text-anchor="${opt.anchor||'middle'}" dominant-baseline="central"
+    pointer-events="none" font-family="${opt.kr?KR:SER}" font-size="${size}" font-weight="${opt.w||500}"
+    fill="${fill}"${opt.op?` fill-opacity="${opt.op}"`:''}${opt.it?' font-style="italic"':''}>${s}</text>`;
+}
+function txtMix(x,y,parts,size,fill,opt){
+  opt=opt||{};
+  const inner=parts.map(p=>`<tspan font-family="${p.kr?KR:SER}"${p.it?' font-style="italic"':''}>${p.s}</tspan>`).join('');
+  return `<text x="${x}" y="${y}" text-anchor="${opt.anchor||'middle'}" dominant-baseline="central"
+    pointer-events="none" font-size="${size}" font-weight="${opt.w||600}" fill="${fill}"${opt.op?` fill-opacity="${opt.op}"`:''}>${inner}</text>`;
+}
+function trimSeg(x1,y1,x2,y2,r1,r2){
+  const dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy),ux=dx/L,uy=dy/L;
+  return {x1:x1+ux*r1,y1:y1+uy*r1,x2:x2-ux*r2,y2:y2-uy*r2,ux:ux,uy:uy};
+}
+function arrow(x1,y1,x2,y2,col,dashed,wid){
+  const dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy),ux=dx/L,uy=dy/L;
+  const ax=x2-ux*18, ay=y2-uy*18, px=-uy, py=ux, hw=12;
+  return `<line x1="${x1}" y1="${y1}" x2="${ax}" y2="${ay}" stroke="${col}" stroke-width="${wid}"
+      stroke-linecap="round" pointer-events="none"${dashed?' stroke-dasharray="13 10"':''}/>`
+   + `<polygon points="${x2},${y2} ${ax+px*hw},${ay+py*hw} ${ax-px*hw},${ay-py*hw}" fill="${col}" pointer-events="none"/>`;
+}
+function chip(x,y,parts,size,col,data){
+  let len=0; parts.forEach(p=>{ len += p.s.length*(p.kr?size*1.0:size*0.58); });
+  const w=len+26, h=size*1.7;
+  return `<rect x="${x-w/2}" y="${y-h/2}" width="${w}" height="${h}" rx="${h/2}"
+      fill="#16283e" stroke="${col}" stroke-width="2.4"${data?` ${data} style="cursor:pointer"`:' pointer-events="none"'}/>`
+   + txtMix(x,y,parts,size,col,{w:700});
+}
+const CSS=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const gsvg=document.getElementById('gsvg'), gwrap=document.getElementById('gwrap');
+let W=0,H=0;
+new ResizeObserver(()=>{
+  const w=Math.round(gwrap.clientWidth), h=Math.round(gwrap.clientHeight);
+  if(w===W&&h===H) return;
+  W=w; H=h; gsvg.setAttribute('viewBox',`0 0 ${W} ${H}`); draw();
+}).observe(gwrap);
+
+/* ═══ 6. 그림 ═══════════════════════════════════════════ */
+function draw(){
+  if(!W) return;
+  const c={ AM:CSS('--amber'), TE:CSS('--teal'), VI:CSS('--violet'), CH:CSS('--chalk'),
+            FA:CSS('--chalk-faint'), P2:CSS('--panel-2'), LS:CSS('--line-strong') };
+  const o=[];
+  if(S.step<=2){
+    const s=Math.min(W*0.48,H*0.47), y1=52;
+    sqFig(o,c,W/2,y1+s/2,s,true);
+    const by=y1+s+58, bh=58, bw=(W-32-18)/2;
+    [[2,'대각선 ',16],[1,'변 ',16+bw+18]].forEach(b=>{
+      o.push(`<rect data-move="${b[0]}" x="${b[2]}" y="${by}" width="${bw}" height="${bh}" rx="13"
+         fill="rgba(157,140,245,.14)" stroke="${c.VI}" stroke-width="2.4" style="cursor:pointer"/>`);
+      o.push(txtMix(b[2]+bw/2,by+bh/2,[{s:b[1],kr:1},{s:b[0]},{s:'칸',kr:1}],29,c.CH,{w:700}));
+    });
+    stripFig(o,c,H-118,74);
+  }else{
+    const TR=Math.round(W*0.50), RX=TR+16, BOT=H-148;
+    drawTable(o,c,TR,BOT);
+    const s=Math.min(270,(W-8-RX)-70);
+    sqFig(o,c,(RX+W-16)/2,(62+H-122)/2,s,false);
+    stripFig(o,c,H-96,56);
+  }
+  gsvg.innerHTML=o.join('');
+}
+
+/* ── 정사각형 (화살표는 1·2단계에서만) ─────────────── */
+function sqFig(o,c,cx,cy,s,arrows){
+  const k=s/310;
+  const x1=cx-s/2, x2=cx+s/2, y1=cy-s/2, y2=cy+s/2;
+  const VX=[x1,x1,x2,x2], VY=[y2,y1,y1,y2];          /* 0=A 1=D 2=C 3=B */
+  const labOff=Math.round(s*0.115), labSz=Math.max(26,Math.round(36*k));
+  const dotR=Math.max(5,Math.round(7*k)), idxR=Math.max(13,Math.round(18*k));
+  const idxSz=Math.max(21,Math.round(23*k)), pR=Math.max(15,Math.round(22*k)),
+        pSz=Math.max(21,Math.round(26*k));
+
+  o.push(`<rect x="${x1}" y="${y1}" width="${s}" height="${s}" fill="none"
+     stroke="${c.LS}" stroke-width="3" pointer-events="none"/>`);
+  o.push(`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c.LS}" stroke-width="2" pointer-events="none"/>`);
+  o.push(`<line x1="${x1}" y1="${y2}" x2="${x2}" y2="${y1}" stroke="${c.LS}" stroke-width="2" pointer-events="none"/>`);
+
+  const p=S.tot%4;
+  if(arrows){
+    [[2,'2'],[1,'1']].forEach(d=>{
+      const n=d[0], q=(p+n)%4;
+      const a=trimSeg(VX[p],VY[p],VX[q],VY[q],36,36);
+      o.push(arrow(a.x1,a.y1,a.x2,a.y2,c.VI,true,5));
+      o.push(`<line x1="${a.x1}" y1="${a.y1}" x2="${a.x2}" y2="${a.y2}" stroke="rgba(0,0,0,0)"
+         stroke-width="46" pointer-events="stroke" data-move="${n}" style="cursor:pointer"/>`);
+      const mx=(a.x1+a.x2)/2, my=(a.y1+a.y2)/2;
+      let lx,ly;
+      if(n===1){ const vx=mx-cx, vy=my-cy, L=Math.hypot(vx,vy)||1;
+                 lx=mx-vx/L*44; ly=my-vy/L*44; }
+      else     { lx=mx-a.uy*42; ly=my+a.ux*42; }
+      o.push(chip(lx,ly,[{s:d[1]},{s:'칸',kr:1}],30,c.VI,`data-move="${n}"`));
+    });
+  }
+
+  for(let i=0;i<4;i++){
+    const ox=(VX[i]<cx?-1:1), oy=(VY[i]<cy?-1:1);
+    o.push(`<circle cx="${VX[i]}" cy="${VY[i]}" r="${dotR}" fill="${c.FA}" pointer-events="none"/>`);
+    o.push(txt(VX[i]+ox*labOff,VY[i]+oy*(labOff-2),NM[i],labSz,c.CH,{w:600,it:1}));
+    if(S.step>=2){
+      const ix=VX[i]+(cx-VX[i])*0.26, iy=VY[i]+(cy-VY[i])*0.26;
+      o.push(`<circle cx="${ix}" cy="${iy}" r="${idxR}" fill="#16283e" stroke="${c.FA}" stroke-width="1.6" pointer-events="none"/>`);
+      o.push(txt(ix,iy,i,idxSz,c.FA,{w:600}));
+    }
+  }
+  o.push(`<circle cx="${VX[p]}" cy="${VY[p]}" r="${pR}" fill="${c.AM}" pointer-events="none"/>`);
+  o.push(txt(VX[p],VY[p],'P',pSz,'#141d26',{w:700,it:1}));
+}
+
+/* ── 이동 칸수 띠 ───────────────────────────────────── */
+function stripFig(o,c,cellTop,cellH){
+  const g=5, cw=(W-32-12*g)/13, fs=Math.max(24,Math.round(cellH*0.40));
+  o.push(txtMix(16,cellTop-26,[{s:'이동 칸수',kr:1}],25,c.FA,{anchor:'start',w:600}));
+  for(let i=0;i<=12;i++){
+    const x=16+i*(cw+g), here=i===S.tot, four=S.step>=2&&i%4===0;
+    o.push(`<rect data-cell="${i}" x="${x}" y="${cellTop}" width="${cw}" height="${cellH}" rx="9"
+       fill="${here?'rgba(245,182,66,.85)':(four?'rgba(245,182,66,.13)':c.P2)}"
+       stroke="${here||four?c.AM:c.LS}" stroke-width="${here?3:2}" style="cursor:pointer"/>`);
+    o.push(txt(x+cw/2,cellTop+cellH/2,NM[i%4],fs,here?'#141d26':(four?c.AM:c.CH),{w:700,it:1}));
+    o.push(txt(x+cw/2,cellTop+cellH+22,i,21,here?c.CH:c.FA,{w:600}));
+  }
+}
+
+/* ── 3·4·5단계 : 대각선 횟수 표 ─────────────────────── */
+function drawTable(o,c,TR,BOT){
+  const w=TR-10, xN=10+w*0.22, xS=10+w*0.57, xV=10+w*0.86;
+  const allOpen=S.rows.every(Boolean), hcol=allOpen?c.TE:c.VI;
+
+  o.push(`<rect data-hrow="1" x="10" y="12" width="${w}" height="50" rx="12"
+     fill="${allOpen?'rgba(73,209,192,.10)':'rgba(157,140,245,.10)'}" stroke="${hcol}"
+     stroke-width="2.4"${allOpen?'':' stroke-dasharray="10 8"'} style="cursor:pointer"/>`);
+  o.push(txtMix(xN,37,[{s:'대각선 횟수',kr:1}],22,hcol,{w:700}));
+  o.push(txtMix(xS,37,[{s:'총 칸수',kr:1}],22,hcol,{w:700}));
+  o.push(txtMix(xV,37,[{s:'도착점',kr:1}],22,hcol,{w:700}));
+
+  const y0=72, rowH=(BOT-y0)/7;
+  for(let k=0;k<=6;k++){
+    const tot=k+6, isA=tot%4===0, open=S.rows[k], dim=S.only&&!isA;
+    const pick=(S.step===4&&isA&&!S.pr[k===2?0:1])||(S.step===5&&isA&&!S.only);
+    const y=y0+k*rowH, h=rowH-8, mid=y+h/2;
+    const col=pick?c.VI:(open?(isA?c.AM:c.TE):c.VI);
+    o.push(`<rect data-row="${k}" x="10" y="${y}" width="${w}" height="${h}" rx="12"
+       fill="${open?(isA?'rgba(245,182,66,.15)':'rgba(73,209,192,.09)'):'rgba(157,140,245,.07)'}"
+       stroke="${col}" stroke-width="${isA&&open?3:2.2}"${open&&!pick?'':' stroke-dasharray="9 7"'}
+       opacity="${dim?0.16:(open?1:0.55)}" style="cursor:pointer"/>`);
+    o.push(txt(xN,mid,k,32,open?c.CH:c.VI,{w:700,op:dim?0.16:1}));
+    if(open){
+      o.push(txt(xS,mid,tot,32,isA?c.AM:c.CH,{w:700,op:dim?0.16:1}));
+      o.push(txt(xV,mid,NM[tot%4],32,isA?c.AM:c.TE,{w:700,it:1,op:dim?0.16:1}));
+    }else{
+      o.push(txt(xS,mid,'?',30,c.VI,{w:600,op:0.6}));
+      o.push(txt(xV,mid,'?',30,c.VI,{w:600,op:0.6}));
+    }
+  }
+}
+
+gsvg.addEventListener('click',e=>{
+  const d=e.target.dataset||{};
+  if(d.move!==undefined){ S.tot=Math.min(12,S.tot + +d.move); after(); }
+  else if(d.cell!==undefined){ S.tot=+d.cell; after(); }
+  else if(d.hrow!==undefined){ S.rows=S.rows.map(()=>true); after(); }
+  else if(d.row!==undefined){
+    const k=+d.row;
+    if(S.step>=5&&(k===2||k===6)) S.only=true;
+    else if(S.step>=4&&(k===2||k===6)){ S.rows[k]=true; S.pr[k===2?0:1]=true; }
+    else S.rows[k]=!S.rows[k];
+    if(S.rows[k]) S.tot=k+6;                 /* 그 경우를 정사각형·띠에 그대로 보인다 */
+    after();
+  }
+});
+
+function stepDone(n){
+  if(n===1) return S.demo||S.tot>0;
+  if(n===2) return S.tot>0&&S.tot%4===0;
+  if(n===3) return S.rows[2]&&S.rows[6];
+  if(n===4) return S.pr[0]&&S.pr[1];
+  return S.only;
+}
+function after(){ if(stepDone(S.step)) S.shown[S.step-1]=true; paint(false); }
+
+function revealAllOfStep(n){
+  if(n===1) S.demo=true;
+  if(n===2) S.tot=8;
+  if(n>=3) S.rows=S.rows.map(()=>true);
+  if(n>=4) S.pr=[true,true];
+  if(n>=5) S.only=true;
+}
+
+/* ═══ 7. 발판 ═══════════════════════════════════════════ */
+const pos=document.getElementById('pos'),
+      nextBtn=document.getElementById('nextBtn'), prevBtn=document.getElementById('prevBtn');
+
+function paint(scrollTo){
+  const keep=(scrollTarget!==null&&Math.abs(flow.scrollTop-scrollTarget)>2)?scrollTarget:flow.scrollTop;
+  paintFlow(scrollTo);
+  if(scrollTo===false) flow.scrollTop=keep;
+  pos.innerHTML=`<b>${S.step}</b> / ${N} · ${STEPS[S.step-1].short}`;
+  prevBtn.disabled=S.step===1;
+  const opened=!!S.shown[S.step-1];
+  nextBtn.textContent = !opened ? '풀이 보기' : (S.step<N ? '다음 ▶' : '완료');
+  nextBtn.disabled = opened && S.step===N;
+  draw();
+}
+function next(){
+  const i=S.step-1;
+  if(!S.shown[i]){ revealAllOfStep(S.step); S.shown[i]=true; paint(false); return; }
+  jump(S.step+1);
+}
+function jump(n){
+  n=Math.max(1,Math.min(N,n));
+  for(let k=1;k<n;k++){ S.shown[k-1]=true; revealAllOfStep(k); }
+  S.step=n; paint();
+}
+function reset(){
+  S.step=1; S.shown=[]; S.tot=0; S.demo=false;
+  S.rows=S.rows.map(()=>false); S.pr=[false,false]; S.only=false;
+  flow.scrollTop=0; scrollTarget=null; paint();
+}
+nextBtn.onclick=next;
+prevBtn.onclick=()=>jump(S.step-1);
+document.getElementById('resetBtn').onclick=reset;
+document.getElementById('fsBtn').onclick=()=>{
+  if(document.fullscreenElement) document.exitFullscreen();
+  else document.documentElement.requestFullscreen?.();
+};
+document.getElementById('qhead').onclick=()=>document.getElementById('qcard').classList.toggle('folded');
+addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' '){ e.preventDefault(); next(); }
+  else if(e.key==='ArrowLeft') jump(S.step-1);
+  else if(e.key==='r'||e.key==='R') reset();
+  else if(e.key==='f'||e.key==='F') document.getElementById('fsBtn').click();
+});
+
+paint();
+</script>
+</body>
+</html>
