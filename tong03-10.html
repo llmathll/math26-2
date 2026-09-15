@@ -16,7 +16,7 @@
   --amber:#f5b642; --coral:#ff7d6a; --teal:#49d1c0; --violet:#9d8cf5;
   --sky:#79b8ff; --laser:#ff2d2d;
   --f-en:'STIX Two Text'; --f-kr:'Noto Sans KR';
-  --ls:42px; --ls-sm:33px; --ls-q:35px;
+  --ls:52px; --ls-sm:40px; --ls-q:40px;
 }
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
 html,body{margin:0; padding:0; height:100%; overflow:hidden; overscroll-behavior:none; touch-action:manipulation;
@@ -55,16 +55,16 @@ html,body{margin:0; padding:0; height:100%; overflow:hidden; overscroll-behavior
 .qbox{position:sticky; top:-1px; z-index:6; box-shadow:0 10px 22px rgba(10,20,32,.85);
   background:var(--panel); border:1px solid var(--line); border-left:5px solid var(--amber);
   border-radius:12px; padding:12px 20px 14px; margin-bottom:16px;}
-.qh{display:flex; align-items:center; gap:14px; font-family:var(--f-kr); font-size:24px; color:var(--amber); font-weight:700; letter-spacing:.04em;}
-.qtog{margin-left:auto; font-family:var(--f-kr); font-size:22px; font-weight:500; color:var(--chalk-soft);
+.qh{display:flex; align-items:center; gap:14px; font-family:var(--f-kr); font-size:28px; color:var(--amber); font-weight:700; letter-spacing:.04em;}
+.qtog{margin-left:auto; font-family:var(--f-kr); font-size:27px; font-weight:500; color:var(--chalk-soft);
   background:var(--panel-2); border:1px solid var(--line-strong); border-radius:8px; padding:3px 14px; cursor:pointer;}
-.qt{font-size:var(--ls-q); line-height:1.52; color:var(--chalk); font-family:var(--f-kr); word-break:keep-all; margin-top:8px;}
+.qt{font-size:var(--ls-q); line-height:1.45; color:var(--chalk); font-family:var(--f-kr); word-break:keep-all; margin-top:8px;}
 .qt .m{font-size:1.02em;}
 .qbox.fold .qt{display:none;}
 .qbox.fold{padding:10px 20px 12px;}
 .qt{max-height:430px; overflow-y:auto;}
 .qgoal{display:none;}
-.qbox.fold .qgoal{display:inline-block; font-family:var(--f-kr); font-size:31px; font-weight:500;
+.qbox.fold .qgoal{display:inline-block; font-family:var(--f-kr); font-size:38px; font-weight:500;
   color:var(--amber); white-space:nowrap; margin-left:4px;}
 .qgoal .m{font-size:1.06em;}
 
@@ -75,21 +75,24 @@ html,body{margin:0; padding:0; height:100%; overflow:hidden; overscroll-behavior
 .stepCard.on{opacity:1; filter:none;}
 .stepCard.live{opacity:1; filter:none; border-color:var(--amber); box-shadow:0 0 0 2px rgba(245,182,66,.25), 0 8px 30px rgba(245,182,66,.10);}
 .ch{display:flex; align-items:center; gap:14px; margin-bottom:10px;}
-.ch .num{flex:0 0 50px; width:50px; height:50px; border-radius:50%; display:grid; place-items:center;
-  font-size:25px; font-weight:700; font-family:var(--f-en); background:var(--panel-2); color:var(--chalk-soft); border:2px solid var(--line-strong);}
+.ch .num{flex:0 0 58px; width:58px; height:58px; border-radius:50%; display:grid; place-items:center;
+  font-size:30px; font-weight:700; font-family:var(--f-en); background:var(--panel-2); color:var(--chalk-soft); border:2px solid var(--line-strong);}
 .stepCard.live .ch .num{background:var(--amber); color:#14202e; border-color:var(--amber);}
 .ch .tt{font-family:var(--f-kr); font-size:var(--ls-sm); font-weight:700; color:var(--chalk); word-break:keep-all; line-height:1.25;}
-.ln{display:block; font-size:var(--ls); color:var(--chalk); margin:6px 0 4px; line-height:1.2;}
+.ln{display:block; font-size:var(--ls); color:var(--chalk); margin:8px 0 6px; line-height:1.22;}
 .ln.m{display:block; white-space:nowrap;}
-.ln.ind{padding-left:1.5em;}
+.ln.ind{padding-left:1.2em;}
+.qt .qi{display:block; padding-left:1.1em; text-indent:-1.1em;}
+.qt .qi *{text-indent:0;}
+.qt .qi::before{content:'▪ '; color:var(--amber);}
 .ln.hi{color:var(--amber);}
 .sub{font-family:var(--f-kr); font-size:var(--ls-sm); color:var(--chalk-soft); margin:6px 0 2px; line-height:1.42; word-break:keep-all;}
 .sub .m{font-size:1.06em; color:var(--chalk);}
-.tip{display:block; font-family:var(--f-kr); font-size:28px; color:var(--violet); margin-top:12px; line-height:1.38; word-break:keep-all;}
-.tip::before{content:'✋ '; font-size:26px;}
+.tip{display:block; font-family:var(--f-kr); font-size:36px; color:var(--violet); margin-top:12px; line-height:1.38; word-break:keep-all;}
+.tip::before{content:'✋ '; font-size:32px;}
 .tip .m{color:inherit;}
-.revealBtn{margin:8px 0 2px; font-family:var(--f-kr); font-size:27px; font-weight:700; color:var(--violet);
-  background:rgba(157,140,245,.10); border:2px solid rgba(157,140,245,.55); border-radius:10px; padding:6px 18px; cursor:pointer;}
+.revealBtn{margin:8px 0 2px; font-family:var(--f-kr); font-size:34px; font-weight:700; color:var(--violet);
+  background:rgba(157,140,245,.10); border:2px solid rgba(157,140,245,.55); border-radius:10px; padding:6px 20px; cursor:pointer;}
 .revealBtn:active{background:rgba(157,140,245,.24);}
 .hid{display:none;} .hid.show{display:block;}
 
@@ -170,33 +173,37 @@ body.laser-on.has-mouse *{cursor:none !important;}
     <div id="leftCol">
       <div class="qbox" id="qbox">
         <div class="qh"><span>tong03-10</span><span class="qgoal"><span class="m"><span class="var-a">a</span>⁶ − <span class="frac"><span class="num">11</span><span class="den"><span class="var-a">a</span>⁶</span></span></span> 의 값은?</span><button class="qtog" id="qtog">접기</button></div>
-        <div class="qt">실수 <span class="m"><span class="var-a">a</span>&thinsp;(<span class="var-a">a</span> &gt; 1)</span>에 대하여 곡선 <span class="m"><span class="v">y</span> = log<sub>a</sub>(<span class="v">x</span> − 2)</span>와 직선 <span class="m"><span class="v">y</span> = <span class="r3"></span><span class="v">x</span> − 3<span class="r3"></span></span>이 그림과 같이 서로 다른 두 점 A, B에서 만나고, 선분 AB의 수직이등분선이 <span class="m"><span class="v">x</span></span>축과 만나는 점을 C라 하자. 삼각형 ABC의 넓이가 <span class="m">12<span class="r3"></span></span>일 때, <span class="m"><span class="var-a">a</span>⁶ − <span class="frac"><span class="num">11</span><span class="den"><span class="var-a">a</span>⁶</span></span></span>의 값은? (단, 점 B의 <span class="m"><span class="v">y</span></span>좌표는 양수이다.)</div>
+        <div class="qt">
+          <span class="qi">곡선 <span class="m"><span class="v">y</span> = log<sub>a</sub>(<span class="v">x</span> − 2)</span> <span class="m">(<span class="var-a">a</span> &gt; 1)</span></span>
+          <span class="qi">직선 <span class="m"><span class="v">y</span> = <span class="r3"></span><span class="v">x</span> − 3<span class="r3"></span></span></span>
+          <span class="qi">두 그래프의 교점 A, B <span class="m">(B의 <span class="v">y</span> &gt; 0)</span></span>
+          <span class="qi">AB의 수직이등분선과 <span class="m"><span class="v">x</span></span>축의 교점 C</span>
+          <span class="qi">△ABC의 넓이 <span class="m">= 12<span class="r3"></span></span></span>
+          <span class="qi" style="color:var(--amber)">구하는 값 : <span class="m"><span class="var-a">a</span>⁶ − <span class="frac"><span class="num">11</span><span class="den"><span class="var-a">a</span>⁶</span></span></span></span>
+        </div>
       </div>
 
       <div class="stepCard" data-s="1">
-        <div class="ch"><span class="num">1</span><span class="tt">점 A는 <span class="var-a">a</span>의 값과 상관없이 정해진다</span></div>
-        <div class="sub">로그의 밑이 무엇이든 <span class="m">log<sub>a</sub>&thinsp;1 = 0</span> 이므로</div>
-        <div class="ln m"><span class="v">x</span> − 2 = 1</div>
-        <div class="ln m ind">⟹ <span class="v">x</span> = 3 일 때 <span class="v">y</span> = 0</div>
-        <div class="sub">직선 <span class="m"><span class="v">y</span> = <span class="r3"></span>(<span class="v">x</span> − 3)</span> 도 점 (3, 0)을 지난다.</div>
-        <div class="ln m hi">A(3, 0)</div>
-        <div class="tip">슬라이더로 <span class="m"><span class="var-a">a</span></span>를 바꿔 보세요. 곡선이 휘어도 A는 움직이지 않습니다.</div>
+        <div class="ch"><span class="num">1</span><span class="tt">점 A는 <span class="var-a">a</span>와 상관없다</span></div>
+        <div class="sub"><span class="m">log<sub>a</sub>&thinsp;1 = 0</span> 이므로</div>
+        <div class="ln m"><span class="v">x</span> = 3 일 때 <span class="v">y</span> = 0</div>
+        <div class="sub">직선도 (3, 0)을 지난다</div>
+        <div class="ln m hi">⟹ A(3, 0)</div>
+        <div class="tip">슬라이더로 <span class="m"><span class="var-a">a</span></span>를 바꿔도 A는 고정</div>
       </div>
 
       <div class="stepCard" data-s="2">
-        <div class="ch"><span class="num">2</span><span class="tt">삼각형 ABC는 정삼각형이다</span></div>
-        <div class="sub">C가 선분 AB의 수직이등분선 위의 점이므로</div>
+        <div class="ch"><span class="num">2</span><span class="tt">△ABC는 정삼각형</span></div>
+        <div class="sub">C는 수직이등분선 위의 점</div>
         <div class="ln m">CA = CB</div>
-        <div class="sub">직선 AB의 기울기가 <span class="m"><span class="r3"></span></span> 이므로</div>
+        <div class="sub">직선 AB의 기울기 <span class="m"><span class="r3"></span></span></div>
         <div class="ln m">∠BAC = 60°</div>
-        <div class="sub">이등변삼각형의 두 밑각이 같으므로 <span class="m">∠ABC = 60°</span>, 따라서 <span class="m">∠ACB = 60°</span></div>
-        <div class="ln m hi">⟹ △ABC 는 정삼각형</div>
-        <div class="tip">점 C를 <span class="m"><span class="v">x</span></span>축 위에서 끌어 <span class="m">CA = CB</span> 가 되는 자리를 찾아보세요.</div>
+        <div class="ln m hi">⟹ 정삼각형</div>
+        <div class="tip">점 C를 끌어 <span class="m">CA = CB</span> 찾기</div>
       </div>
 
       <div class="stepCard" data-s="3">
-        <div class="ch"><span class="num">3</span><span class="tt">넓이에서 한 변의 길이를 구한다</span></div>
-        <div class="sub">한 변의 길이를 <span class="m"><span class="v">b</span></span> 라 하면 정삼각형의 넓이는</div>
+        <div class="ch"><span class="num">3</span><span class="tt">넓이 → 한 변의 길이 <span class="m"><span class="v">b</span></span></span></div>
         <div class="ln m"><span class="frac"><span class="num"><span class="r3"></span></span><span class="den">4</span></span><span class="v">b</span>² = 12<span class="r3"></span></div>
         <div class="ln m ind">⟹ <span class="v">b</span>² = 48</div>
         <div class="ln m ind hi">⟹ <span class="v">b</span> = 4<span class="r3"></span></div>
@@ -204,31 +211,28 @@ body.laser-on.has-mouse *{cursor:none !important;}
 
       <div class="stepCard" data-s="4">
         <div class="ch"><span class="num">4</span><span class="tt">점 B의 좌표</span></div>
-        <div class="sub">A에서 <span class="m">60°</span> 방향으로 <span class="m"><span class="v">b</span></span> 만큼 간 점이 B이므로</div>
-        <div class="ln m">B(3 + <span class="v">b</span> cos 60°, &nbsp;<span class="v">b</span> sin 60°)</div>
-        <div class="ln m ind hi">= B(3 + 2<span class="r3"></span>, &nbsp;6)</div>
-        <div class="sub">직선의 식에 넣어 확인하면</div>
-        <div class="ln m"><span class="r3"></span>(3 + 2<span class="r3"></span>) − 3<span class="r3"></span> = 6</div>
+        <div class="sub">A에서 <span class="m">60°</span> 방향으로 <span class="m"><span class="v">b</span></span> 만큼</div>
+        <div class="ln m">B(3 + <span class="v">b</span> cos 60°, <span class="v">b</span> sin 60°)</div>
+        <div class="ln m ind hi">= B(3 + 2<span class="r3"></span>, 6)</div>
       </div>
 
       <div class="stepCard" data-s="5">
-        <div class="ch"><span class="num">5</span><span class="tt">B는 곡선 위의 점이다</span></div>
-        <div class="ln m">log<sub>a</sub>(3 + 2<span class="r3"></span> − 2) = 6</div>
-        <div class="ln m ind">⟹ log<sub>a</sub>(1 + 2<span class="r3"></span>) = 6</div>
+        <div class="ch"><span class="num">5</span><span class="tt">B를 곡선에 대입</span></div>
+        <div class="ln m">log<sub>a</sub>(1 + 2<span class="r3"></span>) = 6</div>
         <div class="ln m ind hi">⟹ <span class="var-a">a</span>⁶ = 1 + 2<span class="r3"></span></div>
       </div>
 
       <div class="stepCard" data-s="6">
-        <div class="ch"><span class="num">6</span><span class="tt">분모를 유리화하여 답 구하기</span></div>
+        <div class="ch"><span class="num">6</span><span class="tt">유리화하여 답 구하기</span></div>
         <div class="ln m"><span class="frac"><span class="num">11</span><span class="den"><span class="var-a">a</span>⁶</span></span> = <span class="frac"><span class="num">11</span><span class="den">1 + 2<span class="r3"></span></span></span></div>
         <button class="revealBtn" id="revBtn">유리화 과정 보기</button>
         <div class="hid" id="revBox">
-          <div class="ln m ind">= <span class="frac"><span class="num">11(1 − 2<span class="r3"></span>)</span><span class="den">(1 + 2<span class="r3"></span>)(1 − 2<span class="r3"></span>)</span></span></div>
-          <div class="ln m ind">= <span class="frac"><span class="num">11(1 − 2<span class="r3"></span>)</span><span class="den">−11</span></span> = −(1 − 2<span class="r3"></span>)</div>
+          <div class="ln m ind">= <span class="frac"><span class="num">11(1 − 2<span class="r3"></span>)</span><span class="den">1 − 12</span></span></div>
+          <div class="ln m ind">= −1 + 2<span class="r3"></span></div>
         </div>
-        <div class="sub">따라서</div>
-        <div class="ln m"><span class="var-a">a</span>⁶ − <span class="frac"><span class="num">11</span><span class="den"><span class="var-a">a</span>⁶</span></span> = (1 + 2<span class="r3"></span>) + (1 − 2<span class="r3"></span>)</div>
-        <div class="ln m ind hi" style="font-size:52px">= 2</div>
+        <div class="ln m"><span class="var-a">a</span>⁶ − <span class="frac"><span class="num">11</span><span class="den"><span class="var-a">a</span>⁶</span></span></div>
+        <div class="ln m ind">= (1 + 2<span class="r3"></span>) − (−1 + 2<span class="r3"></span>)</div>
+        <div class="ln m ind hi" style="font-size:62px">= 2</div>
       </div>
     </div>
 
