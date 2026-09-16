@@ -238,8 +238,8 @@ const Pu='P';                                     // 확률 P는 정체
 const PX=k=>`${Pu}(${Xf} = ${k})`;
 const all=a=>a.every(Boolean);
 /* 수식 줄 안에 함수 인자 쉼표가 보이지 않도록 조각을 미리 만든다 */
-const FR={}, FK={}, FD={};             // FR: 분모 126, FD: 약분 전 원래 분수
-[1,2,3,4,5,6].forEach(k=>{ FR[k]=F(N126[k-1],126); FD[k]=F(RED[k][0],RED[k][1]); if(k>=3) FK[k]=F(NUMK[k],DENK[k]); });
+const FK={}, FD={};                     // FD: 기약분수
+[1,2,3,4,5,6].forEach(k=>{ FD[k]=F(RED[k][0],RED[k][1]); if(k>=3) FK[k]=F(NUMK[k],DENK[k]); });
 const F2P=F(Pm(5,2),Pm(9,2)), F2072=F(20,72), F252=F(252,126), ANS2=ANS('2');
 const FGEN=F(`${Pm(5,2)} × ${Pm(4,`${kf} − 2`)}`,Pm(9,kf));
 const FSUM=F('56 + 35 + 20 + 10 + 4 + 1','126');
@@ -260,18 +260,18 @@ const STEPS=[
            return `<div class="m">${Xf} = 1 + ${n} + 1 = ${n===4?ANS('6'):`<span class="hl">${n+2}</span>`}</div>`; } },
 
  { t:`(2) ${Xf} = 1, 2일 때`, short:'X = 1, 2',
-   sm:'꺼낼 때마다 <b>남은 공</b>에서 고르므로 자리마다 분모가 하나씩 준다. 확률은 분모 <b>126</b>으로 맞춘다.',
+   sm:'꺼낼 때마다 <b>남은 공</b>에서 고르므로 자리마다 분모가 하나씩 준다.',
    hint:'줄을 눌러 확률을 여세요',
    on:()=>S.r3.some(Boolean),
-   f:()=>(S.r3[0]?`<div class="m">${PX(1)} = ${FD[1]} = <span class="hl">${FR[1]}</span></div>`:'')+
-         (S.r3[1]?`<div class="m">${PX(2)} = ${F2P} = ${F2072} = <span class="hl">${FR[2]}</span></div>`:'') },
+   f:()=>(S.r3[0]?`<div class="m">${PX(1)} = <span class="hl">${FD[1]}</span></div>`:'')+
+         (S.r3[1]?`<div class="m">${PX(2)} = ${F2P} = ${F2072} = <span class="hl">${FD[2]}</span></div>`:'') },
 
  { t:`${Xf} = ${kf} (3 ≤ ${kf} ≤ 6)일 때`, short:'X = 3 ~ 6',
    sm:`처음과 끝은 <b>홀수</b>, 그 사이 <b>${kf} − 2개</b>는 모두 짝수.`,
    hint:'줄을 하나씩 누르거나, 위 상자를 눌러 한꺼번에',
    on:()=>S.r4.some(Boolean),
    f:()=>`<div class="m">${PX(kf)} = ${FGEN}</div>`+
-         [3,4,5,6].map((k,i)=>S.r4[i]?`<div class="m">${PX(k)} = ${FK[k]} = <span class="hl">${FR[k]}</span></div>`:'').join('') },
+         [3,4,5,6].map((k,i)=>S.r4[i]?`<div class="m">${PX(k)} = ${FK[k]} = <span class="hl">${FD[k]}</span></div>`:'').join('') },
 
  { t:`확률분포표와 기댓값 E(${Xf})`, short:'분포표 · E(X)',
    sm:`분모가 모두 126이므로 <b>${xf} × 분자</b>만 더해 126으로 나눈다.`,
@@ -286,7 +286,7 @@ const BANNER=[
  [`(1) ${Xf}의 최댓값`,'짝수를 두 홀수 사이에 최대한 많이 끼운다'],
  ['(2) 확률 구하기','자리마다 (고를 수 있는 공) ÷ (남은 공)을 곱한다'],
  ['(2) 확률 구하기','처음 · 끝은 홀수, 사이는 모두 짝수'],
- ['(2) 확률분포표와 기댓값','모든 확률을 분모 126으로 통일한다']
+ ['(2) 확률분포표와 기댓값','표에서는 모든 확률을 분모 126으로 통일한다']
 ];
 /* ▲▲ 여기까지 ▲▲ */
 const N=STEPS.length;
@@ -494,7 +494,7 @@ function draw(){
       if(open){
         const rx=W-62, ry=y+rh/2-2;
         o.push(txt(rx-50,ry,'=',32,FA,{w:500}));
-        o.push(svgFrac(rx,ry,N126[k-1],126,32,AM,700));
+        o.push(svgFrac(rx,ry,RED[k][0],RED[k][1],32,AM,700));
       }
       o.push('</g>');
     });
@@ -512,7 +512,8 @@ function draw(){
     o.push(`<g data-a="all5:0" style="cursor:pointer">
       <rect x="${sx}" y="${y0}" width="${sw}" height="${th}" fill="${done?'rgba(245,182,66,.10)':'rgba(157,140,245,.08)'}"/>`);
     o.push(txt(sx+sw/2,rm(0),'합계',30,done?AM:VI,{kr:1,w:700}));
-    o.push(svgFrac(sx+sw/2,rm(1),126,126,32,TE));
+    o.push(txt(sx+sw/2,rm(1)-50,'1',34,CH,{w:600}));
+    o.push(svgFrac(sx+sw/2,rm(1)+50,126,126,30,TE));
     if(done) o.push(svgFrac(sx+sw/2,rm(2),252,126,32,AM,700));
     else o.push(txt(sx+sw/2,rm(2),'?',40,VI,{w:700}));
     o.push('</g>');
@@ -525,7 +526,8 @@ function draw(){
       o.push(`<g data-a="col5:${i}" style="cursor:pointer">
         <rect x="${xl}" y="${y0}" width="${cw}" height="${th}" fill="transparent"/>`);
       o.push(txt(x,rm(0),i+1,36,CH,{w:600}));
-      o.push(svgFrac(x,rm(1),n,126,32,TE));
+      o.push(svgFrac(x,rm(1)-50,RED[i+1][0],RED[i+1][1],30,CH));
+      o.push(svgFrac(x,rm(1)+50,n,126,30,TE));
       if(open){
         o.push(txt(x,ry[2]+34,`${i+1}×${n}`,22,CS,{w:600}));
         o.push(svgFrac(x,rm(2)+14,(i+1)*n,126,32,AM,700));
