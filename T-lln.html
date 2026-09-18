@@ -1,0 +1,720 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>큰수의 법칙</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400..700;1,400..700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-deep:#0a1420; --bg:#0e1b2b; --panel:#16283e; --panel-2:#1d3350;
+  --line:rgba(214,229,245,.16); --line-strong:rgba(214,229,245,.34);
+  --chalk:#eaf1f8; --chalk-soft:#b9cadd; --chalk-faint:#7d94ad;
+  --amber:#f5b642; --teal:#49d1c0; --violet:#9d8cf5; --coral:#ff7d6a;
+  --f-en:'STIX Two Text'; --f-kr:'Noto Sans KR';
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--bg-deep);
+  overscroll-behavior:none;touch-action:manipulation;-webkit-text-size-adjust:100%;
+  -webkit-tap-highlight-color:transparent}
+body{color:var(--chalk);font-family:var(--f-en),var(--f-kr),serif}
+button{font:inherit;color:inherit}
+.viewport{position:fixed;inset:0}
+.stage{position:absolute;top:0;left:0;width:1600px;height:900px;transform-origin:0 0;
+  background:var(--bg);overflow:hidden}
+.sheet{height:100%;display:flex;flex-direction:column;gap:12px;padding:12px 22px 18px}
+
+/* ── 머리말 ── */
+.head{flex:0 0 72px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line);padding-bottom:10px}
+.title{font-family:var(--f-kr);font-size:36px;font-weight:700;color:var(--amber);white-space:nowrap}
+.tabs{flex:1;display:flex;gap:10px;margin:0 6px}
+.tab{flex:1 1 0;font-family:var(--f-en),var(--f-kr);font-size:28px;font-weight:700;color:var(--chalk-soft);
+  background:transparent;border:2px solid var(--line-strong);border-radius:12px;padding:7px 8px;
+  white-space:nowrap;cursor:pointer}
+.tab.on{background:rgba(245,182,66,.12);border-color:var(--amber);color:var(--amber)}
+.fbtn{font-family:var(--f-kr);font-size:24px;font-weight:700;cursor:pointer;background:var(--panel-2);
+  border:1.5px solid var(--line-strong);border-radius:10px;padding:10px 18px;white-space:nowrap}
+.v{font-style:italic}
+
+/* ── 본문 ── */
+.body{flex:1 1 auto;min-height:0;position:relative}
+.pane{position:absolute;inset:0;display:none;gap:16px}
+.pane.on{display:flex}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px}
+.gcard{position:relative;flex:1 1 auto;min-width:0;min-height:0}
+.gcard svg{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.side{flex:0 0 auto;display:flex;flex-direction:column;gap:14px;min-height:0}
+
+/* ── 수식 ── */
+.m{font-family:var(--f-en),var(--f-kr),serif;font-variant-numeric:tabular-nums;white-space:nowrap;line-height:1.45}
+.frac{display:inline-flex;flex-direction:column;align-items:stretch;text-align:center;
+  vertical-align:middle;margin:0 .14em;transform:translateY(-.08em);
+  line-height:1.06;font-size:.84em;white-space:nowrap}
+.frac>.num{padding:0 .2em .07em;border-bottom:.058em solid currentColor}
+.frac>.den{padding:.09em .2em 0}
+.ab{display:inline-block;vertical-align:middle;border-left:.05em solid currentColor;
+  border-right:.05em solid currentColor;padding:0 .18em;margin:0 .12em;line-height:1.1}
+.ab .frac{transform:none}
+.bp{display:inline-block;transform:scaleY(1.5);margin:0 .03em;transform-origin:50% 55%}
+.ans{display:inline-flex;align-items:center;vertical-align:middle;color:var(--amber);font-weight:700;
+  padding:.02em .26em;border:2px solid var(--amber);border-radius:.18em;box-shadow:0 0 20px rgba(245,182,66,.2)}
+.dim{color:var(--chalk-soft)}
+.tl{color:var(--teal)}
+.am{color:var(--amber)}
+
+/* ── ① 주사위 ── */
+#p0 .side{width:440px}
+.dieBox{flex:0 0 auto;display:flex;justify-content:center;padding:14px 0 4px}
+.die{width:150px;height:150px}
+.stats{padding:14px 20px;display:flex;flex-direction:column;gap:6px}
+.srow{display:flex;align-items:center;gap:10px;font-size:42px;white-space:nowrap;min-height:62px}
+.kl{font-family:var(--f-kr);font-size:25px;color:var(--chalk-faint);width:104px;flex:0 0 auto}
+.num4{display:inline-block;min-width:3.2ch;text-align:left}
+.tgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.tb{font-family:var(--f-en),var(--f-kr);font-size:30px;font-weight:700;padding:14px 0;border-radius:12px;
+  border:2px solid var(--violet);background:rgba(157,140,245,.14);color:var(--chalk);cursor:pointer;white-space:nowrap}
+.tb.wide{grid-column:span 2}
+.tb:disabled{opacity:.35;cursor:default}
+.tg{font-family:var(--f-en),var(--f-kr);font-size:26px;font-weight:700;padding:12px 0;border-radius:12px;
+  border:2px solid var(--line-strong);background:transparent;color:var(--chalk-soft);cursor:pointer;white-space:nowrap}
+.tg.on{border-color:var(--teal);color:var(--teal);background:rgba(73,209,192,.12)}
+.tb:active,.tg:active,.tab:active,.fbtn:active,.hb:active{transform:scale(.97)}
+
+/* ── ②③ 조절줄 ── */
+.col{flex-direction:column}
+.ctrl{flex:0 0 100px;display:flex;align-items:center;gap:18px;padding:0 18px}
+.nval{font-size:50px;min-width:250px;white-space:nowrap}
+.slider{position:relative;flex:1 1 auto;height:96px;touch-action:none;cursor:pointer}
+.sin{position:absolute;left:40px;right:40px;top:0;bottom:0}
+.strack,.sfill{position:absolute;left:0;top:26px;height:10px;border-radius:5px}
+.strack{right:0;background:rgba(214,229,245,.16)}
+.sfill{background:var(--amber);width:0}
+.stop{position:absolute;top:19px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;pointer-events:none}
+.stop i{width:4px;height:24px;background:rgba(214,229,245,.4);border-radius:2px}
+.stop span{font-size:30px;color:var(--chalk-faint);margin-top:10px;line-height:1}
+.stop.on span{color:var(--amber);font-weight:700}
+.sthumb{position:absolute;top:31px;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;
+  background:var(--amber);box-shadow:0 0 0 7px rgba(245,182,66,.25);pointer-events:none}
+.hbs{display:flex;gap:8px}
+.hb{font-size:30px;padding:10px 16px;border-radius:12px;border:2px solid var(--line-strong);
+  background:transparent;color:var(--chalk-soft);cursor:pointer;white-space:nowrap}
+.hb.on{border-color:var(--teal);color:var(--teal);background:rgba(73,209,192,.14);font-weight:700}
+.row2{flex:1 1 auto;min-height:0;display:flex;gap:16px}
+.row2 .side{width:520px}
+/* ── ② 교과서 확률분포표 (n ≤ 50) ── */
+.ptab{flex:0 0 auto;padding:10px 12px;display:flex}
+.ptab[hidden]{display:none}
+.ptab table{border-collapse:collapse;font-family:var(--f-en),serif;font-variant-numeric:tabular-nums;height:100%}
+.ptab th,.ptab td{border:1.5px solid var(--line-strong);text-align:center;padding:0 12px;font-size:27px;line-height:1;white-space:nowrap}
+.ptab th{font-weight:600;color:var(--chalk-soft);background:var(--panel-2);cursor:pointer}
+.ptab th.xh{width:74px;color:var(--chalk-soft)}
+.ptab th.diag{position:relative;height:50px;background:var(--panel-2) linear-gradient(to top right,transparent calc(50% - 1px),var(--line-strong) 50%,transparent calc(50% + 1px));cursor:default}
+.ptab th.diag i{position:absolute;font-size:25px;font-weight:500}
+.ptab th.diag .dn{right:10px;top:4px} .ptab th.diag .dx{left:10px;bottom:4px}
+.ptab th.cur{background:rgba(245,182,66,.2);color:var(--amber);font-weight:700}
+.ptab td{color:var(--chalk-faint);cursor:pointer}
+.ptab td.c{color:var(--chalk-soft)}
+.ptab td.inb{background:rgba(73,209,192,.08)}
+.ptab td.c.inb{background:rgba(73,209,192,.34);color:var(--chalk);font-weight:700}
+.ptab td.empty{cursor:default}
+.ptab td.sel{outline:3px solid var(--amber);outline-offset:-3px;color:var(--amber)}
+.flines{padding:16px 22px;display:flex;flex-direction:column;gap:4px;font-size:40px}
+#fl1{font-size:38px;padding:14px 16px}
+.flines .fl{min-height:64px;display:flex;align-items:center}
+.flines .fl>span{white-space:nowrap}
+.gauges{padding:14px 22px;display:flex;flex-direction:column;gap:12px;flex:1 1 auto}
+.gauge{border-radius:12px;padding:8px 12px 12px;border:2px solid transparent;cursor:pointer}
+.gauge.on{border-color:var(--teal);background:rgba(73,209,192,.06)}
+.ghead{display:flex;justify-content:space-between;align-items:baseline;font-size:34px;white-space:nowrap}
+.gbar{position:relative;height:22px;border-radius:11px;background:rgba(214,229,245,.12);margin-top:6px;overflow:hidden}
+.gfill{position:absolute;left:0;top:0;bottom:0;background:var(--teal);border-radius:11px;transition:width .25s}
+.gauges.tight .gscale{display:none}
+.gauges.tight{gap:6px;padding:8px 18px}
+.gauges.tight .gauge{padding:4px 12px 9px}
+.gscale{display:flex;justify-content:space-between;font-size:24px;color:var(--chalk-faint);margin-top:2px}
+
+/* ── ④ 정리 ── */
+#p3{flex-direction:column}
+.law{flex:0 0 auto;padding:22px 34px 24px;border-left:8px solid var(--amber)}
+.lawT{font-family:var(--f-kr);font-size:34px;font-weight:700;color:var(--amber);display:flex;justify-content:space-between;align-items:center}
+.lawB{font-family:var(--f-kr);font-size:38px;line-height:1.56;margin-top:8px;word-break:keep-all}
+.lawB .m{font-size:42px;line-height:1}
+.blank{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;min-width:92px;min-height:76px;
+  margin:0 .12em;border:2.5px dashed var(--violet);border-radius:12px;background:rgba(157,140,245,.12);cursor:pointer;padding:0 10px}
+.blank>span{visibility:hidden}
+.blank.open{border-style:solid;border-color:var(--amber);background:rgba(245,182,66,.12);color:var(--amber)}
+.blank.open>span{visibility:visible}
+.lawF{margin-top:6px;font-size:40px}
+.mini{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+.miniH{font-family:var(--f-kr);font-size:26px;color:var(--chalk-soft);padding:12px 22px 0}
+button:focus{outline:none}
+button:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="viewport"><div class="stage" id="stage"><div class="sheet">
+
+  <header class="head">
+    <div class="title">큰수의 법칙</div>
+    <nav class="tabs" id="tabs">
+      <button class="tab on" data-t="0">① 주사위 실험</button>
+      <button class="tab" data-t="1">② 이항분포로 계산</button>
+      <button class="tab" data-t="2">③ <span class="v">h</span>를 줄이면</button>
+      <button class="tab" data-t="3">④ 정리</button>
+    </nav>
+    <button class="fbtn" id="resetBtn">초기화</button>
+    <button class="fbtn" id="fsBtn">전체화면</button>
+  </header>
+
+  <main class="body">
+
+    <!-- ① 주사위 실험 -->
+    <section class="pane on" id="p0">
+      <div class="card gcard" id="gc0"><svg id="g0"></svg></div>
+      <aside class="side">
+        <div class="card dieBox"><svg class="die" id="die" viewBox="0 0 100 100"></svg></div>
+        <div class="card stats" id="stats"></div>
+        <div class="tgrid">
+          <button class="tb" data-k="1">1번</button>
+          <button class="tb" data-k="10">10번</button>
+          <button class="tb" data-k="100">100번</button>
+          <button class="tb" data-k="1000">1000번</button>
+          <button class="tb wide" data-k="all">10000번까지</button>
+        </div>
+        <div class="tgrid">
+          <button class="tg" id="crowdBtn">5명이 함께</button>
+          <button class="tg" id="bandBtn">±0.1 띠</button>
+          <button class="tg" id="clearBtn">지우기</button>
+        </div>
+      </aside>
+    </section>
+
+    <!-- ② 이항분포로 계산 -->
+    <section class="pane col" id="p1">
+      <div class="card ctrl">
+        <div class="nval" id="nv1"></div>
+        <div class="slider" id="sl1"></div>
+      </div>
+      <div class="row2">
+        <div class="card gcard" id="gc1"><svg id="g1"></svg></div>
+        <div class="card ptab" id="tb1"></div>
+        <aside class="side">
+          <div class="card flines" id="fl1"></div>
+          <div class="card gauges tight" id="ga1" style="flex:0 0 auto"></div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ③ h를 줄이면 -->
+    <section class="pane col" id="p2">
+      <div class="card ctrl">
+        <div class="hbs" id="hbs"></div>
+        <div class="nval" id="nv2" style="min-width:230px"></div>
+        <div class="slider" id="sl2"></div>
+      </div>
+      <div class="row2">
+        <div class="card gcard" id="gc2"><svg id="g2"></svg></div>
+        <aside class="side">
+          <div class="card flines" id="fl2"></div>
+          <div class="card gauges tight" id="ga2"></div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ④ 정리 -->
+    <section class="pane" id="p3">
+      <div class="card law">
+        <div class="lawT">큰수의 법칙 <button class="tg" id="allBtn" style="padding:8px 22px">모두 보기</button></div>
+        <div class="lawB" id="lawB"></div>
+      </div>
+      <div class="card mini">
+        <div class="miniH" id="miniH"></div>
+        <div class="gcard" id="gc3"><svg id="g3"></svg></div>
+      </div>
+    </section>
+
+  </main>
+</div></div></div>
+
+<script>
+'use strict';
+/* ═══ 1. 스테이지 스케일링 ═══ */
+const STAGE_W=1600, STAGE_H=900, stage=document.getElementById('stage');
+function fitStage(){
+  const vv=window.visualViewport;
+  const w=vv?vv.width:innerWidth, h=vv?vv.height:innerHeight;
+  const s=Math.min(w/STAGE_W,h/STAGE_H);
+  stage.style.transform=`translate(${Math.round((w-STAGE_W*s)/2)}px,${Math.round((h-STAGE_H*s)/2)}px) scale(${s})`;
+}
+const fitSoon=()=>[0,60,300,700].forEach(t=>setTimeout(fitStage,t));
+addEventListener('resize',fitStage); addEventListener('orientationchange',fitSoon);
+if(window.visualViewport) visualViewport.addEventListener('resize',fitStage);
+document.addEventListener('fullscreenchange',fitSoon);
+fitSoon();
+
+/* ═══ 2. 수식 조각 ═══ */
+const F=(a,b)=>`<span class="frac"><span class="num">${a}</span><span class="den">${b}</span></span>`;
+const V=s=>`<span class="v">${s}</span>`;
+const Xv=V('X'), nv=V('n'), hv=V('h'), pv=V('p');
+const BP=s=>`P<span class="bp">(</span>${s}<span class="bp">)</span>`;
+const ABS=s=>`<span class="ab">${s}</span>`;
+const ANS=s=>`<span class="ans">${s}</span>`;
+const gcd=(a,b)=>b?gcd(b,a%b):a;
+function fr(num,den){ const g=gcd(num,den); num/=g; den/=g; return den===1?`${num}`:F(num,den); }
+function coefN(k,den){ const g=gcd(k,den), a=k/g, b=den/g; return b===1?(a===1?nv:a+nv):F((a===1?'':a)+nv,b); }
+
+/* ═══ 3. 이항분포 B(n, 1/6) ═══ */
+const MAXN=10000, C6=1/6;
+const LF=new Float64Array(MAXN+1); for(let i=1;i<=MAXN;i++) LF[i]=LF[i-1]+Math.log(i);
+const LP=Math.log(1/6), LQ=Math.log(5/6), PMF=new Map();
+function pmf(n){
+  if(PMF.has(n)) return PMF.get(n);
+  const a=new Float64Array(n+1);
+  for(let x=0;x<=n;x++) a[x]=Math.exp(LF[n]-LF[x]-LF[n-x]+x*LP+(n-x)*LQ);
+  PMF.set(n,a); return a;
+}
+/* h = 1/d 일 때 n(1/6 − h) < X < n(1/6 + h) 를 만족하는 정수 X 범위 (정수 연산으로 경계 판정) */
+function inRange(n,d){
+  const den=6*d;
+  return [Math.max(0,Math.floor(n*(d-6)/den)+1), Math.min(n,Math.ceil(n*(d+6)/den)-1)];
+}
+function prob(n,d){
+  const pm=pmf(n), [a,b]=inRange(n,d); let pin=0,pout=0;
+  for(let x=0;x<=n;x++){ if(x>=a&&x<=b) pin+=pm[x]; else pout+=pm[x]; }
+  if(pout<.5) pin=1-pout;
+  return {pin,pout,a,b};
+}
+function fmtP(pin,pout){
+  if(pin<=0) return '0';
+  const s=pin.toFixed(4);
+  if(s!=='1.0000') return s;
+  if(pout<1e-8) return '0.99999999…';
+  const dec=Math.min(8,Math.floor(-Math.log10(pout))+1);
+  return (Math.floor((1-pout)*10**dec)/10**dec).toFixed(dec);
+}
+const HS={10:'0.1',20:'0.05',100:'0.01'};
+
+/* ═══ 4. SVG 도구 ═══ */
+const SER="'STIX Two Text','Noto Sans KR',serif", KR="'Noto Sans KR',sans-serif";
+const CSS=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const COL={};
+function txt(x,y,s,size,fill,o){
+  o=o||{};
+  return `<text x="${x}" y="${y}" text-anchor="${o.anchor||'middle'}" dominant-baseline="central"
+    font-family="${o.kr?KR:SER}" font-size="${size}" font-weight="${o.w||500}" fill="${fill}"
+    ${o.it?'font-style="italic"':''} pointer-events="none">${s}</text>`;
+}
+function sfrac(x,y,a,b,size,fill,o){
+  o=o||{}; const w=Math.max(String(a).length,String(b).length)*size*.56+10;
+  return txt(x,y-size*.58,a,size,fill,{it:o.ita,w:o.w||600})+txt(x,y+size*.62,b,size,fill,{it:o.itb,w:o.w||600})+
+    `<line x1="${x-w/2}" y1="${y}" x2="${x+w/2}" y2="${y}" stroke="${fill}" stroke-width="2.2"/>`;
+}
+function niceStep(span,target){
+  const raw=span/target, mag=10**Math.floor(Math.log10(raw)), r=raw/mag;
+  return (r<1.5?1:r<3.5?2:r<7.5?5:10)*mag;
+}
+const decOf=st=>Math.max(0,-Math.floor(Math.log10(st)+1e-9));
+function fitSvg(id,cb){
+  const svg=document.getElementById(id), wrap=svg.parentElement;
+  new ResizeObserver(()=>{
+    const w=Math.round(wrap.clientWidth), h=Math.round(wrap.clientHeight);
+    if(!w||!h||(w===svg._w&&h===svg._h)) return;
+    svg._w=w; svg._h=h; svg.setAttribute('viewBox',`0 0 ${w} ${h}`); cb();
+  }).observe(wrap);
+  return svg;
+}
+function svgPt(svg,e){
+  const p=svg.createSVGPoint(); p.x=e.clientX; p.y=e.clientY;
+  return p.matrixTransform(svg.getScreenCTM().inverse());
+}
+
+/* ═══ 5. 상대도수 꺾은선 (①, ④ 공용) ═══ */
+const RUNC=['#f5b642','#49d1c0','#9d8cf5','#ff7d6a','#8ec5ff'];
+function drawRuns(svg,runs,n,D,o){
+  const W=svg._w,H=svg._h; if(!W) return;
+  const L=o.L||104,R=96,T=o.T||34,B=o.B||92,pw=W-L-R,ph=H-T-B,base=T+ph,Y0=o.y0||0,YM=o.y1||.5,YS=o.ys||.1;
+  const px=i=>L+i/D*pw, py=v=>base-(v-Y0)/(YM-Y0)*ph;
+  const AM=COL.am,TE=COL.te,FA=COL.fa,LS=COL.ls,LN=COL.ln,CH=COL.ch;
+  const g=[];
+  g.push(`<defs><clipPath id="${svg.id}c"><rect x="${L}" y="${T-4}" width="${pw+4}" height="${ph+4}"/></clipPath></defs>`);
+  if(o.band){
+    g.push(`<rect x="${L}" y="${py(C6+.1)}" width="${pw}" height="${py(C6-.1)-py(C6+.1)}" fill="${TE}" fill-opacity=".11"/>`);
+    [C6+.1,C6-.1].forEach(v=>g.push(`<line x1="${L}" y1="${py(v)}" x2="${L+pw}" y2="${py(v)}" stroke="${TE}" stroke-width="2" stroke-dasharray="10 8" stroke-opacity=".8"/>`));
+    g.push(txt(L+pw+48,py(C6+.1),'+0.1',26,TE,{w:600}));
+    g.push(txt(L+pw+48,py(C6-.1),'−0.1',26,TE,{w:600}));
+  }
+  for(let k=0;Y0+k*YS<=YM+1e-9;k++){ const v=Y0+k*YS;
+    g.push(`<line x1="${L}" y1="${py(v)}" x2="${L+pw}" y2="${py(v)}" stroke="${LN}" stroke-width="${k===0?2.5:1.2}"/>`);
+    g.push(txt(L-16,py(v),v.toFixed(decOf(YS)),o.fs||28,FA,{anchor:'end'}));
+  }
+  g.push(sfrac(26,T+ph*.5,'X','n',30,CH,{ita:1,itb:1}));
+  const st=niceStep(D,5);
+  for(let i=0;i<=D+1e-9;i+=st){
+    g.push(`<line x1="${px(i)}" y1="${base}" x2="${px(i)}" y2="${base+10}" stroke="${LS}" stroke-width="2"/>`);
+    g.push(txt(px(i),base+32,Math.round(i),o.fs||28,FA));
+  }
+  g.push(`<text x="${L+pw}" y="${base+70}" text-anchor="end" dominant-baseline="central" font-size="28" fill="${CH}" pointer-events="none"><tspan font-family="${KR}">던진 횟수 </tspan><tspan font-family="${SER}" font-style="italic">n</tspan></text>`);
+  g.push(`<line x1="${L}" y1="${py(C6)}" x2="${L+pw}" y2="${py(C6)}" stroke="${AM}" stroke-width="3" stroke-dasharray="14 9"/>`);
+  g.push(sfrac(L+pw+48,py(C6),'1','6',30,AM));
+  const lines=[];
+  runs.forEach((r,ri)=>{
+    const upto=Math.min(n,Math.floor(D));
+    if(upto<1) return;
+    const step=Math.max(1,Math.ceil(upto/900)); let d='';
+    for(let i=1;i<=upto;i+=step) d+=(d?'L':'M')+px(i).toFixed(1)+','+py(r[i]/i).toFixed(1);
+    d+='L'+px(upto).toFixed(1)+','+py(r[upto]/upto).toFixed(1);
+    lines.push({ri,d});
+  });
+  lines.reverse().forEach(({ri,d})=>g.push(`<path d="${d}" fill="none" stroke="${RUNC[ri]}" stroke-width="${ri?3:4.5}"
+    stroke-opacity="${ri?.8:1}" stroke-linejoin="round" clip-path="url(#${svg.id}c)"/>`));
+  if(runs.length&&n>=1&&n<=D){
+    const v=runs[0][n]/n;
+    if(v<=YM&&v>=Y0) g.push(`<circle cx="${px(n)}" cy="${py(v)}" r="9" fill="${AM}" stroke="${COL.bg}" stroke-width="3"/>`);
+  }
+  svg.innerHTML=g.join('');
+}
+
+/* ═══ 6. ① 주사위 실험 ═══ */
+const E={n:0, runs:[new Uint16Array(MAXN+1)], face:1, crowd:false, band:false, D:10, Dt:10, job:null, raf:0};
+const g0=fitSvg('g0',()=>draw0());
+const dieEl=document.getElementById('die'), statsEl=document.getElementById('stats');
+const PIPS={1:[[50,50]],2:[[28,28],[72,72]],3:[[27,27],[50,50],[73,73]],4:[[28,28],[72,28],[28,72],[72,72]],
+  5:[[27,27],[73,27],[50,50],[27,73],[73,73]],6:[[28,24],[72,24],[28,50],[72,50],[28,76],[72,76]]};
+function drawDie(f){
+  const one=f===1;
+  dieEl.innerHTML=`<rect x="4" y="4" width="92" height="92" rx="18" fill="${COL.p2}" stroke="${one?COL.am:COL.ls}" stroke-width="${one?4:2.5}"/>`+
+    PIPS[f].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="${one?13:8.5}" fill="${one?COL.co:COL.ch}"/>`).join('');
+}
+function niceD(n){ for(const d of [10,20,50,100,200,500,1000,2000,5000,10000]) if(n<=d) return d; return MAXN; }
+function paintStats(){
+  const n=E.n, X=n?E.runs[0][n]:0;
+  statsEl.innerHTML=
+    `<div class="srow"><span class="kl">던진 횟수</span><span class="m">${nv} = <span class="num4">${n}</span></span></div>`+
+    `<div class="srow"><span class="kl">1의 눈</span><span class="m">${Xv} = <span class="num4">${X}</span></span></div>`+
+    `<div class="srow"><span class="kl">상대도수</span><span class="m am">${n?F(X,n)+' ≈ '+(X/n).toFixed(4):'&nbsp;'}</span></div>`;
+}
+function draw0(){ drawRuns(g0,E.runs,E.n,E.D,{band:E.band}); }
+function commit(k){
+  for(let t=0;t<k&&E.n<MAXN;t++){
+    let f=1;
+    E.runs.forEach((r,ri)=>{ const v=1+Math.floor(Math.random()*6); r[E.n+1]=r[E.n]+(v===1?1:0); if(!ri) f=v; });
+    E.n++; E.face=f;
+  }
+}
+function loop(now){
+  const j=E.job;
+  if(j){
+    if(j.mode==='roll'){
+      if(now-j.last>55){ drawDie(1+Math.floor(Math.random()*6)); j.last=now; }
+      if(now-j.t0>380){ commit(1); E.job=null; }
+    }else if(j.mode==='step'){
+      if(now-j.last>75){ commit(1); j.left--; j.last=now; if(j.left<=0||E.n>=MAXN) E.job=null; }
+    }else{
+      const k=Math.min(j.per,j.left); commit(k); j.left-=k; if(j.left<=0||E.n>=MAXN) E.job=null;
+    }
+    if(!j||j.mode!=='roll'||!E.job) drawDie(E.face);
+    E.Dt=niceD(E.n); paintStats();
+  }
+  const l=Math.log(E.D), lt=Math.log(E.Dt);
+  E.D=Math.abs(lt-l)<.004?E.Dt:Math.exp(l+(lt-l)*.14);
+  draw0(); syncThrowBtns();
+  if(E.job||E.D!==E.Dt) E.raf=requestAnimationFrame(loop); else E.raf=0;
+}
+function kick(){ if(!E.raf) E.raf=requestAnimationFrame(loop); }
+function throwN(k){
+  if(E.job||E.n>=MAXN) return;
+  const left=k==='all'?MAXN-E.n:Math.min(k,MAXN-E.n);
+  if(k===1) E.job={mode:'roll',t0:performance.now(),last:0};
+  else if(k===10) E.job={mode:'step',left,last:0};
+  else E.job={mode:'bulk',left,per:Math.max(1,Math.ceil(left/(left>=5000?150:left>=1000?70:55)))};
+  kick();
+}
+function syncThrowBtns(){
+  document.querySelectorAll('.tb').forEach(b=>b.disabled=!!E.job||E.n>=MAXN);
+}
+document.querySelectorAll('.tb').forEach(b=>b.onclick=()=>throwN(b.dataset.k==='all'?'all':+b.dataset.k));
+document.getElementById('crowdBtn').onclick=e=>{
+  E.crowd=!E.crowd; e.currentTarget.classList.toggle('on',E.crowd);
+  if(E.crowd){
+    for(let ri=1;ri<5;ri++){ const r=new Uint16Array(MAXN+1);
+      for(let i=1;i<=E.n;i++) r[i]=r[i-1]+(Math.random()<1/6?1:0); E.runs.push(r); }
+  }else E.runs.length=1;
+  draw0();
+};
+document.getElementById('bandBtn').onclick=e=>{ E.band=!E.band; e.currentTarget.classList.toggle('on',E.band); draw0(); };
+function clear0(){
+  E.job=null; E.n=0; E.runs=[new Uint16Array(MAXN+1)];
+  if(E.crowd) for(let ri=1;ri<5;ri++) E.runs.push(new Uint16Array(MAXN+1));
+  E.Dt=10; E.D=10; E.face=1; drawDie(1); paintStats(); draw0(); syncThrowBtns();
+}
+document.getElementById('clearBtn').onclick=clear0;
+
+/* ═══ 7. 이항분포 막대그래프 (②, ③ 공용) ═══ */
+function drawDist(svg,n,d,xr,sel){
+  const W=svg._w,H=svg._h; if(!W) return;
+  const L=112,R=26,T=76,B=118,pw=W-L-R,ph=H-T-B,base=T+ph;
+  const [x0,x1]=xr, px=v=>L+(v-x0)/(x1-x0)*pw, h=1/d;
+  const AM=COL.am,TE=COL.te,FA=COL.fa,LS=COL.ls,LN=COL.ln,CH=COL.ch,VI=COL.vi;
+  const pm=pmf(n), [a,b]=inRange(n,d);
+  let xs=Math.max(0,Math.ceil(x0*n-1)), xe=Math.min(n,Math.floor(x1*n+1)), mx=0;
+  for(let x=xs;x<=xe;x++) if(pm[x]>mx) mx=pm[x];
+  while(xs<xe&&pm[xs]<mx*1e-5) xs++;
+  while(xe>xs&&pm[xe]<mx*1e-5) xe--;
+  const ymax=mx*1.16, py=v=>base-v/ymax*ph, bw=pw/(x1-x0)/n;
+  const g=[`<defs><clipPath id="${svg.id}c"><rect x="${L}" y="${T-2}" width="${pw}" height="${ph+2}"/></clipPath></defs>`];
+  /* 띠 */
+  const bl=px(C6-h), br=px(C6+h);
+  g.push(`<rect x="${bl}" y="${T}" width="${br-bl}" height="${ph}" fill="${TE}" fill-opacity=".10"/>`);
+  [bl,br].forEach(x=>g.push(`<line x1="${x}" y1="${T-8}" x2="${x}" y2="${base}" stroke="${TE}" stroke-width="2.5" stroke-dasharray="10 8"/>`));
+  g.push(txt(bl,T-30,'−'+HS[d],28,TE,{w:700}), txt(br,T-30,'+'+HS[d],28,TE,{w:700}));
+  /* 눈금 y */
+  const ys=niceStep(ymax,4), yd=decOf(ys);
+  for(let v=0;v<=ymax+1e-12;v+=ys){
+    g.push(`<line x1="${L}" y1="${py(v)}" x2="${L+pw}" y2="${py(v)}" stroke="${LN}" stroke-width="1.2"/>`);
+    if(v>0) g.push(txt(L-14,py(v),v.toFixed(yd),26,FA,{anchor:'end'}));
+  }
+  g.push(`<text x="14" y="${T-30}" dominant-baseline="central" font-family="${SER}" font-size="28" fill="${CH}" pointer-events="none">P(<tspan font-style="italic">X</tspan> = <tspan font-style="italic">x</tspan>)</text>`);
+  /* 막대 */
+  const segs=[[xs,Math.min(a-1,xe),0],[Math.max(a,xs),Math.min(b,xe),1],[Math.max(b+1,xs),xe,0]];
+  const FILL=[FA,TE], OP=[.55,.9];
+  if(bw>=5){
+    for(let x=xs;x<=xe;x++){
+      const ins=x>=a&&x<=b?1:0, w=Math.max(2,bw*.82);
+      g.push(`<rect x="${px(x/n)-w/2}" y="${py(pm[x])}" width="${w}" height="${base-py(pm[x])}" fill="${x===sel?AM:FILL[ins]}" fill-opacity="${x===sel?1:OP[ins]}" clip-path="url(#${svg.id}c)"/>`);
+    }
+  }else{
+    segs.forEach(([s,e,ins])=>{
+      if(s>e) return;
+      let dd=`M${px((s-.5)/n).toFixed(1)},${base}`;
+      for(let x=s;x<=e;x++) dd+=`L${px((x-.5)/n).toFixed(1)},${py(pm[x]).toFixed(1)}L${px((x+.5)/n).toFixed(1)},${py(pm[x]).toFixed(1)}`;
+      dd+=`L${px((e+.5)/n).toFixed(1)},${base}Z`;
+      g.push(`<path d="${dd}" fill="${FILL[ins]}" fill-opacity="${OP[ins]}" clip-path="url(#${svg.id}c)"/>`);
+    });
+    if(sel!=null&&sel>=0) g.push(`<line x1="${px(sel/n)}" y1="${T}" x2="${px(sel/n)}" y2="${base}" stroke="${AM}" stroke-width="3" clip-path="url(#${svg.id}c)"/>`);
+  }
+  /* 1/6 중심선 */
+  g.push(`<line x1="${px(C6)}" y1="${T-8}" x2="${px(C6)}" y2="${base}" stroke="${AM}" stroke-width="3" stroke-dasharray="14 9"/>`);
+  g.push(sfrac(px(C6),T-34,'1','6',26,AM));
+  g.push(`<line x1="${L}" y1="${base}" x2="${L+pw}" y2="${base}" stroke="${LS}" stroke-width="2.5"/>`);
+  /* 눈금 X/n */
+  const xst=niceStep(x1-x0,6), xd=decOf(xst);
+  for(let v=Math.ceil(x0/xst-1e-9)*xst;v<=x1+1e-9;v+=xst){
+    if(v<-1e-9) continue;
+    g.push(`<line x1="${px(v)}" y1="${base}" x2="${px(v)}" y2="${base+10}" stroke="${LS}" stroke-width="2"/>`);
+    g.push(txt(px(v),base+32,(Math.abs(v)<1e-9?0:v).toFixed(xd),28,CH));
+  }
+  g.push(sfrac(40,base+32,'X','n',24,CH,{ita:1,itb:1}));
+  /* 눈금 X : 띠 안 첫·끝 값은 teal 로, 겹치는 일반 눈금은 생략 */
+  const rowY=base+84, marks=[];
+  if(a<=b){ marks.push(a); if(b!==a) marks.push(b); }
+  const Xst=Math.max(1,Math.round(niceStep((x1-x0)*n,6)));
+  for(let X=Math.ceil(Math.max(0,x0*n)/Xst)*Xst;X<=Math.min(n,x1*n);X+=Xst){
+    if(marks.some(m=>Math.abs(px(m/n)-px(X/n))<70)) continue;
+    g.push(txt(px(X/n),rowY,X,26,FA));
+  }
+  if(a<=b&&b!==a&&px(b/n)-px(a/n)<70){             /* 너무 가까우면 양옆으로 벌린다 */
+    g.push(txt(px(a/n)-6,rowY,a,28,TE,{w:700,anchor:'end'}), txt(px(b/n)+6,rowY,b,28,TE,{w:700,anchor:'start'}));
+  }else marks.forEach(m=>g.push(txt(px(m/n),rowY,m,28,TE,{w:700})));
+  g.push(txt(40,rowY,'X',28,CH,{it:1}));
+  /* 고른 막대 값 */
+  if(sel!=null&&sel>=0){
+    const lab=`P(<tspan font-style="italic">X</tspan> = ${sel}) = ${pm[sel].toFixed(4)}`;
+    const cx=Math.min(L+pw-170,Math.max(L+170,px(sel/n)));
+    g.push(`<rect x="${cx-165}" y="${T+8}" width="330" height="50" rx="10" fill="${COL.bg}" fill-opacity=".9" stroke="${AM}" stroke-width="2"/>`);
+    g.push(`<text x="${cx}" y="${T+33}" text-anchor="middle" dominant-baseline="central" font-family="${SER}" font-size="30" font-weight="600" fill="${AM}" pointer-events="none">${lab}</text>`);
+  }
+  svg.innerHTML=g.join('');
+}
+function barPicker(svg,getN,getXr,onSel){
+  let down=false;
+  const pick=e=>{
+    const W=svg._w, L=112, R=26, pw=W-L-R, [x0,x1]=getXr(), n=getN(), p=svgPt(svg,e);
+    if(p.x<L-10||p.x>L+pw+10) return;
+    const v=x0+(p.x-L)/pw*(x1-x0); onSel(Math.max(0,Math.min(n,Math.round(v*n))));
+  };
+  svg.addEventListener('pointerdown',e=>{ down=true; svg.setPointerCapture(e.pointerId); pick(e); });
+  svg.addEventListener('pointermove',e=>{ if(down) pick(e); });
+  svg.addEventListener('pointerup',()=>down=false);
+  svg.addEventListener('pointercancel',()=>down=false);
+}
+
+/* ═══ 8. 끌기 막대 (n 고르기) ═══ */
+const NSTOPS=[10,30,50,100,200,500,1000,2000,5000,10000];
+function makeSlider(el,onIdx){
+  const N=NSTOPS.length, pct=i=>i/(N-1)*100;
+  el.innerHTML=`<div class="sin"><div class="strack"></div><div class="sfill"></div>`+
+    NSTOPS.map((v,i)=>`<div class="stop" style="left:${pct(i)}%"><i></i><span>${v}</span></div>`).join('')+
+    `<div class="sthumb"></div></div>`;
+  const sin=el.firstChild, fill=sin.querySelector('.sfill'), th=sin.querySelector('.sthumb'), stops=sin.querySelectorAll('.stop');
+  let down=false;
+  const pick=e=>{ const r=sin.getBoundingClientRect(); onIdx(Math.max(0,Math.min(N-1,Math.round((e.clientX-r.left)/r.width*(N-1))))); };
+  el.addEventListener('pointerdown',e=>{ down=true; el.setPointerCapture(e.pointerId); pick(e); });
+  el.addEventListener('pointermove',e=>{ if(down) pick(e); });
+  el.addEventListener('pointerup',()=>down=false);
+  el.addEventListener('pointercancel',()=>down=false);
+  return i=>{ fill.style.width=pct(i)+'%'; th.style.left=pct(i)+'%'; stops.forEach((s,k)=>s.classList.toggle('on',k===i)); };
+}
+
+/* 수식 줄 */
+function formulaLines(n,d,withGeneral){
+  const {pin,pout,a,b}=prob(n,d), den=6*d, L=[];
+  L.push(BP(ABS(`${F(Xv,nv)} − ${F(1,6)}`)+` &lt; ${HS[d]}`));
+  if(withGeneral) L.push(`<span class="dim">= ${BP(`${F(1,6)} − ${F(1,d)} &lt; ${F(Xv,nv)} &lt; ${F(1,6)} + ${F(1,d)}`)}</span>`);
+  if(withGeneral) L.push(`<span class="dim">= ${BP(`${coefN(d-6,den)} &lt; ${Xv} &lt; ${coefN(d+6,den)}`)}</span>`);
+  const lo=fr(n*(d-6),den), hi=fr(n*(d+6),den), body=`${lo} &lt; ${Xv} &lt; ${hi}`;
+  L.push(`= ${(lo+hi).includes('frac')?BP(body):`P(${body})`}`);
+  if(a<=b) L.push(`<span class="tl">= ${a===b?`P(${Xv} = ${a})`:`P(${a} ≤ ${Xv} ≤ ${b})`}</span>`);
+  L.push(`= ${ANS(fmtP(pin,pout))}`);
+  return L.map(s=>`<div class="fl m"><span>${s}</span></div>`).join('');
+}
+function gaugeHTML(label,pin,pout,on,attr){
+  return `<div class="gauge${on?' on':''}" ${attr||''}>
+    <div class="ghead m"><span>${label}</span><span class="${on?'am':''}">${fmtP(pin,pout)}</span></div>
+    <div class="gbar"><div class="gfill" style="width:${(pin*100).toFixed(2)}%"></div></div>
+    <div class="gscale m"><span>0</span><span>1</span></div></div>`;
+}
+
+/* ═══ 9. ② 이항분포로 계산 ═══ */
+const B1={i:0, sel:null}, XR1=[-.04,.54];
+const g1=fitSvg('g1',()=>drawDist(g1,NSTOPS[B1.i],10,XR1,B1.sel));
+const setThumb1=makeSlider(document.getElementById('sl1'),i=>{ if(i!==B1.i){ B1.i=i; B1.sel=null; paint1(); } });
+barPicker(g1,()=>NSTOPS[B1.i],()=>XR1,x=>{ B1.sel=x; paintTable(); drawDist(g1,NSTOPS[B1.i],10,XR1,B1.sel); });
+const TBN=[10,30,50], TBX=15;
+const tb1=document.getElementById('tb1');
+function paintTable(){
+  const n=NSTOPS[B1.i];
+  tb1.hidden=n>50;
+  if(n>50) return;
+  let h=`<table><tr><th class="diag"><i class="dx">X</i><i class="dn">n</i></th>`+
+    TBN.map(m=>`<th data-n="${m}" class="${m===n?'cur':''}">${m}</th>`).join('')+`</tr>`;
+  for(let x=0;x<=TBX;x++){
+    h+=`<tr><th class="xh" style="cursor:default">${x}</th>`;
+    TBN.forEach(m=>{
+      if(x>m){ h+=`<td class="empty"></td>`; return; }
+      const [a,b]=inRange(m,10), cl=[];
+      if(m===n) cl.push('c');
+      if(x>=a&&x<=b) cl.push('inb');
+      if(m===n&&x===B1.sel) cl.push('sel');
+      h+=`<td class="${cl.join(' ')}" data-n="${m}" data-x="${x}">${pmf(m)[x].toFixed(4)}</td>`;
+    });
+    h+='</tr>';
+  }
+  tb1.innerHTML=h+'</table>';
+}
+tb1.onclick=e=>{
+  const c=e.target.closest('[data-n]'); if(!c) return;
+  const i=NSTOPS.indexOf(+c.dataset.n);
+  B1.i=i; B1.sel=c.dataset.x!==undefined?+c.dataset.x:null; paint1();
+};
+function paint1(){
+  const n=NSTOPS[B1.i], r=prob(n,10);
+  setThumb1(B1.i);
+  document.getElementById('nv1').innerHTML=`<span class="m">${nv} = <span class="am">${n}</span></span>`;
+  document.getElementById('fl1').innerHTML=formulaLines(n,10,true);
+  document.getElementById('ga1').innerHTML=gaugeHTML(`${BP(ABS(`${F(Xv,nv)} − ${F(1,6)}`)+' &lt; 0.1')}`,r.pin,r.pout,true,'style="cursor:default"');
+  paintTable();
+  drawDist(g1,n,10,XR1,B1.sel);
+}
+
+/* ═══ 10. ③ h를 줄이면 ═══ */
+const B2={i:6, d:10, sel:null};
+const XR2={10:[-.04,.54],20:[C6-.2,C6+.2],100:[C6-.05,C6+.05]};
+const g2=fitSvg('g2',()=>drawDist(g2,NSTOPS[B2.i],B2.d,XR2[B2.d],B2.sel));
+const setThumb2=makeSlider(document.getElementById('sl2'),i=>{ if(i!==B2.i){ B2.i=i; B2.sel=null; paint2(); } });
+barPicker(g2,()=>NSTOPS[B2.i],()=>XR2[B2.d],x=>{ B2.sel=x; drawDist(g2,NSTOPS[B2.i],B2.d,XR2[B2.d],B2.sel); });
+const hbs=document.getElementById('hbs');
+hbs.innerHTML=[10,20,100].map(d=>`<button class="hb m" data-d="${d}">${hv} = ${HS[d]}</button>`).join('');
+function setH(d){ if(d===B2.d) return; B2.d=d; B2.sel=null; paint2(); }
+hbs.onclick=e=>{ const b=e.target.closest('[data-d]'); if(b) setH(+b.dataset.d); };
+document.getElementById('ga2').onclick=e=>{ const b=e.target.closest('[data-d]'); if(b) setH(+b.dataset.d); };
+function paint2(){
+  const n=NSTOPS[B2.i];
+  setThumb2(B2.i);
+  hbs.querySelectorAll('.hb').forEach(b=>b.classList.toggle('on',+b.dataset.d===B2.d));
+  document.getElementById('nv2').innerHTML=`<span class="m">${nv} = <span class="am">${n}</span></span>`;
+  document.getElementById('fl2').innerHTML=formulaLines(n,B2.d,false);
+  document.getElementById('ga2').innerHTML=[10,20,100].map(d=>{ const r=prob(n,d);
+    return gaugeHTML(`${hv} = ${HS[d]}`,r.pin,r.pout,d===B2.d,`data-d="${d}"`); }).join('');
+  drawDist(g2,n,B2.d,XR2[B2.d],B2.sel);
+}
+
+/* ═══ 11. ④ 정리 ═══ */
+const BL=[F(Xv,nv),pv,'1'];
+const blank=i=>`<span class="blank m" data-b="${i}"><span>${BL[i]}</span></span>`;
+document.getElementById('lawB').innerHTML=
+  `<div>${nv}번의 독립시행에서 사건 ${V('A')}가 일어나는 횟수를 확률변수 ${Xv}라 하고,</div>`+
+  `<div>한 번의 시행에서 사건 ${V('A')}가 일어날 수학적 확률을 ${pv}라 하면</div>`+
+  `<div>상대도수 ${blank(0)}은 ${nv}이 한없이 커질수록 ${blank(1)}에 가까워진다.</div>`+
+  `<div class="lawF">임의의 양수 ${hv}에 대하여 <span class="m">${BP(ABS(`${F(Xv,nv)} − ${pv}`)+` &lt; ${hv}`)}</span> 는 ${blank(2)}에 가까워진다.</div>`;
+const lawB=document.getElementById('lawB'), allBtn=document.getElementById('allBtn');
+function syncAll(){ const all=[...lawB.querySelectorAll('.blank')].every(b=>b.classList.contains('open'));
+  allBtn.textContent=all?'가리기':'모두 보기'; }
+lawB.onclick=e=>{ const b=e.target.closest('.blank'); if(b){ b.classList.toggle('open'); syncAll(); } };
+allBtn.onclick=()=>{ const open=allBtn.textContent==='모두 보기';
+  lawB.querySelectorAll('.blank').forEach(b=>b.classList.toggle('open',open)); syncAll(); };
+function mulberry(a){ return ()=>{ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+const DEMO=(()=>{ const rnd=mulberry(20260917), rs=[];
+  for(let k=0;k<5;k++){ const r=new Uint16Array(MAXN+1); for(let i=1;i<=MAXN;i++) r[i]=r[i-1]+(rnd()<1/6?1:0); rs.push(r); }
+  return rs; })();
+const g3=fitSvg('g3',()=>draw3());
+function draw3(){
+  const mine=E.n>=100;
+  document.getElementById('miniH').innerHTML=
+    `<span class="m">주사위 1의 눈 &nbsp;${pv} = ${F(1,6)}</span>&nbsp;&nbsp;&nbsp;<span style="color:var(--chalk-faint)">${mine?'①에서 던진 결과':'5명이 각각 10000번 던진 예'}</span>`;
+  drawRuns(g3,mine?E.runs:DEMO,mine?E.n:MAXN,mine?niceD(E.n):MAXN,{band:false,T:24,B:96,L:116,y0:.05,y1:.3,ys:.05});
+}
+
+/* ═══ 12. 탭 · 키보드 · 전체화면 ═══ */
+let tab=0;
+const tabs=document.querySelectorAll('.tab'), panes=document.querySelectorAll('.pane');
+function setTab(t){
+  tab=Math.max(0,Math.min(3,t));
+  tabs.forEach((b,i)=>b.classList.toggle('on',i===tab));
+  panes.forEach((p,i)=>p.classList.toggle('on',i===tab));
+  if(tab===3) draw3();
+}
+document.getElementById('tabs').onclick=e=>{ const b=e.target.closest('[data-t]'); if(b) setTab(+b.dataset.t); };
+/* 초기화 : 지금 보고 있는 탭만 처음 상태로 */
+function resetTab(){
+  if(tab===0){ E.crowd=false; E.band=false;
+    document.getElementById('crowdBtn').classList.remove('on'); document.getElementById('bandBtn').classList.remove('on');
+    clear0(); }
+  else if(tab===1){ B1.i=0; B1.sel=null; paint1(); }
+  else if(tab===2){ B2.i=6; B2.d=10; B2.sel=null; paint2(); }
+  else { lawB.querySelectorAll('.blank').forEach(b=>b.classList.remove('open')); syncAll(); }
+}
+document.getElementById('resetBtn').onclick=resetTab;
+const fsBtn=document.getElementById('fsBtn');
+fsBtn.onclick=()=>{
+  const d=document, el=d.documentElement;
+  if(d.fullscreenElement||d.webkitFullscreenElement) (d.exitFullscreen||d.webkitExitFullscreen).call(d);
+  else { const r=el.requestFullscreen||el.webkitRequestFullscreen; if(r) Promise.resolve(r.call(el)).catch(()=>{}); }
+};
+const syncFs=()=>fsBtn.textContent=(document.fullscreenElement||document.webkitFullscreenElement)?'창으로':'전체화면';
+document.addEventListener('fullscreenchange',syncFs); document.addEventListener('webkitfullscreenchange',syncFs);
+addEventListener('keydown',e=>{
+  const k=e.key;
+  if(k>='1'&&k<='4') setTab(+k-1);
+  else if(k==='ArrowRight') setTab(tab+1);
+  else if(k==='ArrowLeft') setTab(tab-1);
+  else if(k==='f'||k==='F') fsBtn.click();
+  else if(k==='r'||k==='R') resetTab();
+  else if(k===' '){ e.preventDefault(); if(tab===0) throwN(10); }
+  else if(k==='ArrowUp'||k==='ArrowDown'){
+    e.preventDefault(); const dlt=k==='ArrowUp'?1:-1;
+    if(tab===1){ B1.i=Math.max(0,Math.min(9,B1.i+dlt)); B1.sel=null; paint1(); }
+    if(tab===2){ B2.i=Math.max(0,Math.min(9,B2.i+dlt)); B2.sel=null; paint2(); }
+  }
+});
+
+/* ═══ 시작 ═══ */
+Object.assign(COL,{am:CSS('--amber'),te:CSS('--teal'),vi:CSS('--violet'),co:CSS('--coral'),ch:CSS('--chalk'),
+  fa:CSS('--chalk-faint'),ls:CSS('--line-strong'),ln:CSS('--line'),p2:CSS('--panel-2'),bg:CSS('--bg')});
+drawDie(1); paintStats(); draw0(); paint1(); paint2();
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{ draw0(); paint1(); paint2(); if(tab===3) draw3(); });
+</script>
+</body>
+</html>
