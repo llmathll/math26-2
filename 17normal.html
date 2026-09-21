@@ -1,0 +1,638 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>정규분포</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400..700;1,400..700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-deep:#0a1420; --bg:#0e1b2b; --panel:#16283e; --panel-2:#1d3350;
+  --line:rgba(214,229,245,.16); --line-strong:rgba(214,229,245,.34);
+  --chalk:#eaf1f8; --chalk-soft:#b9cadd; --chalk-faint:#7d94ad;
+  --amber:#f5b642; --teal:#49d1c0; --violet:#9d8cf5; --coral:#ff7d6a;
+  --f-en:'STIX Two Text'; --f-kr:'Noto Sans KR';
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--bg-deep);
+  overscroll-behavior:none;touch-action:manipulation;-webkit-text-size-adjust:100%;
+  -webkit-tap-highlight-color:transparent}
+body{color:var(--chalk);font-family:var(--f-en),var(--f-kr),serif;
+  user-select:none;-webkit-user-select:none}
+button{font:inherit;color:inherit}
+.viewport{position:fixed;inset:0}
+.stage{position:absolute;top:0;left:0;width:1600px;height:900px;transform-origin:0 0;
+  background:var(--bg);overflow:hidden}
+.sheet{height:100%;display:flex;flex-direction:column;gap:12px;padding:12px 22px 18px}
+
+/* ── 머리말 ── */
+.head{flex:0 0 72px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line);padding-bottom:10px}
+.title{font-family:var(--f-kr);font-size:36px;font-weight:700;color:var(--amber);white-space:nowrap}
+.tabs{flex:1;display:flex;gap:10px;margin:0 6px}
+.tab{flex:1 1 0;font-family:var(--f-en),var(--f-kr);font-size:28px;font-weight:700;color:var(--chalk-soft);
+  background:transparent;border:2px solid var(--line-strong);border-radius:12px;padding:7px 8px;
+  white-space:nowrap;cursor:pointer}
+.tab.on{background:rgba(245,182,66,.12);border-color:var(--amber);color:var(--amber)}
+.fbtn{font-family:var(--f-kr);font-size:24px;font-weight:700;cursor:pointer;background:var(--panel-2);
+  border:1.5px solid var(--line-strong);border-radius:10px;padding:10px 18px;white-space:nowrap}
+.v{font-style:italic}
+
+/* ── 본문 ── */
+.body{flex:1 1 auto;min-height:0;position:relative}
+.pane{position:absolute;inset:0;display:none;gap:14px}
+.pane.on{display:flex}
+.col{flex-direction:column}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px}
+.gcard{position:relative;flex:1 1 auto;min-width:0;min-height:0}
+.gcard svg{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+.gcard svg:active{cursor:grabbing}
+.side{flex:0 0 auto;width:516px;display:flex;flex-direction:column;gap:12px;min-height:0}
+.row2{flex:1 1 auto;min-height:0;display:flex;gap:14px}
+
+/* ── 수식 ── */
+.m{font-family:var(--f-en),var(--f-kr),serif;font-variant-numeric:tabular-nums;white-space:nowrap;line-height:1.45}
+.frac{display:inline-flex;flex-direction:column;align-items:stretch;text-align:center;
+  vertical-align:middle;margin:0 .14em;transform:translateY(-.08em);
+  line-height:1.06;font-size:.84em;white-space:nowrap}
+.frac>.num{padding:0 .2em .07em;border-bottom:.058em solid currentColor}
+.frac>.den{padding:.09em .2em 0}
+.bp{display:inline-block;transform:scaleY(1.5);margin:0 .03em;transform-origin:50% 55%}
+.rt{display:inline-block;border-top:.055em solid currentColor;padding:0 .1em 0 .04em;margin-left:-.02em}
+.ex{font-size:.6em;display:inline-block;vertical-align:baseline;transform:translateY(-.72em);margin:0 .02em}
+.ex .frac{font-size:.9em}
+.dim{color:var(--chalk-soft)}
+.tl{color:var(--teal)}
+.am{color:var(--amber)}
+.vi{color:var(--violet)}
+
+/* ── 조절줄 ── */
+.ctrl{flex:0 0 96px;display:flex;align-items:center;gap:16px;padding:0 20px}
+.nval{font-size:48px;min-width:226px;white-space:nowrap}
+.slider{position:relative;flex:1 1 auto;height:92px;touch-action:none;cursor:pointer}
+.sin{position:absolute;left:34px;right:34px;top:0;bottom:0}
+.strack,.sfill{position:absolute;left:0;top:24px;height:10px;border-radius:5px}
+.strack{right:0;background:rgba(214,229,245,.16)}
+.sfill{background:var(--amber);width:0}
+.stop{position:absolute;top:17px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;pointer-events:none}
+.stop i{width:4px;height:24px;background:rgba(214,229,245,.4);border-radius:2px}
+.stop span{font-size:28px;color:var(--chalk-faint);margin-top:9px;line-height:1}
+.stop.on span{color:var(--amber);font-weight:700}
+.sthumb{position:absolute;top:29px;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;
+  background:var(--amber);box-shadow:0 0 0 7px rgba(245,182,66,.25);pointer-events:none}
+.ctrl .lab{font-family:var(--f-kr);font-size:24px;color:var(--chalk-faint);flex:0 0 auto}
+
+/* ── 옆 칸 ── */
+.fbox{padding:16px 18px;display:flex;flex-direction:column;justify-content:center;gap:10px;flex:0 0 auto}
+.fgen{font-size:30px;color:var(--chalk-faint)}
+.fnow{font-size:36px}
+.vals{flex:1 1 auto;min-height:0;padding:12px 20px;display:flex;flex-direction:column;justify-content:center;gap:8px}
+.vrow{display:flex;align-items:center;gap:12px;min-height:60px;white-space:nowrap}
+.vk{font-family:var(--f-kr);font-size:25px;color:var(--chalk-faint);flex:0 0 auto;width:148px}
+.vv{font-size:38px}
+.note{font-family:var(--f-kr);font-size:27px;line-height:1.42;color:var(--chalk-soft);word-break:keep-all}
+.note b{color:var(--amber);font-weight:700}
+.note i{color:var(--teal);font-style:normal;font-weight:700}
+.bgrid{flex:0 0 auto;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tb{font-family:var(--f-en),var(--f-kr);font-size:29px;font-weight:700;padding:14px 0;border-radius:12px;
+  border:2px solid var(--violet);background:rgba(157,140,245,.14);color:var(--chalk);cursor:pointer;white-space:nowrap}
+.tb.wide{grid-column:span 2}
+.tg{font-family:var(--f-en),var(--f-kr);font-size:27px;font-weight:700;padding:12px 0;border-radius:12px;
+  border:2px solid var(--line-strong);background:transparent;color:var(--chalk-soft);cursor:pointer;white-space:nowrap}
+.tg.on{border-color:var(--teal);color:var(--teal);background:rgba(73,209,192,.12)}
+.tb:disabled,.tg:disabled{opacity:.35;cursor:default}
+.tb:active,.tg:active,.tab:active,.fbtn:active{transform:scale(.97)}
+
+/* ── ④ 정리 ── */
+.law{flex:1 1 auto;min-width:0;padding:18px 28px 20px;border-left:8px solid var(--amber);display:flex;flex-direction:column}
+.lawT{font-family:var(--f-kr);font-size:32px;font-weight:700;color:var(--amber);display:flex;justify-content:space-between;align-items:center;gap:16px}
+.lawH{font-family:var(--f-kr);font-size:31px;color:var(--chalk-soft);margin:10px 0 2px}
+.lawB{font-family:var(--f-kr);font-size:33px;line-height:1.5;flex:1 1 auto;display:flex;flex-direction:column;justify-content:space-evenly}
+.lawB .it{display:flex;gap:10px;align-items:flex-start;word-break:keep-all}
+.lawB .no{color:var(--amber);font-weight:700;flex:0 0 auto}
+.lawB .m{font-size:35px}
+.blank{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;min-width:84px;min-height:50px;
+  margin:0 .1em;border:2.5px dashed var(--violet);border-radius:10px;background:rgba(157,140,245,.12);cursor:pointer;padding:0 10px}
+.blank>span{visibility:hidden}
+.blank.open{border-style:solid;border-color:var(--amber);background:rgba(245,182,66,.12);color:var(--amber)}
+.blank.open>span{visibility:visible}
+#p3 .side{width:540px}
+button:focus{outline:none}
+button:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="viewport"><div class="stage" id="stage"><div class="sheet">
+
+  <header class="head">
+    <div class="title">정규분포</div>
+    <nav class="tabs" id="tabs">
+      <button class="tab on" data-t="0">① <span class="v">m</span> 바꾸기</button>
+      <button class="tab" data-t="1">② <span class="v">σ</span> 바꾸기</button>
+      <button class="tab" data-t="2">③ 함께 바꾸기</button>
+      <button class="tab" data-t="3">④ 정리</button>
+    </nav>
+    <button class="fbtn" id="resetBtn">초기화</button>
+    <button class="fbtn" id="fsBtn">전체화면</button>
+  </header>
+
+  <main class="body">
+
+    <!-- ① m 바꾸기 -->
+    <section class="pane on col" id="p0">
+      <div class="card ctrl">
+        <div class="nval" id="nv0"></div>
+        <div class="slider" id="sl0"></div>
+        <div class="lab" id="lb0"></div>
+      </div>
+      <div class="row2">
+        <div class="card gcard" id="gc0"><svg id="g0"></svg></div>
+        <aside class="side">
+          <div class="card fbox" id="fb0"></div>
+          <div class="card vals" id="va0"></div>
+          <div class="bgrid">
+            <button class="tb wide" id="fig1Btn">교과서 [그림 1]</button>
+            <button class="tg" id="keep0">고정</button>
+            <button class="tg" id="clr0">잔상 지우기</button>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ② σ 바꾸기 -->
+    <section class="pane col" id="p1">
+      <div class="card ctrl">
+        <div class="nval" id="nv1"></div>
+        <div class="slider" id="sl1"></div>
+        <div class="lab" id="lb1"></div>
+      </div>
+      <div class="row2">
+        <div class="card gcard" id="gc1"><svg id="g1"></svg></div>
+        <aside class="side">
+          <div class="card fbox" id="fb1"></div>
+          <div class="card vals" id="va1"></div>
+          <div class="bgrid">
+            <button class="tb wide" id="fig2Btn">교과서 [그림 2]</button>
+            <button class="tg" id="sig1">m ± σ 보기</button>
+            <button class="tg" id="area1">넓이 1</button>
+            <button class="tg" id="keep1">고정</button>
+            <button class="tg" id="clr1">잔상 지우기</button>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ③ 함께 바꾸기 -->
+    <section class="pane col" id="p2">
+      <div class="card ctrl" style="flex:0 0 88px">
+        <div class="nval" id="nv2m"></div>
+        <div class="slider" id="sl2m"></div>
+      </div>
+      <div class="card ctrl" style="flex:0 0 88px">
+        <div class="nval" id="nv2s"></div>
+        <div class="slider" id="sl2s"></div>
+      </div>
+      <div class="row2">
+        <div class="card gcard" id="gc2"><svg id="g2"></svg></div>
+        <aside class="side">
+          <div class="card fbox" id="fb2"></div>
+          <div class="card vals" id="va2"></div>
+          <div class="bgrid">
+            <button class="tg" id="sig2">m ± σ 보기</button>
+            <button class="tg" id="area2">넓이 1</button>
+            <button class="tb" id="keep2">고정</button>
+            <button class="tb" id="clr2">잔상 지우기</button>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ④ 정리 -->
+    <section class="pane" id="p3">
+      <div class="card law">
+        <div class="lawT"><span>정규분포의 확률밀도함수의 그래프의 성질</span>
+          <button class="tg" id="allBtn" style="padding:8px 20px">모두 보기</button></div>
+        <div class="lawH" id="lawH"></div>
+        <div class="lawB" id="lawB"></div>
+      </div>
+      <aside class="side">
+        <div class="card gcard" id="gc3"><svg id="g3"></svg></div>
+      </aside>
+    </section>
+
+  </main>
+</div></div></div>
+
+<script>
+'use strict';
+/* ═══ 1. 스테이지 스케일링 ═══ */
+const STAGE_W=1600, STAGE_H=900, stage=document.getElementById('stage');
+function fitStage(){
+  const vv=window.visualViewport;
+  const w=vv?vv.width:innerWidth, h=vv?vv.height:innerHeight;
+  const s=Math.min(w/STAGE_W,h/STAGE_H);
+  stage.style.transform=`translate(${Math.round((w-STAGE_W*s)/2)}px,${Math.round((h-STAGE_H*s)/2)}px) scale(${s})`;
+}
+const fitSoon=()=>[0,60,300,700].forEach(t=>setTimeout(fitStage,t));
+addEventListener('resize',fitStage); addEventListener('orientationchange',fitSoon);
+if(window.visualViewport) visualViewport.addEventListener('resize',fitStage);
+document.addEventListener('fullscreenchange',fitSoon);
+fitSoon();
+
+/* ═══ 2. 수식 조각 ═══ */
+const F=(a,b)=>`<span class="frac"><span class="num">${a}</span><span class="den">${b}</span></span>`;
+const V=s=>`<span class="v">${s}</span>`;
+const xv=V('x'), mv=V('m'), sv=V('σ'), ev=V('e'), fv=`${V('f')}(${xv})`, Xv=V('X');
+const BP=s=>`P<span class="bp">(</span>${s}<span class="bp">)</span>`;
+const RT=s=>`√<span class="rt">${s}</span>`;
+const EX=s=>`<span class="ex">${s}</span>`;
+const SQ=s=>`${s}<span class="ex">2</span>`;
+/* 확률밀도함수 식 : m, s 를 주면 그 값을 넣은 식, 없으면 문자식 */
+function pdf(m,s,cls){
+  const hi=v=>`<span class="${cls}">${nf(v)}</span>`;
+  const M=m===null?mv:hi(m), S=s===null?sv:hi(s);
+  const sub=m===null?`(${xv} − ${mv})`:(m<0?`(${xv} + ${hi(-m)})`:`(${xv} − ${M})`);
+  return `${fv} = ${F('1',RT('2π')+' '+S)} ${ev}${EX('−'+F(SQ(sub),'2·'+(s===null?SQ(sv):SQ(S))))}`;
+}
+
+/* ═══ 3. 정규분포 ═══ */
+const SQ2PI=Math.sqrt(2*Math.PI);
+const peak=s=>1/(SQ2PI*s);
+const npdf=(x,m,s)=>Math.exp(-(x-m)*(x-m)/(2*s*s))/(SQ2PI*s);
+const f4=v=>v.toFixed(4);
+const f1=v=>v.toFixed(1);
+const nf=v=>(Number.isInteger(v)?String(v):v.toFixed(1)).replace('-','−');  /* 정수는 정수로, 음수는 − */
+
+/* ═══ 4. SVG 도구 ═══ */
+const SER="'STIX Two Text','Noto Sans KR',serif", KR="'Noto Sans KR',sans-serif";
+const CSS=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const COL={};
+function txt(x,y,s,size,fill,o){
+  o=o||{};
+  return `<text x="${x}" y="${y}" text-anchor="${o.anchor||'middle'}" dominant-baseline="central"
+    font-family="${o.kr?KR:SER}" font-size="${size}" font-weight="${o.w||500}" fill="${fill}"
+    ${o.it?'font-style="italic"':''} pointer-events="none">${s}</text>`;
+}
+function sfrac(x,y,a,b,size,fill,o){
+  o=o||{}; const w=o.fw||Math.max(String(a).length,String(b).length)*size*.56+10;
+  return txt(x,y-size*.58,a,size,fill,{it:o.ita,w:o.w||600})+txt(x,y+size*.62,b,size,fill,{it:o.itb,w:o.w||600})+
+    `<line x1="${x-w/2}" y1="${y}" x2="${x+w/2}" y2="${y}" stroke="${fill}" stroke-width="2.2"/>`;
+}
+function fitSvg(id,cb){
+  const svg=document.getElementById(id), wrap=svg.parentElement;
+  new ResizeObserver(()=>{
+    const w=Math.round(wrap.clientWidth), h=Math.round(wrap.clientHeight);
+    if(!w||!h||(w===svg._w&&h===svg._h)) return;
+    svg._w=w; svg._h=h; svg.setAttribute('viewBox',`0 0 ${w} ${h}`); cb();
+  }).observe(wrap);
+  return svg;
+}
+function svgPt(svg,e){
+  const p=svg.createSVGPoint(); p.x=e.clientX; p.y=e.clientY;
+  return p.matrixTransform(svg.getScreenCTM().inverse());
+}
+
+/* ═══ 5. 정규분포 곡선 그리기 (①②③④ 공용) ═══ */
+const X0=-11, X1=11;                       /* 가로축 범위 : ①②③ 공통 */
+const GEO={L:96,R:44,T:56,B:104};
+function geo(svg,x0,x1){
+  const W=svg._w,H=svg._h, a=x0===undefined?X0:x0, b=x1===undefined?X1:x1;
+  const pw=W-GEO.L-GEO.R, ph=H-GEO.T-GEO.B, base=GEO.T+ph;
+  return {W,H,pw,ph,base,x0:a,x1:b,px:v=>GEO.L+(v-a)/(b-a)*pw};
+}
+const decOf=st=>Math.max(0,-Math.floor(Math.log10(st)+1e-9));
+/*  o = { cur:{m,s}, keeps:[{m,s}], ymax, label:'m'|'s'|'ms'|null,
+         axis:true, peakMark:false, sigma:false, area:false, small:false } */
+function drawCurves(svg,o){
+  const W=svg._w; if(!W) return;
+  const G=geo(svg,o.x0,o.x1), {pw,ph,base,px,x0:XA,x1:XB}=G, YM=o.ymax;
+  const py=v=>base-v/YM*ph;
+  const AM=COL.am,TE=COL.te,FA=COL.fa,LS=COL.ls,LN=COL.ln,CH=COL.ch,VI=COL.vi;
+  const g=[`<defs><clipPath id="${svg.id}c"><rect x="${GEO.L-1}" y="${GEO.T-40}" width="${pw+2}" height="${ph+41}"/></clipPath></defs>`];
+  const path=(m,s)=>{
+    let d='', N=520;
+    for(let i=0;i<=N;i++){ const x=XA+(XB-XA)*i/N, y=npdf(x,m,s);
+      d+=(i?'L':'M')+px(x).toFixed(1)+','+py(Math.min(y,YM*1.3)).toFixed(1); }
+    return d;
+  };
+  /* 가로 눈금선 */
+  const ys=YM>.5?.2:YM>.3?.1:.05, yd=decOf(ys);
+  for(let v=ys;v<=YM+1e-9;v+=ys){
+    g.push(`<line x1="${GEO.L}" y1="${py(v)}" x2="${GEO.L+pw}" y2="${py(v)}" stroke="${LN}" stroke-width="1.2"/>`);
+    g.push(txt(GEO.L-14,py(v),v.toFixed(yd),o.small?22:26,FA,{anchor:'end'}));
+  }
+  /* 세로축 · f(x) */
+  g.push(`<line x1="${GEO.L}" y1="${GEO.T-34}" x2="${GEO.L}" y2="${base}" stroke="${LS}" stroke-width="2.5"/>`);
+  g.push(`<path d="M${GEO.L},${GEO.T-46} l-7,14 l14,0 Z" fill="${LS}"/>`);
+  g.push(`<text x="${GEO.L+16}" y="${GEO.T-34}" dominant-baseline="central" font-family="${SER}" font-size="${o.small?26:30}" font-style="italic" fill="${CH}" pointer-events="none">f(x)</text>`);
+  /* 넓이 채우기 (이름표는 대칭축보다 나중에 그린다) */
+  let areaLab='';
+  if(o.area){
+    g.push(`<path d="${path(o.cur.m,o.cur.s)}L${px(XB)},${base}L${px(XA)},${base}Z" fill="${TE}" fill-opacity=".18" clip-path="url(#${svg.id}c)"/>`);
+    const hy=py(peak(o.cur.s)*.36), hx=px(o.cur.m);
+    areaLab=`<rect x="${hx-94}" y="${hy-26}" width="188" height="52" rx="12" fill="${COL.bg}" fill-opacity=".9" stroke="${TE}" stroke-width="1.5"/>`
+      +txt(hx,hy,'넓이 = 1',32,TE,{kr:1,w:700});
+  }
+  /* 고정된 잔상 곡선 */
+  const KC=['#8ec5ff','#9d8cf5','#ff7d6a','#7fd48a'], mlabs=[], leg=[];
+  (o.keeps||[]).forEach((c,i)=>{
+    const col=KC[i%KC.length];
+    g.push(`<path d="${path(c.m,c.s)}" fill="none" stroke="${col}" stroke-width="3.4" stroke-opacity=".92" clip-path="url(#${svg.id}c)"/>`);
+    if(!o.label) return;
+    const lx=px(c.m), ly=py(peak(c.s));
+    g.push(`<line x1="${lx}" y1="${ly}" x2="${lx}" y2="${base}" stroke="${col}" stroke-width="2" stroke-dasharray="8 7" stroke-opacity=".75" clip-path="url(#${svg.id}c)"/>`);
+    if(o.label==='m') mlabs.push({x:lx,v:c.m,col});
+    if(o.label==='ms') leg.push({col,m:c.m,s:c.s});
+    if(o.label==='s') g.push(`<rect x="${lx+30}" y="${ly-22}" width="92" height="42" rx="10" fill="${COL.bg}" stroke="${col}" stroke-width="2"/>`,
+      `<text x="${lx+76}" y="${ly-1}" text-anchor="middle" dominant-baseline="central" font-family="${SER}" font-size="27" font-weight="600" fill="${col}" pointer-events="none"><tspan font-style="italic">σ</tspan>=${nf(c.s)}</text>`);
+  });
+  /* m ± σ */
+  const cm=o.cur.m, cs=o.cur.s, pk=peak(cs);
+  if(o.sigma){
+    [cm-cs,cm+cs].forEach(v=>{
+      const yy=py(npdf(v,cm,cs));
+      g.push(`<line x1="${px(v)}" y1="${yy}" x2="${px(v)}" y2="${base}" stroke="${TE}" stroke-width="2.6" stroke-dasharray="9 7" clip-path="url(#${svg.id}c)"/>`);
+      g.push(`<circle cx="${px(v)}" cy="${yy}" r="8" fill="${TE}" clip-path="url(#${svg.id}c)"/>`);
+    });
+    const ay=py(pk*.78), xa=px(cm), xb=px(cm+cs);
+    g.push(`<line x1="${xa}" y1="${ay}" x2="${xb}" y2="${ay}" stroke="${TE}" stroke-width="2.6"/>`);
+    g.push(`<path d="M${xb},${ay} l-13,-7 l0,14 Z" fill="${TE}"/>`,`<path d="M${xa},${ay} l13,-7 l0,14 Z" fill="${TE}"/>`);
+    g.push(txt((xa+xb)/2,ay-30,'σ',30,TE,{it:1,w:700}));
+  }
+  /* 현재 곡선 */
+  g.push(`<path d="${path(cm,cs)}" fill="none" stroke="${AM}" stroke-width="5" stroke-linejoin="round" clip-path="url(#${svg.id}c)"/>`);
+  /* 현재 곡선의 σ 이름표 (② 처럼 σ 로 구분할 때) */
+  if(o.label==='s'){
+    const lx=px(cm), ly=py(pk);
+    g.push(`<rect x="${lx+30}" y="${ly-22}" width="92" height="42" rx="10" fill="${COL.bg}" stroke="${AM}" stroke-width="2.5"/>`,
+      `<text x="${lx+76}" y="${ly-1}" text-anchor="middle" dominant-baseline="central" font-family="${SER}" font-size="27" font-weight="700" fill="${AM}" pointer-events="none"><tspan font-style="italic">σ</tspan>=${nf(cs)}</text>`);
+  }
+  /* 대칭축 */
+  const mx=px(cm), my=py(pk);
+  g.push(`<line x1="${mx}" y1="${Math.max(GEO.T-30,my-26)}" x2="${mx}" y2="${base}" stroke="${AM}" stroke-width="3" stroke-dasharray="13 9" clip-path="url(#${svg.id}c)"/>`);
+  if(areaLab) g.push(areaLab);
+  /* 최고점 */
+  if(o.peakMark){
+    g.push(`<line x1="${GEO.L}" y1="${my}" x2="${mx}" y2="${my}" stroke="${AM}" stroke-width="2" stroke-dasharray="9 8" stroke-opacity=".8"/>`);
+    g.push(`<circle cx="${mx}" cy="${my}" r="9.5" fill="${AM}" stroke="${COL.bg}" stroke-width="3"/>`);
+    const fm=o.peakLabel==='formula';
+    if(o.peakLabel!=='none'){
+    const bw=fm?150:168, bh=fm?76:42, bx=Math.min(GEO.L+pw-bw-6,mx+18);
+    g.push(`<rect x="${bx}" y="${my-bh-6}" width="${bw}" height="${bh}" rx="10" fill="${COL.bg}" fill-opacity=".92" stroke="${AM}" stroke-width="2"/>`);
+    g.push(fm?sfrac(bx+bw/2,my-bh/2-6,'1','√<tspan text-decoration="overline">2π</tspan> <tspan font-style="italic">σ</tspan>',26,AM,{fw:104})
+             :txt(bx+bw/2,my-25,f4(pk),30,AM,{w:700}));
+    }
+  }
+  /* 가로축 */
+  g.push(`<line x1="${GEO.L}" y1="${base}" x2="${GEO.L+pw+18}" y2="${base}" stroke="${LS}" stroke-width="2.5"/>`);
+  g.push(`<path d="M${GEO.L+pw+30},${base} l-14,-7 l0,14 Z" fill="${LS}"/>`);
+  g.push(txt(GEO.L+pw+26,base+36,'x',o.small?26:30,CH,{it:1}));
+  const xst=o.xstep||2;
+  for(let v=Math.ceil(XA/xst)*xst;v<=XB+1e-9;v+=xst){
+    if(Math.abs(px(v)-mx)<46) continue;
+    g.push(`<line x1="${px(v)}" y1="${base}" x2="${px(v)}" y2="${base+9}" stroke="${LS}" stroke-width="2"/>`);
+    if(!(o.keeps||[]).some(c=>o.label==='m'&&Math.abs(px(c.m)-px(v))<46))
+      g.push(txt(px(v),base+32,v===0?'O':String(v).replace('-','−'),o.small?24:27,FA));
+  }
+  /* 대칭축 이름표 : 겹치면 아래 줄로 내린다 */
+  mlabs.push({x:mx,v:cm,col:AM,cur:1});
+  const rows=[];
+  mlabs.sort((a,b)=>a.x-b.x).forEach(L=>{
+    let r=0; while(rows[r]!==undefined&&L.x-rows[r]<108) r++;
+    rows[r]=L.x; L.row=r;
+  });
+  mlabs.forEach(L=>{
+    const w=L.cur?106:92, y=base+10+L.row*48;
+    g.push(`<rect x="${L.x-w/2}" y="${y}" width="${w}" height="${L.cur?44:40}" rx="10" fill="${COL.bg}" stroke="${L.col}" stroke-width="${L.cur?2.5:2}"/>`);
+    g.push(`<text x="${L.x}" y="${y+(L.cur?23:21)}" text-anchor="middle" dominant-baseline="central" font-family="${SER}" font-size="${L.cur?29:27}" font-weight="${L.cur?700:600}" fill="${L.col}" pointer-events="none"><tspan font-style="italic">m</tspan>=${nf(L.v)}</text>`);
+  });
+  if(o.sigma){
+    const sy=base+10+(Math.max(...mlabs.map(L=>L.row))+1)*48+22;
+    [[cm-cs,'−'],[cm+cs,'+']].forEach(([v,sg])=>{
+      if(Math.abs(px(v)-mx)<86) return;
+      g.push(`<text x="${px(v)}" y="${sy}" text-anchor="middle" dominant-baseline="central" font-family="${SER}" font-size="27" font-weight="700" fill="${TE}" pointer-events="none"><tspan font-style="italic">m</tspan>${sg}<tspan font-style="italic">σ</tspan></text>`);
+    });
+  }
+  if(o.label==='ms'&&leg.length){
+    const rows=[{col:AM,m:cm,s:cs,cur:1}].concat(leg), lw=252, lh=16+rows.length*40;
+    g.push(`<rect x="${GEO.L+14}" y="${GEO.T+8}" width="${lw}" height="${lh}" rx="12" fill="${COL.bg}" fill-opacity=".9" stroke="${LS}" stroke-width="1.5"/>`);
+    rows.forEach((r,i)=>{
+      const y=GEO.T+8+28+i*40;
+      g.push(`<line x1="${GEO.L+30}" y1="${y}" x2="${GEO.L+72}" y2="${y}" stroke="${r.col}" stroke-width="${r.cur?5:3.4}"/>`);
+      g.push(`<text x="${GEO.L+86}" y="${y}" dominant-baseline="central" font-family="${SER}" font-size="27" font-weight="${r.cur?700:600}" fill="${r.col}" pointer-events="none"><tspan font-style="italic">m</tspan>=${nf(r.m)}, <tspan font-style="italic">σ</tspan>=${nf(r.s)}</text>`);
+    });
+  }
+  svg.innerHTML=g.join('');
+}
+
+/* ═══ 6. 끌기 막대 (연속값) ═══ */
+function makeRange(el,min,max,step,ticks,fmt,onVal){
+  const pct=v=>(v-min)/(max-min)*100;
+  el.innerHTML=`<div class="sin"><div class="strack"></div><div class="sfill"></div>`+
+    ticks.map(v=>`<div class="stop" style="left:${pct(v)}%"><i></i><span>${fmt(v)}</span></div>`).join('')+
+    `<div class="sthumb"></div></div>`;
+  const sin=el.firstChild, fill=sin.querySelector('.sfill'), th=sin.querySelector('.sthumb'), stops=sin.querySelectorAll('.stop');
+  let down=false;
+  const pick=e=>{
+    const r=sin.getBoundingClientRect();
+    let v=min+(e.clientX-r.left)/r.width*(max-min);
+    v=Math.max(min,Math.min(max,Math.round(v/step)*step));
+    onVal(+v.toFixed(4));
+  };
+  el.addEventListener('pointerdown',e=>{ down=true; el.setPointerCapture(e.pointerId); pick(e); });
+  el.addEventListener('pointermove',e=>{ if(down) pick(e); });
+  el.addEventListener('pointerup',()=>down=false);
+  el.addEventListener('pointercancel',()=>down=false);
+  return v=>{ fill.style.width=pct(v)+'%'; th.style.left=pct(v)+'%';
+    stops.forEach((s,k)=>s.classList.toggle('on',Math.abs(ticks[k]-v)<1e-9)); };
+}
+/* 그래프를 직접 끌기 : 가로 → m, 세로 → σ */
+function graphDrag(svg,opt){
+  let down=false;
+  const move=e=>{
+    const G=geo(svg); if(!G.pw) return;
+    const p=svgPt(svg,e);
+    if(opt.m){
+      let m=X0+(p.x-GEO.L)/G.pw*(X1-X0);
+      m=Math.max(MLIM[0],Math.min(MLIM[1],Math.round(m/MSTEP)*MSTEP));
+      opt.m(+m.toFixed(2));
+    }
+    if(opt.s){
+      const y=Math.max(1e-6,(G.base-p.y)/G.ph*opt.ymax());
+      let s=1/(SQ2PI*y);
+      s=Math.max(SLIM[0],Math.min(SLIM[1],Math.round(s/SSTEP)*SSTEP));
+      opt.s(+s.toFixed(2));
+    }
+  };
+  svg.addEventListener('pointerdown',e=>{ down=true; svg.setPointerCapture(e.pointerId); move(e); });
+  svg.addEventListener('pointermove',e=>{ if(down) move(e); });
+  svg.addEventListener('pointerup',()=>down=false);
+  svg.addEventListener('pointercancel',()=>down=false);
+}
+const MLIM=[-7,7], MSTEP=.5, MTICK=[-6,-4,-2,0,2,4,6];
+const SLIM=[1,4], SSTEP=.1, STICK=[1,1.5,2,2.5,3,3.5,4];
+const YM_M=.28, YM_S=.46;          /* 세로축 최댓값 : ① σ 고정 / ②③ σ 변화 */
+
+/* 옆 칸 공통 조각 */
+function fbox(m,s){
+  return `<div class="m fgen">${pdf(null,null)}</div><div class="m fnow">${pdf(m,s,'am')}</div>`;
+}
+function vrow(k,v){ return `<div class="vrow"><span class="vk">${k}</span><span class="m vv">${v}</span></div>`; }
+
+/* ═══ 7. ① m 바꾸기 (σ = 2 고정) ═══ */
+const A={m:0, s:2, keeps:[]};
+const g0=fitSvg('g0',()=>draw0());
+const set0=makeRange(document.getElementById('sl0'),MLIM[0],MLIM[1],MSTEP,MTICK,v=>String(v).replace('-','−'),v=>{ if(v!==A.m){A.m=v; paint0();} });
+graphDrag(g0,{m:v=>{ if(v!==A.m){A.m=v; paint0();} }});
+document.getElementById('lb0').innerHTML=`<span class="m" style="font-size:30px">${sv} = 2</span> 고정`;
+function draw0(){ drawCurves(g0,{cur:A,keeps:A.keeps,ymax:YM_M,label:'m',peakMark:true}); }
+function paint0(){
+  set0(A.m);
+  document.getElementById('nv0').innerHTML=`<span class="m">${mv} = <span class="am">${nf(A.m)}</span></span>`;
+  document.getElementById('fb0').innerHTML=fbox(A.m,A.s);
+  document.getElementById('va0').innerHTML=
+    vrow('대칭축',`${xv} = <span class="am">${nf(A.m)}</span>`)+
+    vrow('최고점 높이',`${F('1',RT('2π')+'·2')} = <span class="tl">${f4(peak(A.s))}</span>`)+
+    `<div class="note">${mv}이 변하면 <b>대칭축의 위치</b>는 변하지만 <i>그래프의 모양</i>은 변하지 않는다.</div>`;
+  document.getElementById('clr0').disabled=!A.keeps.length;
+  draw0();
+}
+document.getElementById('keep0').onclick=()=>{ if(A.keeps.length<4){ A.keeps.push({m:A.m,s:A.s}); paint0(); } };
+document.getElementById('clr0').onclick=()=>{ A.keeps=[]; paint0(); };
+document.getElementById('fig1Btn').onclick=()=>{ A.s=2; A.keeps=[{m:0,s:2},{m:4,s:2}]; A.m=2; paint0(); };
+
+/* ═══ 8. ② σ 바꾸기 (m = 0 고정) ═══ */
+const B={m:0, s:1, keeps:[], sigma:false, area:false};
+const g1=fitSvg('g1',()=>draw1());
+const set1=makeRange(document.getElementById('sl1'),SLIM[0],SLIM[1],SSTEP,STICK,v=>nf(v),v=>{ if(v!==B.s){B.s=v; paint1();} });
+graphDrag(g1,{ymax:()=>YM_S, s:v=>{ if(v!==B.s){B.s=v; paint1();} }});
+document.getElementById('lb1').innerHTML=`<span class="m" style="font-size:30px">${mv} = 0</span> 고정`;
+function draw1(){ drawCurves(g1,{cur:B,keeps:B.keeps,ymax:YM_S,label:'s',peakMark:true,peakLabel:'none',sigma:B.sigma,area:B.area}); }
+function paint1(){
+  set1(B.s);
+  document.getElementById('nv1').innerHTML=`<span class="m">${sv} = <span class="am">${nf(B.s)}</span></span>`;
+  document.getElementById('fb1').innerHTML=fbox(B.m,B.s);
+  document.getElementById('va1').innerHTML=
+    vrow('최고점 높이',`${F('1',RT('2π')+'·'+nf(B.s))} = <span class="am">${f4(peak(B.s))}</span>`)+
+    vrow(`<span class="m" style="font-size:28px">${mv} ± ${sv}</span>`,`<span class="tl">${nf(-B.s)} ~ ${nf(B.s)}</span>`)+
+    `<div class="note">${sv}가 커지면 <b>높이가 낮아지고</b> <i>양쪽으로 넓게 퍼진다</i>. 넓이는 늘 1이다.</div>`;
+  document.getElementById('sig1').classList.toggle('on',B.sigma);
+  document.getElementById('area1').classList.toggle('on',B.area);
+  document.getElementById('clr1').disabled=!B.keeps.length;
+  draw1();
+}
+document.getElementById('keep1').onclick=()=>{ if(B.keeps.length<4){ B.keeps.push({m:B.m,s:B.s}); paint1(); } };
+document.getElementById('clr1').onclick=()=>{ B.keeps=[]; paint1(); };
+document.getElementById('sig1').onclick=()=>{ B.sigma=!B.sigma; paint1(); };
+document.getElementById('area1').onclick=()=>{ B.area=!B.area; paint1(); };
+document.getElementById('fig2Btn').onclick=()=>{ B.keeps=[{m:0,s:2},{m:0,s:3}]; B.s=1; paint1(); };
+
+/* ═══ 9. ③ 함께 바꾸기 ═══ */
+const C={m:0, s:1.5, keeps:[], sigma:false, area:false};
+const g2=fitSvg('g2',()=>draw2());
+const set2m=makeRange(document.getElementById('sl2m'),MLIM[0],MLIM[1],MSTEP,MTICK,v=>String(v).replace('-','−'),v=>{ if(v!==C.m){C.m=v; paint2();} });
+const set2s=makeRange(document.getElementById('sl2s'),SLIM[0],SLIM[1],SSTEP,STICK,v=>nf(v),v=>{ if(v!==C.s){C.s=v; paint2();} });
+graphDrag(g2,{ymax:()=>YM_S, m:v=>{ if(v!==C.m){C.m=v; paint2();} }, s:v=>{ if(v!==C.s){C.s=v; paint2();} }});
+function draw2(){ drawCurves(g2,{cur:C,keeps:C.keeps,ymax:YM_S,label:'ms',peakMark:true,sigma:C.sigma,area:C.area}); }
+function paint2(){
+  set2m(C.m); set2s(C.s);
+  document.getElementById('nv2m').innerHTML=`<span class="m">${mv} = <span class="am">${nf(C.m)}</span></span>`;
+  document.getElementById('nv2s').innerHTML=`<span class="m">${sv} = <span class="am">${nf(C.s)}</span></span>`;
+  document.getElementById('fb2').innerHTML=fbox(C.m,C.s);
+  document.getElementById('va2').innerHTML=
+    vrow('정규분포',`N(<span class="am">${nf(C.m)}</span>, <span class="am">${f4(C.s*C.s).replace(/0+$/,'').replace(/\.$/,'')}</span>)`)+
+    vrow('최고점 높이',`${F('1',RT('2π')+'·'+nf(C.s))} = <span class="am">${f4(peak(C.s))}</span>`)+
+    `<div class="note">곡선을 손으로 끌어 보세요. 좌우로 끌면 <b>m</b>, 위아래로 끌면 <i>σ</i>가 바뀝니다.</div>`;
+  document.getElementById('sig2').classList.toggle('on',C.sigma);
+  document.getElementById('area2').classList.toggle('on',C.area);
+  document.getElementById('clr2').disabled=!C.keeps.length;
+  draw2();
+}
+document.getElementById('keep2').onclick=()=>{ if(C.keeps.length<4){ C.keeps.push({m:C.m,s:C.s}); paint2(); } };
+document.getElementById('clr2').onclick=()=>{ C.keeps=[]; paint2(); };
+document.getElementById('sig2').onclick=()=>{ C.sigma=!C.sigma; paint2(); };
+document.getElementById('area2').onclick=()=>{ C.area=!C.area; paint2(); };
+
+/* ═══ 10. ④ 정리 ═══ */
+const BL=[`${xv} = ${mv}`, `${xv}축`, '1', mv, sv, '대칭축의 위치', '그래프의 모양', '높이가 낮아지고', '넓게 퍼진다'];
+const bk=i=>`<span class="blank" data-b="${i}"><span class="${i<5?'m':''}" style="font-family:${i<5?'var(--f-en)':'var(--f-kr)'}">${BL[i]}</span></span>`;
+document.getElementById('lawH').innerHTML=
+  `확률변수 <span class="m">${Xv}</span>가 정규분포 <span class="m">N(${mv}, ${SQ(sv)})</span>을 따를 때, 그 그래프는`;
+document.getElementById('lawB').innerHTML=
+  `<div class="it"><span class="no">❶</span><span>직선 ${bk(0)}에 대하여 대칭인 종 모양의 곡선이고, 점근선은 ${bk(1)}이다.</span></div>`+
+  `<div class="it"><span class="no">❷</span><span>그래프와 <span class="m">${xv}</span>축 사이의 넓이는 ${bk(2)}이다.</span></div>`+
+  `<div class="it"><span class="no">❸</span><span>${bk(3)}은 평균이고, ${bk(4)}는 표준편차이다.</span></div>`+
+  `<div class="it"><span class="no">❹</span><span><span class="m">${sv}</span>의 값이 일정할 때, <span class="m">${mv}</span>의 값이 변하면 ${bk(5)}는 변하지만 ${bk(6)}은 변하지 않는다.</span></div>`+
+  `<div class="it"><span class="no">❺</span><span><span class="m">${mv}</span>의 값이 일정할 때, <span class="m">${sv}</span>의 값이 커지면 대칭축의 위치는 변하지 않지만 그래프의 모양은 ${bk(7)} 양쪽으로 ${bk(8)}.</span></div>`;
+const lawB=document.getElementById('lawB'), allBtn=document.getElementById('allBtn');
+function syncAll(){ const all=[...lawB.querySelectorAll('.blank')].every(b=>b.classList.contains('open'));
+  allBtn.textContent=all?'가리기':'모두 보기'; }
+lawB.onclick=e=>{ const b=e.target.closest('.blank'); if(b){ b.classList.toggle('open'); syncAll(); } };
+allBtn.onclick=()=>{ const open=allBtn.textContent==='모두 보기';
+  lawB.querySelectorAll('.blank').forEach(b=>b.classList.toggle('open',open)); syncAll(); };
+const g3=fitSvg('g3',()=>draw3());
+function draw3(){
+  drawCurves(g3,{cur:{m:0,s:1.6},keeps:[],ymax:.3,x0:-5.6,x1:5.6,xstep:2,
+    peakMark:true,peakLabel:'formula',sigma:true,area:false,small:true});
+}
+
+/* ═══ 11. 탭 · 키보드 · 전체화면 ═══ */
+let tab=0;
+const tabs=document.querySelectorAll('.tab'), panes=document.querySelectorAll('.pane');
+function setTab(t){
+  tab=Math.max(0,Math.min(3,t));
+  tabs.forEach((b,i)=>b.classList.toggle('on',i===tab));
+  panes.forEach((p,i)=>p.classList.toggle('on',i===tab));
+  if(tab===3) draw3();
+}
+document.getElementById('tabs').onclick=e=>{ const b=e.target.closest('[data-t]'); if(b) setTab(+b.dataset.t); };
+function resetTab(){
+  if(tab===0){ A.m=0; A.s=2; A.keeps=[]; paint0(); }
+  else if(tab===1){ B.s=1; B.keeps=[]; B.sigma=false; B.area=false; paint1(); }
+  else if(tab===2){ C.m=0; C.s=1.5; C.keeps=[]; C.sigma=false; C.area=false; paint2(); }
+  else { lawB.querySelectorAll('.blank').forEach(b=>b.classList.remove('open')); syncAll(); }
+}
+document.getElementById('resetBtn').onclick=resetTab;
+const fsBtn=document.getElementById('fsBtn');
+fsBtn.onclick=()=>{
+  const d=document, el=d.documentElement;
+  if(d.fullscreenElement||d.webkitFullscreenElement) (d.exitFullscreen||d.webkitExitFullscreen).call(d);
+  else { const r=el.requestFullscreen||el.webkitRequestFullscreen; if(r) Promise.resolve(r.call(el)).catch(()=>{}); }
+};
+const syncFs=()=>fsBtn.textContent=(document.fullscreenElement||document.webkitFullscreenElement)?'창으로':'전체화면';
+document.addEventListener('fullscreenchange',syncFs); document.addEventListener('webkitfullscreenchange',syncFs);
+addEventListener('keydown',e=>{
+  const k=e.key;
+  if(k>='1'&&k<='4') setTab(+k-1);
+  else if(k==='ArrowRight'&&!e.shiftKey&&tab===3) setTab(tab+1);
+  else if(k==='f'||k==='F') fsBtn.click();
+  else if(k==='r'||k==='R') resetTab();
+  else if(k==='ArrowLeft'||k==='ArrowRight'){
+    /* ←/→ : ①③ 에서는 m 이동, 그 밖에는 탭 이동 */
+    const d=k==='ArrowRight'?1:-1;
+    if(tab===0){ e.preventDefault(); A.m=Math.max(MLIM[0],Math.min(MLIM[1],+(A.m+d*MSTEP).toFixed(2))); paint0(); }
+    else if(tab===2){ e.preventDefault(); C.m=Math.max(MLIM[0],Math.min(MLIM[1],+(C.m+d*MSTEP).toFixed(2))); paint2(); }
+    else setTab(tab+d);
+  }
+  else if(k==='ArrowUp'||k==='ArrowDown'){
+    e.preventDefault(); const d=k==='ArrowUp'?1:-1;
+    if(tab===1){ B.s=Math.max(SLIM[0],Math.min(SLIM[1],+(B.s+d*SSTEP).toFixed(2))); paint1(); }
+    else if(tab===2){ C.s=Math.max(SLIM[0],Math.min(SLIM[1],+(C.s+d*SSTEP).toFixed(2))); paint2(); }
+  }
+  else if(k===' '){ e.preventDefault();
+    if(tab===0) document.getElementById('keep0').click();
+    else if(tab===1) document.getElementById('keep1').click();
+    else if(tab===2) document.getElementById('keep2').click();
+    else allBtn.click(); }
+});
+
+/* ═══ 시작 ═══ */
+Object.assign(COL,{am:CSS('--amber'),te:CSS('--teal'),vi:CSS('--violet'),co:CSS('--coral'),ch:CSS('--chalk'),
+  fa:CSS('--chalk-faint'),ls:CSS('--line-strong'),ln:CSS('--line'),p2:CSS('--panel-2'),bg:CSS('--bg')});
+syncAll(); paint0(); paint1(); paint2();
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{ paint0(); paint1(); paint2(); if(tab===3) draw3(); });
+</script>
+</body>
+</html>
