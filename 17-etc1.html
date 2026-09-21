@@ -1,0 +1,584 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>17-etc1 정규분포의 대칭</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400..700;1,400..700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-deep:#0a1420; --bg:#0e1b2b; --panel:#16283e; --panel-2:#1d3350;
+  --line:rgba(214,229,245,.16); --line-strong:rgba(214,229,245,.34);
+  --chalk:#eaf1f8; --chalk-soft:#b9cadd; --chalk-faint:#7d94ad;
+  --amber:#f5b642; --teal:#49d1c0; --violet:#9d8cf5; --coral:#ff7d6a;
+  --f-en:'STIX Two Text'; --f-kr:'Noto Sans KR';
+  --ls:44px; --ls-sm:29px; --ls-q:26px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--bg-deep);
+  overscroll-behavior:none;touch-action:manipulation;-webkit-text-size-adjust:100%}
+.viewport{position:fixed;inset:0}
+.stage{width:1600px;height:900px;user-select:none;-webkit-user-select:none;transform-origin:0 0;background:var(--bg);color:var(--chalk)}
+.sheet{height:100%;display:flex;flex-direction:column;gap:12px;padding:16px 30px 14px}
+
+/* ── 본문 2단 ───────────────────────────────── */
+#body2col{flex:1 1 auto;min-height:0;display:flex;gap:18px}
+#leftCol{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:12px}
+#rightCol{flex:0 0 716px;display:flex;min-height:0}
+
+/* ── 문제 카드 ─────────────────────────────── */
+.qcard{flex:0 0 auto;background:var(--panel);border:1px solid var(--line);
+  border-radius:14px;padding:11px 18px 13px}
+.qhead{display:flex;align-items:center;gap:12px;cursor:pointer}
+.qnum{background:var(--amber);color:#141d26;font-family:var(--f-kr);font-weight:700;
+  font-size:20px;padding:2px 12px;border-radius:8px;white-space:nowrap}
+.qgist{flex:1;font-family:var(--f-en),var(--f-kr),serif;font-size:25px;font-weight:500;color:var(--amber);
+  word-break:keep-all}
+.qarrow{color:var(--chalk-faint);font-size:20px;transition:transform .2s}
+.qtext{font-family:var(--f-en),var(--f-kr),serif;font-size:var(--ls-q);line-height:1.5;color:var(--chalk-soft);margin-top:9px;
+  max-height:360px;overflow:hidden;transition:max-height .25s,margin-top .25s,opacity .2s;word-break:keep-all}
+.qtext .bogi{margin-top:6px;padding:4px 14px;border:1px solid var(--line-strong);border-radius:8px}
+.qcard.folded .qtext{max-height:0;margin-top:0;opacity:0}
+.qcard.folded .qarrow{transform:rotate(-90deg)}
+
+/* ── 단계 누적 스크롤 ──────────────────────── */
+.flowWrap{position:relative;flex:1 1 auto;min-height:0}
+.flow{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;
+  touch-action:pan-y;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+  padding:2px 16px 130px 0}
+.flow::-webkit-scrollbar{width:10px}
+.flow::-webkit-scrollbar-thumb{background:rgba(214,229,245,.28);border-radius:6px}
+.fadeTop,.fadeBot{position:absolute;left:0;right:0;height:40px;pointer-events:none;
+  opacity:0;transition:opacity .15s}
+.fadeTop{top:0;background:linear-gradient(180deg,var(--bg) 20%,transparent)}
+.fadeBot{bottom:0;background:linear-gradient(0deg,var(--bg) 20%,transparent)}
+
+.blk{padding:9px 0 13px 16px;border-left:3px solid transparent;opacity:.55;cursor:pointer}
+.blk.cur{opacity:1;border-left-color:var(--amber)}
+.bhead{display:flex;align-items:center;gap:12px}
+.bno{flex:0 0 48px;width:48px;height:48px;border-radius:50%;display:grid;place-items:center;
+  font-family:var(--f-en);font-size:25px;font-weight:700;
+  border:2px solid var(--teal);color:var(--teal);background:transparent}
+.blk.cur .bno{background:var(--amber);border-color:var(--amber);color:#141d26}
+.btitle{font-family:var(--f-kr);font-size:var(--ls-sm);font-weight:700;color:var(--chalk);
+  word-break:keep-all}
+.btitle .v{font-family:var(--f-en);font-size:1.12em;font-weight:500}
+.bbody{padding-left:60px}
+.bsm{font-family:var(--f-kr);font-size:var(--ls-sm);line-height:1.42;color:var(--chalk-soft);
+  margin-top:7px;word-break:keep-all}
+.bsm b{color:var(--chalk);font-weight:700}
+.bsm .e{font-family:var(--f-en);font-size:1.12em;white-space:nowrap}
+.bsm .e .v{font-style:italic}
+.bpre{margin-top:9px}
+.bmath{margin-top:11px}
+
+/* ── 수식 조판 ─────────────────────────────── */
+.m{font-family:var(--f-en),var(--f-kr),serif;font-variant-numeric:tabular-nums;
+  font-size:var(--ls);line-height:1.4;word-break:keep-all;white-space:nowrap}
+.m+.m{margin-top:8px}
+.v{font-style:italic}
+.frac{display:inline-flex;flex-direction:column;align-items:stretch;text-align:center;
+  vertical-align:middle;margin:0 .2em;transform:translateY(-.1em);
+  line-height:1.06;font-size:.84em;white-space:nowrap}
+.frac>.num{padding:0 .22em .07em;border-bottom:.058em solid currentColor}
+.frac>.den{padding:.09em .22em 0}
+.hl{color:var(--amber);font-weight:700}
+.ans{display:inline-flex;align-items:center;vertical-align:middle;transform:translateY(-.1em);
+  color:var(--amber);font-weight:700;padding:.05em .24em;border:2px solid var(--amber);
+  border-radius:.18em;box-shadow:0 0 20px rgba(245,182,66,.2)}
+.kw{font-family:var(--f-kr);font-size:.72em;font-weight:700}
+.tag{display:inline-block;font-family:var(--f-kr);font-size:.66em;font-weight:700;color:var(--teal);
+  border:2px solid var(--teal);border-radius:8px;padding:0 .3em;margin-left:.5em;vertical-align:.12em}
+.tag.no{color:var(--chalk-soft);border-color:var(--chalk-faint)}
+
+/* ── 오른쪽 패널 ───────────────────────────── */
+.gpanel{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px;
+  background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:11px 14px 12px}
+.mbanner{flex:0 0 auto;border-bottom:1px solid var(--line);padding-bottom:8px}
+.mbanner .t{font-family:var(--f-kr);font-size:24px;font-weight:700;color:var(--amber)}
+.mbanner .s{font-family:var(--f-en),var(--f-kr),serif;font-size:23px;color:var(--chalk-soft);margin-top:1px;
+  word-break:keep-all}
+.gwrap{flex:1 1 0;min-height:0;position:relative}
+.gwrap svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+#gsvg{touch-action:none}
+.srow{flex:0 0 44px;display:flex;align-items:center;gap:10px}
+.gbtn{font-family:var(--f-kr);font-size:19px;font-weight:700;color:var(--chalk);cursor:pointer;
+  background:rgba(157,140,245,.14);border:1.5px solid var(--violet);border-radius:10px;
+  padding:7px 15px;white-space:nowrap}
+.gbtn:active{transform:scale(.97)}
+.gbtn[hidden]{display:none}
+
+/* ── 발판 ──────────────────────────────────── */
+.foot{flex:0 0 46px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.fmeta{font-family:var(--f-kr);font-size:18px;color:var(--chalk-faint);white-space:nowrap}
+.fmeta b{color:var(--chalk-soft);font-weight:700}
+.fbtns{display:flex;gap:8px}
+.fbtn{font-family:var(--f-kr);font-size:22px;font-weight:700;color:var(--chalk);cursor:pointer;
+  background:var(--panel-2);border:1.5px solid var(--line-strong);border-radius:10px;
+  padding:8px 20px;white-space:nowrap}
+.fbtn:hover{border-color:var(--chalk-soft)}
+.fbtn:active{transform:scale(.97)}
+.fbtn.primary{background:linear-gradient(180deg,#f5b642,#e09e28);color:#141d26;border-color:transparent}
+.fbtn:disabled{opacity:.3;cursor:default;transform:none}
+
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+}
+</style>
+</head>
+<body>
+<div class="viewport"><div class="stage" id="stage"><div class="sheet">
+
+  <div id="body2col">
+    <div id="leftCol">
+
+      <!-- ▼▼ 문제 : 여기를 바꾼다 ▼▼ -->
+      <div class="qcard" id="qcard">
+        <div class="qhead" id="qhead">
+          <span class="qnum">17-etc1</span>
+          <span class="qgist"><span class="v">X</span> ~ N(20, 4²) · <span class="v">f</span>(<span class="v">k</span>) = <span class="v">P</span>(<span class="v">k</span> − 8 ≤ <span class="v">X</span> ≤ <span class="v">k</span>)</span>
+          <span class="qarrow" id="qarrow">▾</span>
+        </div>
+        <div class="qtext">
+          연속확률변수 <span class="v">X</span>는 평균이 20, 표준편차가 4인 정규분포를 따른다.
+          함수 <span class="v">f</span>(<span class="v">k</span>)를 <span class="v">f</span>(<span class="v">k</span>) = <span class="v">P</span>(<span class="v">k</span> − 8 ≤ <span class="v">X</span> ≤ <span class="v">k</span>)로 정의할 때,
+          옳은 것만을 &lt;보기&gt;에서 있는 대로 고르시오.
+          <div class="bogi">
+            ㄱ. <span class="v">f</span>(12) = <span class="v">f</span>(36)<br>
+            ㄴ. 함수 <span class="v">f</span>(<span class="v">k</span>)는 <span class="v">k</span> = 24일 때 최댓값을 갖는다.<br>
+            ㄷ. 임의의 실수 <span class="v">k</span>에 대하여 <span class="v">f</span>(<span class="v">k</span>) = <span class="v">f</span>(24 − <span class="v">k</span>)이다.
+          </div>
+        </div>
+      </div>
+      <!-- ▲▲ 문제 끝 ▲▲ -->
+
+      <div class="flowWrap">
+        <div class="flow" id="flow"></div>
+        <div class="fadeTop" id="fadeTop"></div>
+        <div class="fadeBot" id="fadeBot"></div>
+      </div>
+    </div>
+
+    <div id="rightCol">
+      <div class="gpanel">
+        <div class="mbanner">
+          <div class="t">평균 20에 대한 대칭으로 보기</div>
+          <div class="s">길이 8인 구간 [<i>k</i> − 8, <i>k</i>] 를 끌어서 움직여 본다</div>
+        </div>
+        <div class="gwrap" id="gwrap"><svg id="gsvg"></svg></div>
+        <div class="srow">
+          <div style="flex:1"></div>
+          <button class="gbtn" id="gbtn" hidden></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <div class="fmeta" id="pos"></div>
+    <div class="fbtns">
+      <button class="fbtn" id="resetBtn">처음부터</button>
+      <button class="fbtn" id="prevBtn">◀ 이전</button>
+      <button class="fbtn primary" id="nextBtn">풀이 보기</button>
+      <button class="fbtn" id="fsBtn">전체화면</button>
+    </div>
+  </div>
+
+</div></div></div>
+
+<script>
+/* ═══ 1. 스테이지 스케일링 ═══════════════════════════════ */
+const STAGE_W=1600, STAGE_H=900, stage=document.getElementById('stage');
+function fitStage(){
+  const vv=window.visualViewport;
+  const w=vv?vv.width:innerWidth, h=vv?vv.height:innerHeight;
+  const s=Math.min(w/STAGE_W,h/STAGE_H);
+  stage.style.transform=`translate(${Math.round((w-STAGE_W*s)/2)}px,${Math.round((h-STAGE_H*s)/2)}px) scale(${s})`;
+}
+addEventListener('resize',fitStage);
+if(window.visualViewport) visualViewport.addEventListener('resize',fitStage);
+[0,60,300,700].forEach(t=>setTimeout(fitStage,t));
+
+/* ═══ 2. 수식 조각 ═══════════════════════════════════════ */
+const F =(a,b)=>`<span class="frac"><span class="num">${a}</span><span class="den">${b}</span></span>`;
+const V =s=>`<span class="v">${s}</span>`;
+const Pf=V('P'), ff=V('f'), kf=V('k'), Xf=V('X'), xf=V('x');
+const ANS=s=>`<span class="ans">${s}</span>`;
+const E =s=>`<span class="e">${s}</span>`;           // 설명문 안 수식
+const KW=s=>`<span class="kw">${s}</span>`;           // 수식 줄 안 한글
+const TAG=(s,no)=>`<span class="tag${no?' no':''}">${s}</span>`;
+
+/* ═══ 3. 상태 ═══════════════════════════════════════════ */
+/* ▼▼ 문항마다 바꾸는 부분 ▼▼ */
+const MU=20, SD=4, LEN=8, XMIN=-4, XMAX=44, KMIN=8, KMAX=40;
+const newS=()=>({ step:1, shown:[], k:12, moved:false, m2:false, m4:false, wrong:false });
+const S=newS();
+
+const FR=[[`(${kf} − 8) + ${kf}`,'2'],['4 + 36','2'],['12 + 28','2'],
+  [`(${kf} − 4) + (44 − ${kf})`,'2'],[`(${kf} − 4) + (20 − ${kf})`,'2']].map(a=>F(...a));
+
+const STEPS=[
+ { t:`${ff}(${kf})는 구간의 넓이`, short:'구간',
+   pre:()=>`<div class="m">${Xf} ~ N(20, 4²)</div>
+            <div class="m">${ff}(${kf}) = ${Pf}(${kf} − 8 ≤ ${Xf} ≤ ${kf})</div>`,
+   sm:`구간 길이는 늘 <b>8</b>. ${E(kf)}가 변하면 구간이 통째로 미끄러진다.`,
+   f:()=>`<div class="m">${KW('중점')} = ${FR[0]} = <span class="hl">${kf} − 4</span></div>` },
+
+ { t:`ㄱ. ${ff}(12)와 ${ff}(36)`, short:'ㄱ',
+   sm:`두 구간이 <b>평균 20에 대하여 대칭</b>이면<br>넓이가 같다.`,
+   f:()=>`<div class="m">${FR[1]} = 20</div>
+          <div class="m">${FR[2]} = 20</div>
+          <div class="m">${ff}(12) = ${ff}(36)${TAG('ㄱ 참')}</div>` },
+
+ { t:`ㄴ. 최댓값`, short:'ㄴ',
+   sm:`길이가 같은 구간이면 <b>중점이 평균 20</b>일 때<br>넓이가 가장 크다.`,
+   f:()=>`<div class="m">${kf} − 4 = 20</div>
+          <div class="m">${kf} = <span class="hl">24</span>${TAG('ㄴ 참')}</div>` },
+
+ { t:`ㄷ. 대칭인 구간 찾기`, short:`${ff}(48 − ${kf})`,
+   sm:`중점 ${E(`${kf} − 4`)}를 20에 대하여 뒤집으면 ${E(`44 − ${kf}`)}.<br>오른쪽 끝은 여기에 4를 더한다.`,
+   f:()=>`<div class="m">${FR[3]} = 20</div>
+          <div class="m">${ff}(${kf}) = ${ff}(<span class="hl">48</span> − ${kf})</div>` },
+
+ { t:`ㄷ 판정과 정답`, short:'정답',
+   sm:`${E(`${ff}(24 − ${kf})`)}의 구간과 짝을 지으면<br>대칭축이 20이 아니다.`,
+   f:()=>`<div class="m">${FR[4]} = 8</div>
+          <div class="m">${ff}(${kf}) ≠ ${ff}(24 − ${kf})${TAG('ㄷ 거짓',1)}</div>
+          <div class="m">${KW('정답')} ${ANS('ㄱ, ㄴ')}</div>` }
+];
+/* ▲▲ 여기까지 ▲▲ */
+const N=STEPS.length;
+
+/* ═══ 4. 왼쪽 그리기 ════════════════════════════════════ */
+const flow=document.getElementById('flow'), fadeTop=document.getElementById('fadeTop'),
+      fadeBot=document.getElementById('fadeBot');
+let scrollTarget=null;
+
+function paintFlow(scrollTo){
+  let h='';
+  for(let i=1;i<=S.step;i++){
+    const st=STEPS[i-1], cur=i===S.step, open=cur? S.shown[i-1] : true, fx=open?st.f():'';
+    h+=`<div class="blk${cur?' cur':''}" id="blk${i}" data-jump="${i}">
+          <div class="bhead"><div class="bno">${i}</div><div class="btitle">${st.t}</div></div>
+          <div class="bbody">
+            ${st.pre?`<div class="bpre">${st.pre()}</div>`:''}
+            ${st.sm?`<div class="bsm">${st.sm}</div>`:''}
+            ${fx?`<div class="bmath">${fx}</div>`:''}
+          </div>
+        </div>`;
+  }
+  flow.innerHTML=h;
+  if(scrollTo!==false){
+    const el=document.getElementById('blk'+S.step);
+    if(el){ scrollTarget=Math.max(0,el.offsetTop-6);
+            flow.scrollTo({top:scrollTarget,behavior:'smooth'}); }
+  }
+  updFade();
+}
+function updFade(){
+  fadeTop.style.opacity = flow.scrollTop>6 ? 1 : 0;
+  fadeBot.style.opacity = (flow.scrollHeight-flow.clientHeight-flow.scrollTop)>10 ? 1 : 0;
+}
+flow.addEventListener('scroll',updFade,{passive:true});
+
+let downTop=0;
+flow.addEventListener('pointerdown',()=>{ downTop=flow.scrollTop; scrollTarget=null; });
+flow.addEventListener('click',e=>{
+  if(Math.abs(flow.scrollTop-downTop)>4) return;
+  const b=e.target.closest('[data-jump]');
+  if(b && +b.dataset.jump!==S.step) jump(+b.dataset.jump);
+});
+
+/* ═══ 5. SVG 도구 ═══════════════════════════════════════ */
+const SER="'STIX Two Text',serif", KR="'Noto Sans KR',sans-serif";
+function txt(x,y,s,size,fill,opt){
+  opt=opt||{};
+  return `<text x="${x}" y="${y}" text-anchor="${opt.anchor||'middle'}" dominant-baseline="central"
+    font-family="${opt.kr?KR:SER}" font-size="${size}" font-weight="${opt.w||500}" pointer-events="none"
+    fill="${fill}"${opt.op?` fill-opacity="${opt.op}"`:''}${opt.it?' font-style="italic"':''}>${s}</text>`;
+}
+function txtMix(x,y,parts,size,fill,opt){
+  opt=opt||{};
+  const inner=parts.map(p=>`<tspan font-family="${p.kr?KR:SER}"${p.it?' font-style="italic"':''}${p.c?` fill="${p.c}"`:''}>${p.s}</tspan>`).join('');
+  return `<text x="${x}" y="${y}" text-anchor="${opt.anchor||'middle'}" dominant-baseline="central" pointer-events="none"
+    font-size="${size}" font-weight="${opt.w||600}" fill="${fill}"${opt.op?` fill-opacity="${opt.op}"`:''}>${inner}</text>`;
+}
+const CSS=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const gsvg=document.getElementById('gsvg'), gwrap=document.getElementById('gwrap');
+let W=0,H=0;
+new ResizeObserver(()=>{
+  const w=Math.round(gwrap.clientWidth), h=Math.round(gwrap.clientHeight);
+  if(w===W&&h===H) return;
+  W=w; H=h; gsvg.setAttribute('viewBox',`0 0 ${W} ${H}`); draw();
+}).observe(gwrap);
+
+/* ═══ 6. 그림 ═══════════════════════════════════════════ */
+/* ▼▼ 문항마다 바꾸는 부분 ▼▼ */
+function erf(x){                       // Abramowitz–Stegun 7.1.26
+  const s=x<0?-1:1; x=Math.abs(x);
+  const t=1/(1+0.3275911*x);
+  const y=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x);
+  return s*y;
+}
+const Phi=z=>0.5*(1+erf(z/Math.SQRT2));
+const fk=k=>Phi((k-MU)/SD)-Phi((k-LEN-MU)/SD);
+const dens=x=>Math.exp(-(((x-MU)/SD)**2)/2);
+const num=n=>n<0?'−'+(-n):String(n);
+const dec=v=>v.toFixed(3);
+
+let L={};   // 현재 배치 (끌기 좌표 변환용)
+function layout(){
+  const split=S.step>=3;
+  const x0=26, x1=W-26;
+  const top=split?40:44;
+  const base=split?Math.round(H*0.47):H-176;
+  const X=v=>x0+(v-XMIN)/(XMAX-XMIN)*(x1-x0);
+  const Y=d=>base-d*(base-top);
+  L={split,x0,x1,top,base,X,Y,inv:px=>XMIN+(px-x0)/(x1-x0)*(XMAX-XMIN)};
+  if(split){ L.fTop=base+92; L.fBase=H-106; L.FY=v=>L.fBase-v/0.72*(L.fBase-L.fTop); }
+  return L;
+}
+function areaPath(a,b){
+  const {X,Y,base}=L;
+  a=Math.max(a,XMIN); b=Math.min(b,XMAX);
+  if(b<=a) return '';
+  let d=`M ${X(a)} ${base} L ${X(a)} ${Y(dens(a))}`;
+  for(let x=a;x<b;x+=0.2) d+=` L ${X(x).toFixed(1)} ${Y(dens(x)).toFixed(1)}`;
+  d+=` L ${X(b)} ${Y(dens(b))} L ${X(b)} ${base} Z`;
+  return d;
+}
+/* 구간 하나: 채움 + 양 끝 세로선 */
+function band(a,b,col,op,dash,attr){
+  const {X,Y,base}=L, d=areaPath(a,b);
+  if(!d) return '';
+  let s=`<path d="${d}" fill="${col}" fill-opacity="${op}" stroke="${col}" stroke-width="3"
+          ${dash?'stroke-dasharray="10 7"':''} ${attr||''}/>`;
+  return s;
+}
+function draw(){
+  if(!W) return;
+  const AM=CSS('--amber'), TE=CSS('--teal'), VI=CSS('--violet'), CO=CSS('--coral'),
+        CH=CSS('--chalk'), SO=CSS('--chalk-soft'), FA=CSS('--chalk-faint'), LS=CSS('--line-strong');
+  layout();
+  const {X,Y,base,top,x0,x1}=L, o=[], st=S.step, k=S.k;
+  const labels=[];                                     // 축 아래 강조 눈금 {v,c}
+
+  /* 끌기 영역 (투명) */
+  if(st!==2) o.push(`<rect data-drag="1" x="0" y="0" width="${W}" height="${base+46}" fill="transparent" style="cursor:ew-resize"/>`);
+
+  /* 정규분포 곡선 */
+  let cd=`M ${X(XMIN)} ${Y(dens(XMIN))}`;
+  for(let x=XMIN;x<=XMAX;x+=0.2) cd+=` L ${X(x).toFixed(1)} ${Y(dens(x)).toFixed(1)}`;
+
+  /* 구간들 */
+  if(st===2){
+    o.push(band(4,12,AM,.30,false));
+    labels.push({v:4,c:AM},{v:12,c:AM});
+    if(S.m2){ o.push(band(28,36,TE,.30,false)); labels.push({v:28,c:TE},{v:36,c:TE}); }
+    else o.push(band(28,36,VI,.10,true,'data-mirror="1" style="cursor:pointer"'));
+  }else{
+    const pending = (st===1||st===3) && !S.shown[st-1];
+    o.push(band(k-8,k,pending?VI:AM,pending?.16:.30,pending,'data-drag="1" style="cursor:ew-resize"'));
+    labels.push({v:k-8,c:AM},{v:k,c:AM});
+    if(st>=4){
+      if(S.m4 || st===5){ o.push(band(40-k,48-k,TE,.30,false,'data-drag="1"')); labels.push({v:40-k,c:TE},{v:48-k,c:TE}); }
+      else o.push(band(40-k,48-k,VI,.10,true,'data-mirror="1" style="cursor:pointer"'));
+    }
+    if(st===5 && S.wrong){
+      o.push(band(16-k,24-k,CO,.22,true,'data-drag="1"'));
+      labels.push({v:16-k,c:CO},{v:24-k,c:CO});
+    }
+  }
+  o.push(`<path d="${cd}" fill="none" stroke="${CH}" stroke-width="3.5" pointer-events="none"/>`);
+
+  /* 대칭축 */
+  if(st>=2){
+    o.push(`<line x1="${X(MU)}" y1="${top-4}" x2="${X(MU)}" y2="${base}" stroke="${TE}" stroke-width="2.5" stroke-dasharray="8 7" pointer-events="none"/>`);
+    o.push(txtMix(X(MU),top-24,[{s:'x',it:1},{s:' = 20'}],28,TE,{w:600}));
+  }
+  if(st===5 && S.wrong){
+    o.push(`<line x1="${X(8)}" y1="${top-4}" x2="${X(8)}" y2="${base}" stroke="${CO}" stroke-width="2.5" stroke-dasharray="8 7" pointer-events="none"/>`);
+    o.push(txtMix(X(8),top-24,[{s:'x',it:1},{s:' = 8'}],28,CO,{w:600}));
+  }
+
+  /* 가로축 + 눈금 */
+  o.push(`<line x1="${x0}" y1="${base}" x2="${x1}" y2="${base}" stroke="${LS}" stroke-width="2" pointer-events="none"/>`);
+  const lv=labels.filter(l=>l.v>=XMIN&&l.v<=XMAX);
+  for(let t=0;t<=40;t+=4){
+    o.push(`<line x1="${X(t)}" y1="${base}" x2="${X(t)}" y2="${base+8}" stroke="${LS}" stroke-width="2"/>`);
+    if(!lv.some(l=>Math.abs(l.v-t)<2.6)) o.push(txt(X(t),base+28,t,24,FA,{w:500}));
+  }
+  const drawn={};
+  lv.forEach(l=>{ if(drawn[l.v]) return; drawn[l.v]=1;
+    o.push(`<line x1="${X(l.v)}" y1="${base}" x2="${X(l.v)}" y2="${base+10}" stroke="${l.c}" stroke-width="3"/>`);
+    o.push(txt(X(l.v),base+30,num(l.v),28,l.c,{w:700})); });
+  o.push(txtMix(x1+4,base-18,[{s:'x',it:1}],28,SO,{anchor:'end'}));
+
+  /* ㄱ: 대칭 짝 표시 */
+  if(st===2 && S.m2){
+    [[12,28,base+62],[4,36,base+96]].forEach(([a,b,y])=>{
+      o.push(`<line x1="${X(a)}" y1="${y}" x2="${X(b)}" y2="${y}" stroke="${TE}" stroke-width="3"/>`);
+      [a,b].forEach(v=>o.push(`<circle cx="${X(v)}" cy="${y}" r="7" fill="${TE}"/>`));
+      o.push(`<line x1="${X(MU)}" y1="${y-12}" x2="${X(MU)}" y2="${y+12}" stroke="${AM}" stroke-width="4"/>`);
+      o.push(txtMix(X(a)-14,y,[{s:String(a)}],26,TE,{anchor:'end',w:700}));
+      o.push(txtMix(X(b)+14,y,[{s:String(b)}],26,TE,{anchor:'start',w:700}));
+    });
+  }
+
+  /* 아래 그래프: y = f(k) */
+  if(L.split){
+    const {fTop,fBase,FY}=L;
+    o.push(`<line x1="${x0}" y1="${fBase}" x2="${x1}" y2="${fBase}" stroke="${LS}" stroke-width="2"/>`);
+    let gd=`M ${X(XMIN)} ${FY(fk(XMIN))}`;
+    for(let x=XMIN;x<=XMAX;x+=0.2) gd+=` L ${X(x).toFixed(1)} ${FY(fk(x)).toFixed(1)}`;
+    o.push(`<path d="${gd}" fill="none" stroke="${SO}" stroke-width="3" stroke-opacity=".75"/>`);
+    o.push(txtMix(x0+4,fTop-14,[{s:'y',it:1},{s:' = '},{s:'f',it:1},{s:'('},{s:'k',it:1},{s:')'}],28,SO,{anchor:'start'}));
+    o.push(txtMix(x1+4,fBase-18,[{s:'k',it:1}],28,SO,{anchor:'end'}));
+    if(st>=4) o.push(`<line x1="${X(24)}" y1="${fTop-6}" x2="${X(24)}" y2="${fBase}" stroke="${TE}" stroke-width="2.5" stroke-dasharray="8 7"/>`);
+    const dots=[{v:k,c:st===3&&k===24?AM:AM}];
+    if(st>=4 && (S.m4||st===5)) dots.push({v:48-k,c:TE});
+    if(st===5 && S.wrong && 24-k>=XMIN) dots.push({v:24-k,c:CO});
+    if(dots.length>1 && dots[1].v!==k){
+      o.push(`<line x1="${X(k)}" y1="${FY(fk(k))}" x2="${X(48-k)}" y2="${FY(fk(k))}" stroke="${TE}" stroke-width="2.5" stroke-dasharray="7 6"/>`);
+    }
+    const fl={};
+    dots.forEach(d=>{
+      o.push(`<line x1="${X(d.v)}" y1="${FY(fk(d.v))}" x2="${X(d.v)}" y2="${fBase}" stroke="${d.c}" stroke-width="2" stroke-opacity=".6"/>`);
+      o.push(`<circle cx="${X(d.v)}" cy="${FY(fk(d.v))}" r="10" fill="${d.c}" stroke="#0e1b2b" stroke-width="3"/>`);
+      if(!fl[d.v]){ fl[d.v]=1; o.push(txt(X(d.v),fBase+28,num(d.v),28,d.c,{w:700})); }
+    });
+    if(st>=4 && !dots.some(d=>Math.abs(d.v-24)<2.6)) o.push(txt(X(24),fBase+28,'24',26,TE,{w:600}));
+  }
+
+  /* 결론식 */
+  const cy=H-34, P=[];
+  const fK=v=>[{s:'f',it:1},{s:`(${num(v)})`}];
+  if(st===1){
+    P.push(...fK(k),{s:' = '},{s:'P',it:1},{s:`(${num(k-8)} ≤ `},{s:'X',it:1},{s:` ≤ ${k})`});
+  }else if(st===2){
+    if(S.m2) P.push(...fK(12),{s:' = '},...fK(36));
+    else P.push(...fK(12),{s:' = '},...fK(36),{s:' ?',c:VI});
+  }else if(st===3){
+    P.push(...fK(k),{s:' = '},{s:'P',it:1},{s:`(${num(k-8)} ≤ `},{s:'X',it:1},{s:` ≤ ${k})`},{s:` ≈ ${dec(fk(k))}`});
+  }else if(st===4){
+    if(S.m4) P.push(...fK(k),{s:' = '},...fK(48-k));
+    else P.push(...fK(k),{s:' = '},{s:'f',it:1},{s:'( ? )',c:VI});
+  }else{
+    if(!S.wrong) P.push(...fK(k),{s:' = '},...fK(48-k));
+    else if(k===12) P.push(...fK(12),{s:' = '},...fK(12),{s:'  같은 구간',kr:1,c:SO});
+    else P.push(...fK(k),{s:' ≠ '},...fK(24-k));
+  }
+  const good=(st===3&&k===24)||(st===2&&S.m2)||(st===4&&S.m4);
+  o.push(txtMix(16,cy,P,40,good?AM:CH,{anchor:'start',w:600}));
+
+  gsvg.innerHTML=o.join('');
+}
+
+/* 끌기: 손가락 위치가 구간의 중점이 되게 */
+let dragging=false;
+function kFromEvent(e){
+  const pt=gsvg.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY;
+  const p=pt.matrixTransform(gsvg.getScreenCTM().inverse());
+  return Math.max(KMIN,Math.min(KMAX,Math.round(L.inv(p.x)+4)));
+}
+function setK(k){
+  if(k===S.k) return;
+  S.k=k; S.moved=true;
+  if(S.step===1 && !S.shown[0]) { doneNow(); return; }
+  if(S.step===3 && k===24 && !S.shown[2]) { doneNow(); return; }
+  draw();
+}
+gsvg.addEventListener('pointerdown',e=>{
+  const t=e.target;
+  if(t.dataset.mirror!==undefined){
+    if(S.step===2) S.m2=true; else if(S.step===4) S.m4=true;
+    doneNow(); return;
+  }
+  if(t.dataset.drag===undefined || S.step===2) return;
+  dragging=true; gsvg.setPointerCapture(e.pointerId); setK(kFromEvent(e));
+});
+gsvg.addEventListener('pointermove',e=>{ if(dragging) setK(kFromEvent(e)); });
+const endDrag=()=>{ dragging=false; };
+gsvg.addEventListener('pointerup',endDrag);
+gsvg.addEventListener('pointercancel',endDrag);
+
+function doneNow(){ S.shown[S.step-1]=true; paint(false); }
+
+/* 단계에 필요한 것을 한꺼번에 여는 함수 (버튼만 눌러도 진행되도록) */
+function revealAllOfStep(n,past){
+  if(n===2) S.m2=true;
+  if(n===3 && !past) S.k=24;
+  if(n===4) S.m4=true;
+  if(n===5) S.wrong=true;
+}
+function onEnter(n){                    // 단계에 들어설 때 보기 좋은 k
+  if(n>=4 && S.k===24) S.k=18;
+}
+
+/* 보조 버튼 */
+function srowCfg(){
+  const st=S.step;
+  if(st===2 && !S.m2) return {t:'대칭 구간 보기', f:()=>{S.m2=true; doneNow();}};
+  if(st===3)           return {t:'중점을 20에 맞추기', f:()=>{S.k=24; doneNow();}};
+  if(st===4 && !S.m4) return {t:'대칭 구간 보기', f:()=>{S.m4=true; doneNow();}};
+  if(st===5)           return {t:S.wrong?'ㄷ의 구간 숨기기':'ㄷ의 구간 보기', f:()=>{S.wrong=!S.wrong; if(S.wrong) doneNow(); else paint(false);}};
+  return null;
+}
+/* ▲▲ 여기까지 ▲▲ */
+
+/* ═══ 7. 보조줄 · 발판 ══════════════════════════════════ */
+const gbtn=document.getElementById('gbtn'), pos=document.getElementById('pos'),
+      nextBtn=document.getElementById('nextBtn'), prevBtn=document.getElementById('prevBtn');
+let gAct=null;
+function updSrow(){
+  const c=srowCfg();
+  if(c){ gbtn.hidden=false; gbtn.textContent=c.t; gAct=c.f; } else { gbtn.hidden=true; gAct=null; }
+}
+gbtn.addEventListener('click',()=>{ if(gAct) gAct(); });
+
+function paint(scrollTo){
+  const keep=(scrollTarget!==null&&Math.abs(flow.scrollTop-scrollTarget)>2)?scrollTarget:flow.scrollTop;
+  paintFlow(scrollTo);
+  if(scrollTo===false) flow.scrollTop=keep;
+  pos.innerHTML=`<b>${S.step}</b> / ${N} · ${STEPS[S.step-1].short}`;
+  prevBtn.disabled=S.step===1;
+  const opened=!!S.shown[S.step-1];
+  nextBtn.textContent = !opened ? '풀이 보기' : (S.step<N ? '다음 ▶' : '완료');
+  nextBtn.disabled = opened && S.step===N;
+  updSrow(); draw();
+}
+function next(){
+  const i=S.step-1;
+  if(!S.shown[i]){ revealAllOfStep(S.step,false); S.shown[i]=true; paint(false); return; }
+  jump(S.step+1);
+}
+function jump(n){
+  n=Math.max(1,Math.min(N,n));
+  for(let k=1;k<n;k++){ if(!S.shown[k-1]) revealAllOfStep(k,true); S.shown[k-1]=true; }
+  S.step=n; onEnter(n); paint();
+}
+function reset(){
+  Object.assign(S,newS());
+  flow.scrollTop=0; scrollTarget=null; paint();
+}
+nextBtn.onclick=next;
+prevBtn.onclick=()=>jump(S.step-1);
+document.getElementById('resetBtn').onclick=reset;
+document.getElementById('fsBtn').onclick=()=>{
+  if(document.fullscreenElement) document.exitFullscreen();
+  else document.documentElement.requestFullscreen?.();
+};
+document.getElementById('qhead').onclick=()=>document.getElementById('qcard').classList.toggle('folded');
+addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' '){ e.preventDefault(); next(); }
+  else if(e.key==='ArrowLeft') jump(S.step-1);
+  else if(e.key==='r'||e.key==='R') reset();
+  else if(e.key==='f'||e.key==='F') document.getElementById('fsBtn').click();
+});
+
+paint();
+</script>
+</body>
+</html>
