@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>tong03-12 · 수열의 귀납적 정의</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400..700;1,400..700&family=Noto+Sans+KR:wght@400;500;700&display=swap');
+
+:root{
+  --bg-deep:#0a1420; --bg:#0e1b2b; --panel:#16283e; --panel-2:#1d3350;
+  --line:rgba(214,229,245,.18); --line-strong:rgba(214,229,245,.38);
+  --chalk:#eaf1f8; --chalk-soft:#b9cadd; --chalk-faint:#7d94ad;
+  --amber:#f5b642; --coral:#ff7d6a; --teal:#49d1c0; --violet:#9d8cf5;
+  --sky:#79b8ff; --laser:#ff2d2d; --red:#ff5d5d;
+  --f-en:'STIX Two Text'; --f-kr:'Noto Sans KR';
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0; padding:0; height:100%; overflow:hidden; overscroll-behavior:none; touch-action:manipulation;
+  background:var(--bg-deep); color:var(--chalk);
+  font-family:var(--f-en), var(--f-kr), system-ui, sans-serif; -webkit-font-smoothing:antialiased;}
+.viewport{position:fixed; inset:0; overflow:hidden;}
+.stage{position:absolute; left:0; top:0; width:1600px; height:900px; transform-origin:0 0; background:var(--bg);}
+.sheet{width:100%; height:100%; padding:14px 34px 16px; display:flex; flex-direction:column; gap:12px;}
+.topline{flex:0 0 2px; background:linear-gradient(90deg,var(--amber),rgba(245,182,66,.05)); border-radius:2px;}
+
+/* ---------- 조판 ---------- */
+.kr{font-family:var(--f-kr); word-break:keep-all;}
+.m{font-family:var(--f-en),var(--f-kr),serif; font-variant-numeric:tabular-nums; white-space:nowrap; line-height:1.15; display:inline-block;}
+.m i,.v{font-style:italic; font-family:var(--f-en),serif;}
+.m sub{font-size:.60em; vertical-align:-.26em; line-height:0; font-family:var(--f-en),serif;}
+.frac{display:inline-flex; flex-direction:column; align-items:stretch; text-align:center; vertical-align:middle;
+  margin:0 .22em; transform:translateY(-.08em); line-height:1.06; font-size:.86em;}
+.frac>.num{padding:0 .22em .07em; border-bottom:.058em solid currentColor;}
+.frac>.den{padding:.09em .22em 0;}
+
+/* ---------- 문제 상자 ---------- */
+.qbox{flex:0 0 auto; position:relative; background:var(--panel); border-left:5px solid var(--amber);
+  border-radius:12px; padding:12px 22px 12px; box-shadow:0 10px 22px rgba(10,20,32,.6);}
+.qtop{display:flex; align-items:baseline; gap:18px; margin-bottom:10px;}
+.qh{font-family:var(--f-kr); font-size:28px; font-weight:700; color:var(--amber);}
+.qt{font-family:var(--f-kr); font-size:38px; line-height:1.3; word-break:keep-all;}
+.qtog{position:absolute; right:14px; top:10px; font-family:var(--f-kr); font-size:27px; font-weight:500;
+  color:var(--chalk-soft); background:var(--panel-2); border:1px solid var(--line-strong); border-radius:10px;
+  padding:4px 16px; cursor:pointer; z-index:3;}
+.cond{display:flex; align-items:center; gap:0; border:2px solid var(--line-strong); border-radius:10px;
+  padding:8px 18px; background:rgba(10,20,32,.35); font-size:40px;}
+.cond .tag{font-family:var(--f-kr); font-weight:500; color:var(--chalk-soft); margin-right:.35em; font-size:36px;}
+.cga{display:flex; align-items:center; padding-right:34px; margin-right:30px; border-right:2px solid var(--line);}
+.hl{border-radius:10px; padding:0 .15em; transition:background .3s, box-shadow .3s;}
+.hl.on{background:rgba(245,182,66,.22); box-shadow:0 0 0 3px rgba(245,182,66,.65);}
+.cna{display:flex; align-items:center;}
+.brace{width:26px; height:118px; margin:0 6px 0 10px; flex:0 0 auto;}
+.cases{display:flex; flex-direction:column; gap:2px;}
+.crow{display:flex; align-items:baseline; gap:.5em; padding:1px 12px; border-radius:10px; transition:background .3s, box-shadow .3s;}
+.crow .cv{min-width:3.9em;}
+.crow.top .cc{color:var(--teal);}
+.crow.bot .cc{color:var(--coral);}
+.crow.top.on{background:rgba(73,209,192,.20); box-shadow:0 0 0 3px rgba(73,209,192,.8);}
+.crow.bot.on{background:rgba(255,125,106,.20); box-shadow:0 0 0 3px rgba(255,125,106,.8);}
+.qgoal{margin-left:auto; padding-left:22px; font-family:var(--f-kr); font-size:32px; color:var(--amber);
+  text-align:right; line-height:1.3; align-self:flex-end;}
+.qgoal .m{font-size:1.1em;}
+.qch{font-size:38px; display:flex; gap:56px; margin-top:10px; padding-left:6px;}
+.qch span{padding:0 12px; border-radius:10px;}
+.qch span.ans{color:#14202e; background:var(--amber); font-weight:700;}
+.qbox.fold .qtop,.qbox.fold .qch{display:none;}
+.qbox.fold{padding-top:10px;}
+.qbox:not(.fold) .qgoal{display:none;}
+
+/* ---------- 칠판 ---------- */
+#boardWrap{flex:1 1 auto; min-height:0; position:relative; overflow:hidden;}
+#board{position:absolute; left:0; top:0; width:1532px; height:640px; transform-origin:0 0;}
+#bsvg{position:absolute; inset:0; width:1532px; height:640px; overflow:visible;}
+.bel{position:absolute; transform:translate(-50%,-50%) scale(.85); opacity:0; pointer-events:none;
+  transition:opacity .35s ease, transform .35s ease; white-space:nowrap;}
+.bel.show{opacity:1; transform:translate(-50%,-50%) scale(1); pointer-events:auto;}
+.bel.al{transform:translate(0,-50%) scale(.85);}   .bel.al.show{transform:translate(0,-50%) scale(1);}
+.bel.at{transform:translate(0,0) scale(.9);}        .bel.at.show{transform:translate(0,0) scale(1);}
+.sl{opacity:0; transition:opacity .35s ease;}
+.sl.show{opacity:1;}
+.dead{filter:saturate(.3);}
+.bel.show.dead{opacity:.42;}
+.sl.show.dead{opacity:.35;}
+
+.ttl{font-family:var(--f-kr); font-size:34px; font-weight:700; color:var(--chalk-soft);}
+.ttl b{display:inline-block; font-size:26px; color:#14202e; background:var(--amber); border-radius:8px; padding:2px 12px; margin-right:12px; vertical-align:4px;}
+.node{display:flex; flex-direction:column; align-items:center; line-height:1;}
+.node .lab{font-size:34px; color:var(--chalk-soft);}
+.node .val{font-size:62px; margin-top:4px;}
+.ring{position:absolute; left:50%; top:50%; width:170px; height:170px; transform:translate(-50%,-50%);
+  border:5px solid var(--amber); border-radius:50%; box-shadow:0 0 18px rgba(245,182,66,.45);}
+.xm{font-family:var(--f-kr); font-size:60px; font-weight:700; color:var(--red);}
+.note{font-family:var(--f-kr); font-size:30px; line-height:1.25; text-align:center;}
+.note .m{font-size:1.1em;}
+.ctag{font-size:32px; padding:0 8px; border-radius:8px; background:var(--bg);}
+.hd{font-size:40px; color:var(--chalk-soft);}
+.cell{font-size:52px; min-width:1.2em; text-align:center;}
+.cell.t{color:var(--teal);} .cell.c{color:var(--coral);}
+.cell.fin{color:var(--amber); }
+.ph{font-family:var(--f-kr); font-size:40px; font-weight:700; color:var(--violet); width:78px; height:64px;
+  border:3px dashed rgba(157,140,245,.75); border-radius:12px; display:flex; align-items:center; justify-content:center;
+  background:rgba(157,140,245,.10); cursor:pointer; animation:php 1.4s ease-in-out infinite;}
+@keyframes php{0%,100%{box-shadow:0 0 0 0 rgba(157,140,245,0);}50%{box-shadow:0 0 0 7px rgba(157,140,245,.28);}}
+.plab{font-family:var(--f-kr); font-size:25px; padding:0 4px; background:var(--bg); border-radius:6px;}
+.plab .m{font-size:1.08em;}
+.sit{font-size:38px;}
+.guide{font-family:var(--f-kr); font-size:32px; color:var(--chalk-soft);}
+.guide .m{font-size:1.1em; color:var(--chalk);}
+.ansbox{font-family:var(--f-kr); font-size:36px; line-height:1.45; padding:14px 18px; border:3px solid var(--amber);
+  border-radius:14px; background:rgba(245,182,66,.08); box-shadow:0 0 22px rgba(245,182,66,.25);}
+.ansbox .m{font-size:1.15em;}
+.ansbox .big{font-size:44px; font-weight:700; color:var(--amber);}
+.mark{position:absolute; left:50%; top:50%; width:88px; height:76px; transform:translate(-50%,-50%);
+  border:4px solid var(--amber); border-radius:50%;}
+
+/* 잠깐 나타났다 사라지는 설명 */
+.bub{font-family:var(--f-kr); font-size:31px; line-height:1.34; color:var(--chalk); background:rgba(22,40,62,.97);
+  border:3px solid var(--amber); border-radius:14px; padding:10px 18px; box-shadow:0 10px 26px rgba(0,0,0,.55); z-index:5;}
+.bub .m{font-size:1.12em;}
+.bub .ok{color:var(--teal);} .bub .no{color:var(--red); font-weight:700;} .bub .cr{color:var(--coral);}
+.bub .am{color:var(--amber);}
+.bel.new{animation:pop .6s ease;}
+@keyframes pop{0%{filter:brightness(2.2);}100%{filter:none;}}
+
+/* ---------- 발판 ---------- */
+.app-foot{flex:0 0 58px; display:flex; align-items:center; gap:16px; border-top:1px solid var(--line); padding-top:8px;}
+.dots{display:flex; gap:9px; margin-left:2px; align-items:center;}
+.dots .gl{font-family:var(--f-kr); font-size:20px; font-weight:700; color:var(--chalk-faint); margin:0 4px 0 12px;}
+.dots .gl:first-child{margin-left:0;}
+.dot{width:14px; height:14px; border-radius:50%; background:var(--panel-2); border:1px solid var(--line-strong); cursor:pointer;}
+.dot.on{background:var(--chalk-soft); border-color:var(--chalk-soft);}
+.dot.live{background:var(--amber); border-color:var(--amber); box-shadow:0 0 0 4px rgba(245,182,66,.22);}
+.btns{margin-left:auto; display:flex; gap:10px;}
+.btn{font-family:var(--f-kr); font-size:25px; font-weight:500; color:var(--chalk-soft); background:var(--panel);
+  border:1px solid var(--line-strong); border-radius:10px; padding:6px 20px; cursor:pointer; white-space:nowrap;}
+.btn:active{background:var(--panel-2);}
+.btn.prim{color:#14202e; background:var(--amber); border-color:var(--amber); font-weight:700;}
+.btn[disabled]{opacity:.3; pointer-events:none;}
+.btn.glow{animation:gl 1.3s ease-in-out infinite;}
+@keyframes gl{0%,100%{box-shadow:0 0 0 0 rgba(245,182,66,0);}50%{box-shadow:0 0 0 7px rgba(245,182,66,.30);}}
+.btn.act{color:var(--teal); border-color:rgba(73,209,192,.6);}
+
+/* ---------- 레이저 ---------- */
+#laser{position:fixed; inset:0; pointer-events:none; z-index:9999; display:none;}
+body.laser-on #laser{display:block;}
+body.laser-on.has-mouse{cursor:none;}
+body.laser-on.has-mouse *{cursor:none !important;}
+.ldot{position:absolute; border-radius:50%; background:var(--laser); transform:translate(-50%,-50%);}
+.lring{position:absolute; border-radius:50%; border:3px solid var(--laser); transform:translate(-50%,-50%);}
+@media (prefers-reduced-motion:reduce){*{transition:none !important; animation:none !important;}}
+</style>
+</head>
+<body>
+<div class="viewport">
+ <div class="stage" id="stage">
+  <div class="sheet">
+   <div class="topline"></div>
+
+   <div class="qbox" id="qbox">
+          <div class="qtop">
+       <span class="qh">tong03-12</span>
+       <span class="qt">모든 항이 <b>정수</b>인 수열 <span class="m">{<i>a</i><sub><i>n</i></sub>}</span> 에서 <span class="m"><i>a</i><sub>6</sub></span>의 최댓값과 최솟값의 합은?</span>
+     </div>
+     <div class="cond">
+       <div class="cga"><span class="tag">(가)</span>
+         <span class="m"><span class="hl" id="g1"><i>a</i><sub>1</sub> ≤ 0</span>,&nbsp; <span class="hl" id="g4"><i>a</i><sub>4</sub> = 6</span></span></div>
+       <div class="cna"><span class="tag">(나)</span>
+         <span class="m"><i>a</i><sub><i>n</i>+2</sub> =</span>
+         <svg class="brace" viewBox="0 0 26 118" preserveAspectRatio="none"><path d="M22 3 Q12 3 12 16 L12 46 Q12 58 3 59 Q12 60 12 72 L12 102 Q12 115 22 115" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>
+         <div class="cases">
+           <div class="crow top" id="rTop"><span class="m cv"><i>a</i><sub><i>n</i></sub> + 2</span><span class="m cc">(<i>a</i><sub><i>n</i></sub><i>a</i><sub><i>n</i>+1</sub> ≤ 3)</span></div>
+           <div class="crow bot" id="rBot"><span class="m cv"><i>a</i><sub><i>n</i>+1</sub> − 2</span><span class="m cc">(<i>a</i><sub><i>n</i></sub><i>a</i><sub><i>n</i>+1</sub> &gt; 3)</span></div>
+         </div>
+       </div>
+       <div class="qgoal">구하는 값<br><span class="m"><i>a</i><sub>6</sub></span> 최대 + 최소</div>
+     </div>
+     <div class="qch" id="qch"><span class="m">① 4</span><span class="m">② 5</span><span class="m">③ 6</span><span class="m" id="c4">④ 7</span><span class="m">⑤ 8</span></div>
+   </div>
+
+   <div id="boardWrap"><div id="board"><svg id="bsvg" xmlns="http://www.w3.org/2000/svg"></svg></div></div>
+
+   <div class="app-foot">
+     <div class="dots" id="dots"></div>
+     <div class="btns">
+       <button class="btn" id="bPrev">이전</button>
+       <button class="btn prim" id="bNext">다음</button>
+       <button class="btn" id="bReset">처음</button>
+       <button class="btn" id="qtog">문제 접기</button>
+       <button class="btn" id="bFull">전체화면</button>
+       <button class="btn" id="bLaser">레이저</button>
+     </div>
+   </div>
+  </div>
+ </div>
+</div>
+<div id="laser"></div>
+
+<script>
+'use strict';
+/* ===================== 스테이지 ===================== */
+const STAGE_W=1600, STAGE_H=900, stage=document.getElementById('stage');
+function fitStage(){
+  const vv=window.visualViewport;
+  const w=vv?vv.width:innerWidth, h=vv?vv.height:innerHeight;
+  const s=Math.min(w/STAGE_W,h/STAGE_H);
+  stage.style.transform=`translate(${Math.round((w-STAGE_W*s)/2)}px,${Math.round((h-STAGE_H*s)/2)}px) scale(${s})`;
+  window.__scale=s; fitBoard();
+}
+addEventListener('resize',fitStage); addEventListener('orientationchange',fitStage);
+if(window.visualViewport)visualViewport.addEventListener('resize',fitStage);
+
+/* ===================== 칠판 배율 (문제를 펼치면 칠판이 줄어든다) ===================== */
+const BW=1532, BH=640, wrap=document.getElementById('boardWrap'), board=document.getElementById('board');
+function fitBoard(){
+  const w=wrap.clientWidth, h=wrap.clientHeight; if(!w||!h)return;
+  const s=Math.min(1,w/BW,h/BH);
+  board.style.transform=`translate(${Math.round((w-BW*s)/2)}px,0) scale(${s})`;
+}
+new ResizeObserver(fitBoard).observe(wrap);
+
+/* ===================== 수식 조각 ===================== */
+const A=n=>`<i>a</i><sub>${n}</sub>`;
+const M=s=>`<span class="m">${s}</span>`;
+const FR=(n,d)=>`<span class="frac"><span class="num">${n}</span><span class="den">${d}</span></span>`;
+
+/* ===================== 조각 정의 =====================
+   p = 0 문제 / 1~6 STEP 1 / 7~19 STEP 2                      */
+const N=20;
+const META=[
+ {},                                  // 0
+ {ga:['g4']},                         // 1 a4=6
+ {rule:'bot'},                        // 2 a3=8
+ {rule:'bot', ga:['g1']},             // 3 a2=10 ✗
+ {rule:'top', ga:['g1']},             // 4 a1=6 ✗
+ {rule:'top'},                        // 5 a2=4
+ {rule:'top'},                        // 6 a3≤0
+ {},                                  // 7 STEP2 상황
+ {},                                  // 8 행1
+ {rule:'top'},{rule:'bot'},           // 9,10
+ {},{rule:'top'},{rule:'bot'},        // 11~13
+ {},{rule:'top'},{rule:'top'},        // 14~16
+ {},                                  // 17 a3=-3
+ {rule:'top'},                        // 18 a3=k
+ {}                                   // 19 답
+];
+
+const SVGNS='http://www.w3.org/2000/svg', SV=document.getElementById('bsvg');
+const items=[];   // {el, from, to, dead}
+function reg(el,from,to,dead){items.push({el,from,to:to??99,dead:dead??99});return el;}
+function el(html,x,y,cls,from,to,dead){
+  const d=document.createElement('div'); d.className='bel '+(cls||''); d.innerHTML=html;
+  d.style.left=x+'px'; d.style.top=y+'px'; board.appendChild(d); return reg(d,from,to,dead);
+}
+function line(x1,y1,x2,y2,col,from,to,dead,w){
+  const l=document.createElementNS(SVGNS,'line');
+  l.setAttribute('x1',x1);l.setAttribute('y1',y1);l.setAttribute('x2',x2);l.setAttribute('y2',y2);
+  l.setAttribute('stroke',col);l.setAttribute('stroke-width',w||4);l.setAttribute('stroke-linecap','round');
+  l.setAttribute('class','sl'); SV.appendChild(l); return reg(l,from,to,dead);
+}
+function arc(x1,x2,y,col,from,to){   // 두 칸을 잇는 아래쪽 곡선
+  const p=document.createElementNS(SVGNS,'path');
+  p.setAttribute('d',`M${x1} ${y} Q${(x1+x2)/2} ${y+26} ${x2} ${y}`);
+  p.setAttribute('fill','none');p.setAttribute('stroke',col);p.setAttribute('stroke-width',3.5);p.setAttribute('stroke-linecap','round');
+  p.setAttribute('class','sl'); SV.appendChild(p); return reg(p,from,to);
+}
+const C={teal:'#49d1c0',coral:'#ff7d6a',amber:'#f5b642',soft:'#b9cadd',line:'rgba(214,229,245,.30)',violet:'#9d8cf5'};
+const node=(n,v,extra)=>`<div class="node"><span class="lab m">${A(n)}</span><span class="val m">${v}</span>${extra||''}</div>`;
+
+/* ---------- 가운데 구분선 ---------- */
+line(708,10,708,630,'rgba(121,184,255,.55)',1,99,99,5);
+
+/* ===================== STEP 1 (왼쪽) ===================== */
+el(`<div class="ttl"><b>STEP 1</b>거꾸로 생각하기</div>`,6,26,'al',1);
+const P4=[600,330], P2=[400,160], P3=[400,455], P1=[180,330], P2b=[180,545];
+// 선
+line(P4[0]-38,P4[1]-34,P2[0]+66,P2[1]+56,C.teal,5);
+line(P4[0]-48,P4[1]+20,P3[0]+48,P3[1]-18,C.coral,2,99,5);
+line(P3[0]-48,P3[1]-18,P1[0]+48,P1[1]+18,C.teal,4,99,5);
+line(P3[0]-48,P3[1]+18,P2b[0]+48,P2b[1]-12,C.coral,3,99,5);
+// 선 위 조건 꼬리표
+el(M(`${A(2)}${A(3)} ≤ 3`),585,215,'ctag t',5).style.color=C.teal;
+el(M(`${A(2)}${A(3)} &gt; 3`),575,440,'ctag',2,99,5).style.color=C.coral;
+el(M(`${A(1)}${A(2)} ≤ 3`),318,335,'ctag',4,99,5).style.color=C.teal;
+el(M(`${A(1)}${A(2)} &gt; 3`),312,540,'ctag',3,99,5).style.color=C.coral;
+// 점
+el(node(4,'6'),P4[0],P4[1],'',1);
+el(node(3,'8'),P3[0],P3[1],'',2,99,5);
+el(node(2,'10'),P2b[0],P2b[1],'',3,99,5);
+el(node(1,'6'),P1[0],P1[1],'',4,99,5);
+el(node(2,'4','<span class="ring"></span>'),P2[0],P2[1],'',5);
+// ✗ 표시와 이유 (계속 남는다)
+el('✗',P2b[0]-78,P2b[1]-28,'xm',3);
+el(`${M(`${A(1)}${A(2)} &gt; 3`)} 불가`,P2b[0],P2b[1]+72,'note',3).style.color='#ffb3a8';
+el('✗',P1[0]-78,P1[1]-28,'xm',4);
+el(`${M(`${A(1)} ≤ 0`)} 에 모순`,P1[0],P1[1]+72,'note',4).style.color='#ffb3a8';
+// 결론
+el(`<span class="m" style="font-size:40px;color:var(--teal)">4${A(3)} ≤ 3</span>`,P2[0]-240,P2[1]-28,'',6);
+el(`<span class="m" style="font-size:46px;color:var(--amber)">∴ ${A(3)} ≤ 0</span>`,P2[0]-240,P2[1]+36,'',6);
+
+// 설명 풍선 (그 단계에서만)
+el(`${M(`${A(4)} = 6`)} 에서<br><span class="am">거꾸로</span> 거슬러 올라가기`,470,520,'bub at',1,1);
+el(`<span class="cr">${M(`${A(2)}${A(3)} &gt; 3`)}</span> 이면<br>${M(`${A(4)} = ${A(3)} − 2`)}<br>${M(`6 = ${A(3)} − 2`)} → ${M(`${A(3)} = 8`)}`,452,40,'bub at',2,2);
+el(`<span class="cr">${M(`${A(1)}${A(2)} &gt; 3`)}</span> 이면<br>${M(`8 = ${A(2)} − 2`)} → ${M(`${A(2)} = 10`)}<br>${M(`${A(1)} ≤ 0`)} → ${M(`${A(1)}${A(2)} ≤ 0`)} <span class="no">✗</span>`,420,40,'bub at',3,3);
+el(`<span class="ok">${M(`${A(1)}${A(2)} ≤ 3`)}</span> 이면<br>${M(`8 = ${A(1)} + 2`)} → ${M(`${A(1)} = 6`)}<br>${M(`${A(1)} ≤ 0`)} 에 맞지 않음 <span class="no">✗</span>`,420,40,'bub at',4,4);
+el(`${M(`${A(3)} = 8`)} 은 불가능<br>→ <span class="ok">${M(`${A(2)}${A(3)} ≤ 3`)}</span> 이고<br>${M(`6 = ${A(2)} + 2`)} → ${M(`${A(2)} = 4`)}`,440,470,'bub at',5,5);
+el(`${M(`4${A(3)} ≤ 3`)} → ${M(`${A(3)} ≤ ${FR('3','4')}`)}<br>${M(`${A(3)}`)} 는 정수 → ${M(`${A(3)} ≤ 0`)}`,470,22,'bub at',6,6);
+
+/* ===================== STEP 2 (오른쪽) ===================== */
+const X0=732;
+el(`<div class="ttl"><b>STEP 2</b></div>`,X0+6,26,'al',7);
+el(`<span class="m sit">${A(1)} ≤ 0,&nbsp; ${A(2)} = 4,&nbsp; ${A(3)} ≤ 0,&nbsp; ${A(4)} = 6</span>`,X0+140,26,'al',7);
+el(`<span class="guide">${M(`${A(3)} = 0, −1, −2, …`)} 차례로 대입</span>`,X0+140,82,'al',7);
+
+const CX=[888,993,1100,1228];            // a3 a4 a5 a6 열
+const RY=[210,305,400,470,575];          // 0, −1, −2, −3, k 행
+const HY=140;
+['3','4','5','6'].forEach((n,i)=>el(`<span class="m hd">${A(n)}</span>`,CX[i],HY,'',7));
+line(CX[0]-50,HY+30,CX[3]+50,HY+30,C.line,7,99,99,2);
+const A2=[782,380];
+el(node(2,'4'),A2[0],A2[1],'',7);
+
+/* 한 행: a3, a5, a6 값 / 곱 / 적용 규칙 */
+const ROWS=[
+ {a3:'0',  a5:'2',  a6:'0',  p35:'0',   p45:'12', r6:'c', s:8,  keep:true},
+ {a3:'−1', a5:'1',  a6:'−1', p35:'−6',  p45:'6',  r6:'c', s:11, keep:true},
+ {a3:'−2', a5:'0',  a6:'8',  p35:'−12', p45:'0',  r6:'t', s:14, keep:false},
+];
+ROWS.forEach((r,k)=>{
+  const y=RY[k], s=r.s;
+  line(A2[0]+30,A2[1]+(k-1)*14,CX[0]-40,y,C.soft,s,99,99,3);
+  el(`<span class="m cell">${r.a3}</span>`,CX[0],y,'',s);
+  el(`<span class="m cell">6</span>`,CX[1],y,'',s);
+  // 터치로 여는 빈칸
+  const ph5=el('?',CX[2],y,'ph',s,s);        ph5.onclick=()=>go(s+1);
+  const ph6=el('?',CX[3],y,'ph',s,s+1);      ph6.onclick=()=>go(s+2);
+  // a5 : a3·a4 ≤ 3
+  el(`<span class="m cell t">${r.a5}</span>`,CX[2],y,'',s+1);
+  const until=r.keep?99:s+2;
+  arc(CX[0]+18,CX[1]-18,y+30,C.teal,s+1,until);
+  el(`곱 ${M(r.p35)}`,(CX[0]+CX[1])/2,y+60,'plab',s+1,until).style.color=C.teal;
+  // a6
+  const col=r.r6==='t'?C.teal:C.coral;
+  el(`<span class="m cell ${r.r6}">${r.a6}</span>`,CX[3],y,'',s+2);
+  arc(CX[1]+18,CX[2]-18,y+30,col,s+2,r.keep?99:s+2);
+  el(`곱 ${M(r.p45)}`,(CX[1]+CX[2])/2,y+60,'plab',s+2,r.keep?99:s+2).style.color=col;
+});
+// a3 = −3 한 줄
+line(A2[0]+30,A2[1]+30,CX[0]-40,RY[3],C.soft,17,99,99,3);
+el(`<span class="m cell">−3</span>`,CX[0],RY[3],'',17);
+el(`<span class="m cell">6</span>`,CX[1],RY[3],'',17);
+el(`<span class="m cell t">−1</span>`,CX[2],RY[3],'',17);
+el(`<span class="m cell t">8</span>`,CX[3],RY[3],'',17);
+// ⋮ 과 a3 = k
+el(`<span class="m cell" style="font-size:40px">⋮</span>`,CX[0],523,'',18);
+line(A2[0]+24,A2[1]+44,CX[0]-40,RY[4],C.soft,18,99,99,3);
+el(`<span class="m cell"><i>k</i></span>`,CX[0],RY[4],'',18);
+el(`<span class="m cell">6</span>`,CX[1],RY[4],'',18);
+el(`<span class="m cell t"><i>k</i> + 2</span>`,CX[2],RY[4],'',18);
+el(`<span class="m cell t">8</span>`,CX[3],RY[4],'',18);
+el(`<span class="m" style="font-size:30px;color:var(--chalk-soft)">(<i>k</i> ≤ −2)</span>`,CX[0]-8,RY[4]+46,'',18);
+
+// 설명 풍선 (오른쪽 끝 설명 칸)
+const BX=1282;
+const bub2=(html,y,p)=>el(html,BX,y,'bub at',p,p);
+bub2(`${M(`${A(3)} = 0`)} 대입`,RY[0]-34,8);
+bub2(`${M(`${A(3)}${A(4)} = 0`)}<br><span class="ok">${M('≤ 3')}</span> 이므로<br>${M(`${A(5)} = ${A(3)} + 2`)}<br>${M('= 2')}`,RY[0]-34,9);
+bub2(`${M(`${A(4)}${A(5)} = 12`)}<br><span class="cr">${M('&gt; 3')}</span> 이므로<br>${M(`${A(6)} = ${A(5)} − 2`)}<br>${M('= 0')}`,RY[0]-34,10);
+bub2(`${M(`${A(3)} = −1`)} 대입`,RY[1]-34,11);
+bub2(`${M(`${A(3)}${A(4)} = −6`)}<br><span class="ok">${M('≤ 3')}</span> 이므로<br>${M(`${A(5)} = ${A(3)} + 2`)}<br>${M('= 1')}`,RY[1]-80,12);
+bub2(`${M(`${A(4)}${A(5)} = 6`)}<br><span class="cr">${M('&gt; 3')}</span> 이므로<br>${M(`${A(6)} = ${A(5)} − 2`)}<br>${M('= −1')}`,RY[1]-80,13);
+bub2(`${M(`${A(3)} = −2`)} 대입`,RY[2]-34,14);
+bub2(`${M(`${A(3)}${A(4)} = −12`)}<br><span class="ok">${M('≤ 3')}</span> 이므로<br>${M(`${A(5)} = ${A(3)} + 2`)}<br>${M('= 0')}`,RY[2]-150,15);
+bub2(`${M(`${A(4)}${A(5)} = 0`)}<br><span class="ok">${M('≤ 3')}</span> 이므로<br>${M(`${A(6)} = ${A(4)} + 2`)}<br>${M('= 8')}`,RY[2]-150,16);
+bub2(`${M(`${A(5)} = −1`)}<br>${M(`${A(4)}${A(5)} = −6`)}<br><span class="ok">${M('≤ 3')}</span> → ${M(`${A(6)} = 8`)}`,RY[3]-150,17);
+bub2(`${M(`${A(5)} = <i>k</i> + 2 ≤ 0`)}<br>${M(`${A(4)}${A(5)} ≤ 0`)} <span class="ok">${M('≤ 3')}</span><br>${M(`${A(6)} = ${A(4)} + 2`)}<br>${M('= 8')} <span class="am">항상</span>`,RY[3]-190,18);
+
+// 답
+el(`<span class="mark"></span>`,CX[3],RY[4],'',19);
+el(`<span class="mark"></span>`,CX[3],RY[1],'',19);
+el(`<div class="ansbox">${M(A(6))} 최댓값 <span class="m big">8</span><br>${M(A(6))} 최솟값 <span class="m big">−1</span><br>합 <span class="m big">7</span> &nbsp;<span class="m big">④</span></div>`,BX,RY[0]+60,'at',19);
+
+/* ===================== 진행 ===================== */
+let step=0, userFold=null;
+const qbox=document.getElementById('qbox'), qtog=document.getElementById('qtog');
+function setFold(f){qbox.classList.toggle('fold',f); qtog.textContent=f?'문제 펼치기':'문제 접기'; setTimeout(fitBoard,0);}
+function toggleQ(){userFold=!qbox.classList.contains('fold'); setFold(userFold);}
+qtog.onclick=toggleQ;
+
+const dots=document.getElementById('dots'), dotEls=[];
+for(let i=0;i<N;i++){
+  if(i===0||i===1||i===7){const g=document.createElement('span');g.className='gl';g.textContent=i===0?'문제':i===1?'STEP 1':'STEP 2';dots.appendChild(g);}
+  const d=document.createElement('div');d.className='dot';d.onclick=()=>go(i);dots.appendChild(d);dotEls.push(d);
+}
+function go(n){
+  n=Math.max(0,Math.min(N-1,n)); const prev=step; step=n;
+  if(userFold===null) setFold(n>=1);
+  items.forEach(it=>{
+    const on=n>=it.from&&n<=it.to;
+    it.el.classList.toggle('show',on);
+    it.el.classList.toggle('dead',on&&n>=it.dead);
+    if(it.el.classList.contains('bel')) it.el.classList.toggle('new',on&&it.from===n&&n!==prev);
+  });
+  const m=META[n]||{};
+  document.getElementById('rTop').classList.toggle('on',m.rule==='top');
+  document.getElementById('rBot').classList.toggle('on',m.rule==='bot');
+  ['g1','g4'].forEach(id=>document.getElementById(id).classList.toggle('on',!!(m.ga&&m.ga.includes(id))));
+  document.getElementById('c4').classList.toggle('ans',n===N-1);
+  dotEls.forEach((d,i)=>{d.classList.toggle('on',i<n);d.classList.toggle('live',i===n);});
+  document.getElementById('bPrev').disabled=n===0;
+  document.getElementById('bNext').disabled=n===N-1;
+  document.getElementById('bNext').classList.toggle('glow',n===0);
+}
+window.go=go; Object.defineProperty(window,'step',{get:()=>step});
+document.getElementById('bPrev').onclick=()=>go(step-1);
+document.getElementById('bNext').onclick=()=>go(step+1);
+document.getElementById('bReset').onclick=()=>{userFold=null;go(0);};
+
+/* ===================== 레이저 (기본 꺼짐) ===================== */
+const laser=document.getElementById('laser'); const LN=6, ldots=[];
+for(let i=0;i<LN;i++){
+  const d=document.createElement('div');d.className='ldot';
+  const s=26-i*3.4;d.style.width=s+'px';d.style.height=s+'px';
+  d.style.opacity=(0.92-i*0.14).toFixed(2);
+  d.style.boxShadow=i===0?'0 0 18px 7px rgba(255,45,45,.75)':'0 0 10px 3px rgba(255,45,45,.35)';
+  laser.appendChild(d);ldots.push({el:d,x:-100,y:-100});
+}
+let lx=-100,ly=-100,lOn=false;
+addEventListener('pointermove',e=>{if(e.pointerType!=='mouse')return;
+  document.body.classList.add('has-mouse');lx=e.clientX;ly=e.clientY;lOn=true;},{passive:true});
+addEventListener('pointerdown',e=>{
+  if(e.pointerType!=='mouse'||!document.body.classList.contains('laser-on'))return;
+  const r=document.createElement('div');r.className='lring';
+  r.style.left=e.clientX+'px';r.style.top=e.clientY+'px';r.style.width='10px';r.style.height='10px';
+  laser.appendChild(r); const t0=performance.now();
+  (function an(){const k=(performance.now()-t0)/480;
+    if(k>=1){r.remove();return;}
+    const s=10+k*84;r.style.width=s+'px';r.style.height=s+'px';r.style.opacity=(0.9*(1-k)).toFixed(2);
+    requestAnimationFrame(an);})();},{passive:true});
+(function lloop(){
+  if(lOn){let tx=lx,ty=ly;
+    for(let i=0;i<LN;i++){const d=ldots[i];d.x+=(tx-d.x)*(i===0?0.55:0.30);d.y+=(ty-d.y)*(i===0?0.55:0.30);
+      d.el.style.left=d.x+'px';d.el.style.top=d.y+'px';tx=d.x;ty=d.y;}}
+  requestAnimationFrame(lloop);})();
+document.getElementById('bLaser').onclick=()=>{
+  document.body.classList.toggle('laser-on');
+  document.getElementById('bLaser').classList.toggle('act',document.body.classList.contains('laser-on'));};
+
+/* ===================== 전체화면 / 키보드 ===================== */
+document.getElementById('bFull').onclick=()=>{
+  if(!document.fullscreenElement)(document.documentElement.requestFullscreen||document.documentElement.webkitRequestFullscreen).call(document.documentElement);
+  else document.exitFullscreen();
+  setTimeout(fitStage,300);};
+addEventListener('keydown',e=>{
+  const k=e.key.toLowerCase();
+  if(e.key==='ArrowRight'||e.key===' '){go(step+1);e.preventDefault();}
+  else if(e.key==='ArrowLeft'){go(step-1);e.preventDefault();}
+  else if(k==='r')document.getElementById('bReset').click();
+  else if(k==='f')document.getElementById('bFull').click();
+  else if(k==='l')document.getElementById('bLaser').click();
+  else if(k==='q')toggleQ();
+});
+
+/* ===================== 시작 ===================== */
+[0,60,300,700,1400].forEach(t=>setTimeout(fitStage,t)); fitStage();
+go(0);
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{fitStage();});
+</script>
+</body>
+</html>
