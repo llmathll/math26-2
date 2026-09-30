@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>tong03-14 · 사인법칙과 코사인법칙</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400..700;1,400..700&family=Noto+Sans+KR:wght@400;500;700&display=swap');
+
+:root{
+  --bg-deep:#0a1420; --bg:#0e1b2b; --panel:#16283e; --panel-2:#1d3350;
+  --line:rgba(214,229,245,.18); --line-strong:rgba(214,229,245,.38);
+  --chalk:#eaf1f8; --chalk-soft:#b9cadd; --chalk-faint:#7d94ad;
+  --amber:#f5b642; --coral:#ff7d6a; --teal:#49d1c0; --violet:#9d8cf5;
+  --sky:#79b8ff; --laser:#ff2d2d; --red:#ff5d5d;
+  --f-en:'STIX Two Text'; --f-kr:'Noto Sans KR';
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0; padding:0; height:100%; overflow:hidden; overscroll-behavior:none; touch-action:manipulation;
+  background:var(--bg-deep); color:var(--chalk);
+  font-family:var(--f-en), var(--f-kr), system-ui, sans-serif; -webkit-font-smoothing:antialiased;}
+.viewport{position:fixed; inset:0; overflow:hidden;}
+.stage{position:absolute; left:0; top:0; width:1600px; height:900px; transform-origin:0 0; background:var(--bg);}
+.sheet{width:100%; height:100%; padding:14px 34px 16px; display:flex; flex-direction:column; gap:12px;}
+.topline{flex:0 0 2px; background:linear-gradient(90deg,var(--amber),rgba(245,182,66,.05)); border-radius:2px;}
+
+/* ---------- 조판 ---------- */
+.kr{font-family:var(--f-kr); word-break:keep-all;}
+.m{font-family:var(--f-en),var(--f-kr),serif; font-variant-numeric:tabular-nums; white-space:nowrap; line-height:1.15; display:inline-block;}
+.m i,.v{font-style:italic; font-family:var(--f-en),serif;}
+.m sub{font-size:.60em; vertical-align:-.26em; line-height:0; font-family:var(--f-en),serif;}
+.frac{display:inline-flex; flex-direction:column; align-items:stretch; text-align:center; vertical-align:middle;
+  margin:0 .22em; transform:translateY(-.08em); line-height:1.06; font-size:.86em;}
+.frac>.num{padding:0 .22em .07em; border-bottom:.058em solid currentColor;}
+.frac>.den{padding:.09em .22em 0;}
+.sg{text-decoration:overline; text-decoration-thickness:.055em; text-underline-offset:0; }
+.rt{display:inline-block; width:1.16em; height:1.12em; vertical-align:-.24em; margin:0 .04em 0 .05em;}
+.rt svg{display:block; width:100%; height:100%; overflow:visible;}
+.rt text{font-family:var(--f-en),serif; font-style:normal;}
+
+/* ---------- 본문 배치 ---------- */
+#main{flex:1 1 auto; min-height:0; display:flex; gap:28px; position:relative;}
+#leftCol{flex:0 0 752px; width:752px; display:flex; flex-direction:column; gap:10px; min-height:0;}
+#rightCol{flex:0 0 752px; width:752px; position:relative; min-height:0;}
+#divider{position:absolute; left:764px; top:4px; bottom:4px; width:4px; border-radius:2px; background:rgba(121,184,255,.45);}
+#ov{position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:8; overflow:visible;}
+
+/* ---------- 문제 상자 (왼쪽만) ---------- */
+.qbox{flex:0 0 auto; position:relative; background:var(--panel); border-left:5px solid var(--amber);
+  border-radius:12px; padding:12px 20px 14px; box-shadow:0 10px 22px rgba(10,20,32,.6);}
+.qh{font-family:var(--f-kr); font-size:28px; font-weight:700; color:var(--amber); margin-right:10px;}
+.qt{font-family:var(--f-kr); font-size:36px; line-height:1.42; word-break:keep-all;}
+.qt .m{font-size:1.05em;}
+.qs{display:none; font-family:var(--f-kr); font-size:33px; line-height:1.3;}
+.qs .qi{display:block; white-space:nowrap;}
+.qs .qi::before{content:'▪ '; color:var(--amber);}
+.qs .m{font-size:1.06em;}
+.qs .goal{color:var(--amber);}
+.qbox.fold .qt{display:none;}
+.qbox.fold .qs{display:block;}
+.qbox.fold{padding:8px 20px 10px;}
+
+/* ---------- 칠판 ---------- */
+#lwrap{flex:1 1 auto; min-height:0; position:relative; overflow:hidden;}
+.board{position:absolute; left:0; top:0; transform-origin:0 0;}
+#lboard{width:752px; height:620px;}
+#rboard{width:752px; height:786px;}
+.board>svg{position:absolute; inset:0; width:100%; height:100%; overflow:visible;}
+.bel{position:absolute; transform:translate(-50%,-50%) scale(.85); opacity:0; pointer-events:none;
+  transition:opacity .35s ease, transform .35s ease; white-space:nowrap;}
+.bel.show{opacity:1; transform:translate(-50%,-50%) scale(1); pointer-events:auto;}
+.bel.al{transform:translate(0,-50%) scale(.9);}   .bel.al.show{transform:translate(0,-50%) scale(1);}
+.bel.at{transform:translate(0,0) scale(.9);}      .bel.at.show{transform:translate(0,0) scale(1);}
+.bel.ar{transform:translate(-100%,-50%) scale(.9);} .bel.ar.show{transform:translate(-100%,-50%) scale(1);}
+.sl{opacity:0; transition:opacity .4s ease;}
+.sl.show{opacity:1;}
+.bel.new{animation:pop .6s ease;}
+@keyframes pop{0%{filter:brightness(2.2);}100%{filter:none;}}
+
+.pt{font-family:var(--f-en),serif; font-size:40px; color:var(--chalk);}
+.lb{font-family:var(--f-en),serif; font-size:40px; padding:0 4px; border-radius:8px; background:rgba(14,27,43,.78); line-height:1.1;}
+.eq{font-size:42px;}
+.eqs{font-size:40px;}
+.ttl{font-family:var(--f-kr); font-size:30px; font-weight:700; color:var(--chalk-soft);}
+.ttl b{display:inline-block; font-size:24px; color:#14202e; background:var(--amber); border-radius:8px; padding:2px 12px; margin-right:12px; vertical-align:3px;}
+.tg{font-family:var(--f-kr); font-size:28px; font-weight:500; color:var(--chalk-soft);}
+.tg .m{font-size:1.1em;}
+.sm{font-size:30px;}
+.tl{color:var(--teal);} .am{color:var(--amber);} .sk{color:var(--sky);} .cr{color:var(--coral);} .vi{color:var(--violet);}
+.strat{font-family:var(--f-kr); font-size:33px; line-height:1.42; padding:8px 22px 10px; border:3px solid var(--violet);
+  border-radius:16px; background:rgba(29,51,80,.96); box-shadow:0 10px 26px rgba(0,0,0,.5);}
+.strat .h{font-size:30px; font-weight:700; color:var(--violet); margin-bottom:2px;}
+.strat .m{font-size:1.08em;}
+.strike{position:relative; color:var(--chalk-faint);}
+.strike::after{content:''; position:absolute; left:-4px; right:-4px; top:52%; height:4px; background:var(--red); transform:rotate(-8deg); border-radius:2px;}
+.ansbox{font-family:var(--f-kr); font-size:34px; line-height:1.3; padding:10px 20px; border:3px solid var(--amber);
+  border-radius:14px; background:rgba(245,182,66,.08); box-shadow:0 0 22px rgba(245,182,66,.25); display:flex; padding:4px 20px; align-items:center; gap:18px;}
+.ansbox .m{font-size:1.15em;}
+.ansbox .big{font-size:52px; font-weight:700; color:var(--amber);}
+
+/* 물음 네모 : 누르면 열림, [다음]은 모두 열기 */
+.bx{display:inline-block; position:relative; border-radius:10px; transition:background .3s, box-shadow .3s;}
+.bx:not(.open){cursor:pointer; background:rgba(157,140,245,.16); box-shadow:inset 0 0 0 3px rgba(157,140,245,.85); animation:php 1.4s ease-in-out infinite;}
+.bx:not(.open)>.bxc{visibility:hidden;}
+.bx.open{animation:pop .6s ease;}
+@keyframes php{0%,100%{filter:none;}50%{filter:brightness(1.35);}}
+.tag2{font-family:var(--f-kr); font-size:23px; font-weight:500; padding:0 8px; border-radius:8px; background:rgba(14,27,43,.85);}
+.uw{position:relative; display:inline-block;}
+.un{position:absolute; left:50%; top:100%; transform:translateX(-50%); margin-top:2px; font-size:32px; color:var(--teal);
+  opacity:0; transition:opacity .35s;}
+.chk .un{opacity:1;}
+.hbox{display:inline-flex; align-items:center; padding:6px 8px; margin:0 -2px; border-radius:12px; transition:background .3s, box-shadow .3s;}
+.hbox.hot{box-shadow:0 0 0 3px rgba(245,182,66,.85); background:rgba(245,182,66,.14);}
+
+/* ---------- 발판 ---------- */
+.app-foot{flex:0 0 58px; display:flex; align-items:center; gap:16px; border-top:1px solid var(--line); padding-top:8px;}
+.dots{display:flex; gap:9px; margin-left:2px; align-items:center;}
+.dots .gl{font-family:var(--f-kr); font-size:20px; font-weight:700; color:var(--chalk-faint); margin:0 4px 0 12px;}
+.dots .gl:first-child{margin-left:0;}
+.dot{width:14px; height:14px; border-radius:50%; background:var(--panel-2); border:1px solid var(--line-strong); cursor:pointer;}
+.dot.on{background:var(--chalk-soft); border-color:var(--chalk-soft);}
+.dot.live{background:var(--amber); border-color:var(--amber); box-shadow:0 0 0 4px rgba(245,182,66,.22);}
+.btns{margin-left:auto; display:flex; gap:10px;}
+.btn{font-family:var(--f-kr); font-size:25px; font-weight:500; color:var(--chalk-soft); background:var(--panel);
+  border:1px solid var(--line-strong); border-radius:10px; padding:6px 20px; cursor:pointer; white-space:nowrap;}
+.btn:active{background:var(--panel-2);}
+.btn.prim{color:#14202e; background:var(--amber); border-color:var(--amber); font-weight:700;}
+.btn[disabled]{opacity:.3; pointer-events:none;}
+.btn.glow{animation:gl 1.3s ease-in-out infinite;}
+@keyframes gl{0%,100%{box-shadow:0 0 0 0 rgba(245,182,66,0);}50%{box-shadow:0 0 0 7px rgba(245,182,66,.30);}}
+.btn.act{color:var(--teal); border-color:rgba(73,209,192,.6);}
+
+/* ---------- 레이저 ---------- */
+#laser{position:fixed; inset:0; pointer-events:none; z-index:9999; display:none;}
+body.laser-on #laser{display:block;}
+body.laser-on.has-mouse{cursor:none;}
+body.laser-on.has-mouse *{cursor:none !important;}
+.ldot{position:absolute; border-radius:50%; background:var(--laser); transform:translate(-50%,-50%);}
+.lring{position:absolute; border-radius:50%; border:3px solid var(--laser); transform:translate(-50%,-50%);}
+@media (prefers-reduced-motion:reduce){*{transition:none !important; animation:none !important;}}
+</style>
+</head>
+<body>
+<div class="viewport">
+ <div class="stage" id="stage">
+  <div class="sheet">
+   <div class="topline"></div>
+
+   <div id="main">
+    <div id="leftCol">
+     <div class="qbox" id="qbox">
+       <div class="qt" id="qt"></div>
+       <div class="qs" id="qs"></div>
+     </div>
+     <div id="lwrap"><div class="board" id="lboard"><svg id="lsvg" xmlns="http://www.w3.org/2000/svg"></svg></div></div>
+    </div>
+    <div id="divider"></div>
+    <div id="rightCol"><div class="board" id="rboard"><svg id="rsvg" xmlns="http://www.w3.org/2000/svg"></svg></div></div>
+    <svg id="ov" xmlns="http://www.w3.org/2000/svg">
+      <defs><marker id="ah" viewBox="0 0 12 12" refX="9" refY="6" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M1 1 L11 6 L1 11 Z" fill="#f5b642"/></marker></defs>
+      <path id="arrow" d="" fill="none" stroke="#f5b642" stroke-width="5" stroke-linecap="round" marker-end="url(#ah)" opacity="0"/>
+    </svg>
+   </div>
+
+   <div class="app-foot">
+     <div class="dots" id="dots"></div>
+     <div class="btns">
+       <button class="btn" id="bPrev">이전</button>
+       <button class="btn prim" id="bNext">다음</button>
+       <button class="btn" id="bReset">처음</button>
+       <button class="btn" id="qtog">문제 접기</button>
+       <button class="btn" id="bFull">전체화면</button>
+       <button class="btn" id="bLaser">레이저</button>
+     </div>
+   </div>
+  </div>
+ </div>
+</div>
+<div id="laser"></div>
+
+<script>
+'use strict';
+/* ===================== 수식 조각 ===================== */
+function R(d){   // SVG 글리프 근호 (갈고리·덮개선·숫자 한 덩어리)
+  return '<span class="rt"><svg viewBox="0 0 116 112" preserveAspectRatio="xMinYMin meet" xmlns="http://www.w3.org/2000/svg">'
+   +'<path d="M3 54 L18 62 L40 95 L61 12 L114 12" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>'
+   +'<text x="64" y="88" font-size="100" fill="currentColor">'+d+'</text></svg></span>';
+}
+const M=s=>`<span class="m">${s}</span>`;
+const FR=(n,d)=>`<span class="frac"><span class="num">${n}</span><span class="den">${d}</span></span>`;
+const SG=s=>`<span class="sg">${s}</span>`;
+const X='<i>x</i>';
+const R6='3'+R(6), R3=R(3);
+const BX=(g,c)=>`<span class="bx" data-g="${g}"><span class="bxc">${c}</span></span>`;
+const UW=(t,n)=>`<span class="uw">${t}<span class="un">${n}</span></span>`;
+
+/* ===================== 문제 ===================== */
+document.getElementById('qt').innerHTML=
+ `<span class="qh">tong03-14</span>선분 AB의 길이가 ${M(R6)}인 삼각형 ABC에서 선분 AB의 수직이등분선이 선분 BC와 점 D에서 만나고, 두 삼각형 ABD, ABC의 외접원의 넓이의 비가 ${M('3 : 4')}이다. ${M(`${SG('AD')} &lt; ${SG('AB')}`)}, ${M(`${SG('CD')} = 3`)}일 때, 삼각형 ACD의 외접원의 넓이는?`;
+document.getElementById('qs').innerHTML=
+ `<span class="qi"><span class="qh">tong03-14</span>${M(`${SG('AB')} = ${R6}`)}, &nbsp;${M(`${SG('AD')} &lt; ${SG('AB')}`)}, &nbsp;${M(`${SG('CD')} = 3`)}</span>`
++`<span class="qi">외접원 넓이 ${M('△ABD : △ABC = 3 : 4')}</span>`
++`<span class="qi goal">구하는 값 : △ACD의 외접원의 넓이</span>`;
+
+/* ===================== 스테이지 ===================== */
+const STAGE_W=1600, STAGE_H=900, stage=document.getElementById('stage');
+function fitStage(){
+  const vv=window.visualViewport;
+  const w=vv?vv.width:innerWidth, h=vv?vv.height:innerHeight;
+  const s=Math.min(w/STAGE_W,h/STAGE_H);
+  stage.style.transform=`translate(${Math.round((w-STAGE_W*s)/2)}px,${Math.round((h-STAGE_H*s)/2)}px) scale(${s})`;
+  window.__scale=s; fitBoard();
+}
+addEventListener('resize',fitStage); addEventListener('orientationchange',fitStage);
+if(window.visualViewport)visualViewport.addEventListener('resize',fitStage);
+
+/* 왼쪽 칠판: 문제를 펼치면 줄어든다 */
+const LW=752, LH=620, lwrap=document.getElementById('lwrap'), lboard=document.getElementById('lboard');
+function fitBoard(){
+  const w=lwrap.clientWidth, h=lwrap.clientHeight; if(!w||!h)return;
+  const s=Math.min(1,w/LW,h/LH);
+  lboard.style.transform=`translate(${Math.round((w-LW*s)/2)}px,0) scale(${s})`;
+  requestAnimationFrame(placeArrow);
+}
+new ResizeObserver(fitBoard).observe(lwrap);
+
+/* ===================== 칠판 요소 ===================== */
+const SVGNS='http://www.w3.org/2000/svg';
+const items=[];
+function reg(e,from,to,rv){items.push({el:e,from,to:to??99,rv});return e;}
+function el(board,html,x,y,cls,from,to,rv){
+  const d=document.createElement('div'); d.className='bel '+(cls||''); d.innerHTML=html;
+  d.style.left=x+'px'; d.style.top=y+'px'; board.appendChild(d); return reg(d,from,to,rv);
+}
+function sv(svg,tag,attrs,from,to){
+  const e=document.createElementNS(SVGNS,tag);
+  for(const k in attrs)e.setAttribute(k,attrs[k]);
+  e.setAttribute('class','sl'); svg.appendChild(e); return reg(e,from,to);
+}
+const C={teal:'#49d1c0',coral:'#ff7d6a',amber:'#f5b642',soft:'#b9cadd',chalk:'#eaf1f8',sky:'#79b8ff',violet:'#9d8cf5'};
+const LB=document.getElementById('lboard'), LS=document.getElementById('lsvg');
+const RB=document.getElementById('rboard'), RS=document.getElementById('rsvg');
+const L=(h,x,y,c,f,t,rv)=>el(LB,h,x,y,c,f,t,rv);
+const Rr=(h,x,y,c,f,t)=>el(RB,h,x,y,c,f,t);
+const seg=(p,q,col,w,f,t,dash)=>sv(LS,'line',{x1:p[0],y1:p[1],x2:q[0],y2:q[1],stroke:col,'stroke-width':w,'stroke-linecap':'round',...(dash?{'stroke-dasharray':dash}:{})},f,t);
+const poly=(pts,fill,f,t,stroke,sw)=>sv(LS,'polygon',{points:pts.map(p=>p.join(',')).join(' '),fill,stroke:stroke||'none','stroke-width':sw||0,'stroke-linejoin':'round'},f,t);
+
+/* ===================== 좌표 (실제 비율, 1 = 50px) =====================
+   AB = 3√6, ∠B = 45°, AD = BD = 3√3, CD = 3                    */
+const r6=Math.sqrt(6), r3=Math.sqrt(3), SC=44, AX=118, AY=330;
+const P=(u,v)=>[AX+u*SC, AY-v*SC];
+const pA=P(0,0), pB=P(3*r6,0), pM=P(1.5*r6,0), pD=P(1.5*r6,1.5*r6);
+const cv=(3*r3+3)/Math.SQRT2, pC=P(3*r6-cv,cv);
+const pO=[(pA[0]+pC[0])/2,(pA[1]+pC[1])/2];
+
+/* 단계
+ 0 문제 | 1 삼각형·AB | 2 M, MD | 3 x, x, 3 | 4 전략 | 5 사인법칙 비 | 6 AC | 7 MB | 8 cos B = MB/x
+ 9 코사인법칙 | 10 두 식 같다 | 11 정리 | 12 삼차방정식 | 13 인수분해 | 14 x = 3√3 | 15 ∠ADC = 90° | 16 넓이 */
+const N=17;
+
+/* ---------- 강조 채우기 (선보다 먼저 그려 선 아래에 깔린다) ---------- */
+poly([pA,pB,pD],'rgba(73,209,192,.20)',5,5);            // △ABD
+poly([pD,pM,pB],'rgba(121,184,255,.24)',8,8);            // △DMB
+poly([pA,pB,pC],'rgba(245,182,66,.10)',9,9,C.amber,5);   // △ABC
+poly([pA,pD,pC],'rgba(245,182,66,.18)',15,16);           // △ACD
+// 외접원
+sv(LS,'circle',{cx:pO[0],cy:pO[1],r:3*SC,fill:'rgba(73,209,192,.07)',stroke:C.teal,'stroke-width':4.5},16);
+sv(LS,'circle',{cx:pO[0],cy:pO[1],r:6,fill:C.teal},16);
+
+/* ---------- 삼각형 ---------- */
+seg(pA,pB,C.chalk,4,1); seg(pB,pC,C.chalk,4,1); seg(pC,pA,C.chalk,4,1);
+poly([pA,pB,pC],'none',5,5,C.amber,5);                   // △ABC 테두리 (사인법칙)
+// AB 길이 치수선
+const dy=pA[1]+64;
+seg([pA[0],dy],[pB[0],dy],C.soft,2.5,1); seg([pA[0],dy-12],[pA[0],dy+12],C.soft,2.5,1); seg([pB[0],dy-12],[pB[0],dy+12],C.soft,2.5,1);
+L(`<span class="lb m">${R6}</span>`,(pA[0]+pB[0])/2,dy,'',1);
+// 꼭짓점
+L('<span class="pt">A</span>',pA[0]-24,pA[1]+18,'',1);
+L('<span class="pt">B</span>',pB[0]+24,pB[1]+18,'',1);
+L('<span class="pt">C</span>',pC[0]-6,pC[1]-30,'',1);
+
+/* ---------- M, MD ---------- */
+seg(pM,pD,C.sky,4,2);
+sv(LS,'polyline',{points:`${pM[0]},${pM[1]-18} ${pM[0]+18},${pM[1]-18} ${pM[0]+18},${pM[1]}`,fill:'none',stroke:C.sky,'stroke-width':3},2);
+[(pA[0]+pM[0])/2,(pM[0]+pB[0])/2].forEach(cx=>{[-5,5].forEach(o=>seg([cx+o,pA[1]-11],[cx+o,pA[1]+11],C.sky,3,2));});
+sv(LS,'circle',{cx:pM[0],cy:pM[1],r:6,fill:C.sky},2);
+sv(LS,'circle',{cx:pD[0],cy:pD[1],r:6,fill:C.chalk},2);
+L('<span class="pt">M</span>',pM[0]-26,pM[1]+22,'',2);
+L('<span class="pt">D</span>',pD[0]+26,pD[1]-26,'',2);
+
+/* ---------- AD = BD = x, CD = 3 ---------- */
+seg(pA,pD,C.teal,4,3);
+L(`<span class="lb m tl">${X}</span>`,230,272,'',3,13);
+L(`<span class="lb m tl">${X}</span>`,384,226,'',3,13);
+L(`<span class="lb m am">${'3'+R(3)}</span>`,226,278,'',14);
+L(`<span class="lb m am">${'3'+R(3)}</span>`,398,222,'',14);
+L(`<span class="lb m">3</span>`,256,100,'',3);
+// ∠B
+const aR=46;
+sv(LS,'path',{d:`M${pB[0]-aR} ${pB[1]} A${aR} ${aR} 0 0 1 ${pB[0]-aR*Math.SQRT1_2} ${pB[1]-aR*Math.SQRT1_2}`,fill:'none',stroke:C.amber,'stroke-width':4},5);
+
+/* ---------- 전략 (5단계에서 사라짐) ---------- */
+L(`<div class="strat"><div class="h">풀이 전략</div>① ${M(SG('AC'))} → ${M(X)}로 표현<br>② ${M('cos B')}를 두 가지로<br>③ ${M(X)} → 외접원의 넓이</div>`,196,406,'at',4,4);
+
+/* ---------- 사인법칙 ---------- */
+L(`<span class="tg">외접원 넓이의 비 ${M('3 : 4')} →</span>`,410,28,'al',5);
+L(`<span class="m eq"><i>R</i><sub>1</sub> : <i>R</i><sub>2</sub> = ${BX('r',`${R3} : 2`)}</span>`,410,82,'al',5);
+L(`<span class="m eq tl">2<i>R</i><sub>1</sub> = ${FR(X,'sin B')}</span>`,430,164,'al',5);
+L(`<span class="m eq am">2<i>R</i><sub>2</sub> = ${FR(SG('AC'),'sin B')}</span>`,430,282,'al',5);
+L(`<span class="tag2 tl">△ABD의 외접원 반지름</span>`,506,218,'al',5,5,'pre');
+L(`<span class="tag2 am">△ABC의 외접원 반지름</span>`,506,338,'al',5,5,'pre');
+L(`<span class="m eq"><span class="tl">${X}</span> : <span class="am">${SG('AC')}</span> = ${R3} : 2</span>`,6,462,'al',5,99,'post');
+// AC
+seg(pA,pC,C.amber,6,6,14);
+L(`<span class="m eq">⟹ ${SG('AC')} = <span class="am">${FR('2'+X,R3)}</span></span>`,350,462,'al',6);
+L(`<span class="lb m am">${FR('2'+X,R3)}</span>`,pO[0]-58,pO[1]+6,'',6,14);
+L(`<span class="lb m am">6</span>`,pO[0]-40,pO[1]+6,'',15);
+
+/* ---------- MB, cos B ---------- */
+seg(pM,pB,C.sky,7,7,8);
+L(`<span class="m eq">${SG('MB')} = <span class="sk">${FR(R6,'2')}</span></span>`,6,566,'al',7);
+L(`<span class="m eq">cos B = ${FR(SG('MB'),X)} = <span id="cL" class="hbox">${FR(R6,'2'+X)}</span></span>`,290,558,'al',8);
+
+/* ---------- ∠ADC = 90° ---------- */
+const u1=[-Math.SQRT1_2,-Math.SQRT1_2], u2=[-Math.SQRT1_2,Math.SQRT1_2], q=22;
+sv(LS,'polyline',{points:[[pD[0]+q*u1[0],pD[1]+q*u1[1]],[pD[0]+q*(u1[0]+u2[0]),pD[1]+q*(u1[1]+u2[1])],[pD[0]+q*u2[0],pD[1]+q*u2[1]]].map(p=>p.join(',')).join(' '),fill:'none',stroke:C.amber,'stroke-width':4},15);
+
+/* ===================== 오른쪽 : STEP 2 ===================== */
+const RX=18;
+Rr(`<div class="ttl">△ABC에서 코사인법칙</div>`,RX,22,'al',9);
+Rr(`<span class="m eq">cos B = ${FR(`${BX('c','54')} + ${BX('c',`(${X} + 3)²`)} − ${BX('c',`${FR('4','3')}${X}²`)}`,`2 × ${BX('c',R6)} × ${BX('c',`(${X} + 3)`)}`)}</span>`,RX,112,'al',9);
+Rr(`<span class="m eq"><span id="cR" class="hbox">${FR(R6,'2'+X)}</span> = ${FR(`−${FR('1','3')}${X}² + 6${X} + 63`,`6${R(6)}(${X} + 3)`)}</span>`,RX,240,'al',10);
+Rr(`<span class="tg">← 두 ${M('cos B')}가 같다</span>`,748,276,'ar',10);
+Rr(`<span class="m eq" style="font-size:40px">108(${X} + 3) = −${FR('2','3')}${X}³ + 12${X}² + 126${X}</span>`,RX,332,'al',11);
+Rr(`<span class="tg sk">↓ 양변 × ${M(FR('3','2'))} 후 이항</span>`,RX+30,386,'al',12);
+Rr(`<span class="m eq">${X}³ ${BX('k','− 18')}${X}² ${BX('k','− 27')}${X} ${BX('k','+ 486')} = 0</span>`,RX,438,'al',12);
+Rr(`<span class="m eq">${X}²(${X} − 18) − 27(${X} − 18) = 0</span>`,RX,494,'al',13);
+Rr(`<span class="m eq">⟹ (${X} − 18)(${X}² − 27) = 0</span>`,RX,548,'al',13);
+Rr(`<span class="m eq"><span id="x18">${X} = 18</span></span>`,RX,602,'al',14);
+Rr(`<span class="m eq am">${X} = 3${R3}</span>`,RX+210,602,'al',14);
+Rr(`<span class="tg">${M(`(${SG('AD')} &lt; ${SG('AB')} = ${R6})`)}</span>`,RX+420,602,'al',14);
+Rr(`<span class="m eq" id="sqrow">${SG('AC')} = 6 ⟹ ${UW(SG('AC')+'²','36')} = ${UW(SG('AD')+'²','27')} + ${UW(SG('CD')+'²','9')}</span>`,RX,654,'al',15);
+Rr(`<div class="ansbox">외접원의 반지름 ${M(`${FR(SG('AC'),'2')} = ${BX('a','3')}`)} &nbsp;→ 넓이 <span class="m big">${BX('a','9π')}</span></div>`,RX,738,'al',16);
+
+/* ===================== 화살표 (왼쪽 cos B → 오른쪽 식) ===================== */
+const MAIN=document.getElementById('main'), ARR=document.getElementById('arrow');
+function placeArrow(){
+  const a=document.getElementById('cL'), b=document.getElementById('cR');
+  if(!a||!b)return;
+  const s=window.__scale||1, m=MAIN.getBoundingClientRect(), ra=a.getBoundingClientRect(), rb=b.getBoundingClientRect();
+  const x1=(ra.right-m.left)/s+8, y1=(ra.top+ra.bottom)/2/s-m.top/s;
+  const x2=(rb.left-m.left)/s-10, y2=(rb.bottom-m.top)/s+4;
+  const gx=766;
+  ARR.setAttribute('d',`M${x1} ${y1} C${gx+10} ${y1}, ${gx-10} ${y2+40}, ${x2} ${y2}`);
+}
+
+/* ===================== 진행 ===================== */
+let step=0, userFold=null;
+/* 물음 네모 그룹 : 그 단계에서 [다음]을 누르면 먼저 열린다 */
+const GROUPS={r:5, c:9, k:12, a:16};
+const SEQ={a:true};                       // 하나씩 열기
+const bxOf=g=>[...document.querySelectorAll(`.bx[data-g="${g}"]`)];
+const gDone=g=>bxOf(g).every(b=>b.classList.contains('open'));
+function syncRv(){
+  items.forEach(it=>{ if(!it.rv)return;
+    const g=Object.keys(GROUPS).find(k=>GROUPS[k]===it.from)||'r';
+    const done=gDone(g), inRange=step>=it.from&&step<=it.to;
+    const on=inRange&&(it.rv==='pre'?!done:done);
+    it.el.classList.toggle('show',on);
+  });
+  document.getElementById('bNext').disabled=step===N-1&&gDone('a');
+}
+document.querySelectorAll('.bx').forEach(b=>b.addEventListener('click',e=>{
+  const g=b.dataset.g; if(step!==GROUPS[g]||b.classList.contains('open'))return;
+  b.classList.add('open'); e.stopPropagation(); syncRv();
+}));
+function nextBtn(){
+  const g=Object.keys(GROUPS).find(k=>GROUPS[k]===step);
+  if(g&&!gDone(g)){
+    const closed=bxOf(g).filter(b=>!b.classList.contains('open'));
+    (SEQ[g]?closed.slice(0,1):closed).forEach(b=>b.classList.add('open'));
+    syncRv(); return;
+  }
+  go(step+1);
+}
+const qbox=document.getElementById('qbox'), qtog=document.getElementById('qtog');
+function setFold(f){qbox.classList.toggle('fold',f); qtog.textContent=f?'문제 펼치기':'문제 접기'; setTimeout(fitBoard,0);}
+function toggleQ(){userFold=!qbox.classList.contains('fold'); setFold(userFold);}
+qtog.onclick=toggleQ;
+
+const dots=document.getElementById('dots'), dotEls=[];
+for(let i=0;i<N;i++){
+  if(i===0||i===1||i===9){const g=document.createElement('span');g.className='gl';g.textContent=i===0?'문제':i===1?'STEP 1':'STEP 2';dots.appendChild(g);}
+  const d=document.createElement('div');d.className='dot';d.onclick=()=>go(i);dots.appendChild(d);dotEls.push(d);
+}
+function go(n){
+  n=Math.max(0,Math.min(N-1,n)); const prev=step; step=n;
+  if(n>=4&&prev<4)userFold=null;
+  if(userFold===null) setFold(n>=4);
+  items.forEach(it=>{
+    const on=n>=it.from&&n<=it.to;
+    it.el.classList.toggle('show',on);
+    if(it.el.classList.contains('bel')) it.el.classList.toggle('new',on&&it.from===n&&n!==prev);
+  });
+  for(const g in GROUPS){ const open=n>GROUPS[g]; bxOf(g).forEach(b=>b.classList.toggle('open',open)); }
+  syncRv();
+  document.getElementById('sqrow').classList.toggle('chk',n===15);
+  document.getElementById('cL').classList.toggle('hot',n===10);
+  document.getElementById('cR').classList.toggle('hot',n===10);
+  document.getElementById('x18').classList.toggle('strike',n>=14);
+  ARR.style.transition='opacity .4s'; ARR.setAttribute('opacity',n>=10?(n===10?1:.45):0);
+  placeArrow(); setTimeout(placeArrow,420);
+  dotEls.forEach((d,i)=>{d.classList.toggle('on',i<n);d.classList.toggle('live',i===n);});
+  document.getElementById('bPrev').disabled=n===0;
+  document.getElementById('bNext').classList.toggle('glow',n===0);
+}
+window.go=go; Object.defineProperty(window,'step',{get:()=>step});
+document.getElementById('bPrev').onclick=()=>go(step-1);
+document.getElementById('bNext').onclick=nextBtn;
+document.getElementById('bReset').onclick=()=>{userFold=null;go(0);};
+
+/* ===================== 레이저 (기본 꺼짐) ===================== */
+const laser=document.getElementById('laser'); const LN=6, ldots=[];
+for(let i=0;i<LN;i++){
+  const d=document.createElement('div');d.className='ldot';
+  const s=26-i*3.4;d.style.width=s+'px';d.style.height=s+'px';
+  d.style.opacity=(0.92-i*0.14).toFixed(2);
+  d.style.boxShadow=i===0?'0 0 18px 7px rgba(255,45,45,.75)':'0 0 10px 3px rgba(255,45,45,.35)';
+  laser.appendChild(d);ldots.push({el:d,x:-100,y:-100});
+}
+let lx=-100,ly=-100,lOn=false;
+addEventListener('pointermove',e=>{if(e.pointerType!=='mouse')return;
+  document.body.classList.add('has-mouse');lx=e.clientX;ly=e.clientY;lOn=true;},{passive:true});
+addEventListener('pointerdown',e=>{
+  if(e.pointerType!=='mouse'||!document.body.classList.contains('laser-on'))return;
+  const r=document.createElement('div');r.className='lring';
+  r.style.left=e.clientX+'px';r.style.top=e.clientY+'px';r.style.width='10px';r.style.height='10px';
+  laser.appendChild(r); const t0=performance.now();
+  (function an(){const k=(performance.now()-t0)/480;
+    if(k>=1){r.remove();return;}
+    const s=10+k*84;r.style.width=s+'px';r.style.height=s+'px';r.style.opacity=(0.9*(1-k)).toFixed(2);
+    requestAnimationFrame(an);})();},{passive:true});
+(function lloop(){
+  if(lOn){let tx=lx,ty=ly;
+    for(let i=0;i<LN;i++){const d=ldots[i];d.x+=(tx-d.x)*(i===0?0.55:0.30);d.y+=(ty-d.y)*(i===0?0.55:0.30);
+      d.el.style.left=d.x+'px';d.el.style.top=d.y+'px';tx=d.x;ty=d.y;}}
+  requestAnimationFrame(lloop);})();
+document.getElementById('bLaser').onclick=()=>{
+  document.body.classList.toggle('laser-on');
+  document.getElementById('bLaser').classList.toggle('act',document.body.classList.contains('laser-on'));};
+
+/* ===================== 전체화면 / 키보드 ===================== */
+document.getElementById('bFull').onclick=()=>{
+  if(!document.fullscreenElement)(document.documentElement.requestFullscreen||document.documentElement.webkitRequestFullscreen).call(document.documentElement);
+  else document.exitFullscreen();
+  setTimeout(fitStage,300);};
+addEventListener('keydown',e=>{
+  const k=e.key.toLowerCase();
+  if(e.key==='ArrowRight'||e.key===' '){nextBtn();e.preventDefault();}
+  else if(e.key==='ArrowLeft'){go(step-1);e.preventDefault();}
+  else if(k==='r')document.getElementById('bReset').click();
+  else if(k==='f')document.getElementById('bFull').click();
+  else if(k==='l')document.getElementById('bLaser').click();
+  else if(k==='q')toggleQ();
+});
+
+/* ===================== 시작 ===================== */
+[0,60,300,700,1400].forEach(t=>setTimeout(fitStage,t)); fitStage();
+go(0);
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{fitStage();placeArrow();});
+</script>
+</body>
+</html>
