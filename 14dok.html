@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>독립시행의 확률 개념 복습</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400..700;1,400..700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Nord 팔레트 */
+  --bg-deep:#242933; --bg:#2e3440; --panel:#3b4252; --panel-2:#434c5e;
+  --line:rgba(216,222,233,.16); --line-strong:rgba(216,222,233,.36);
+  --chalk:#eceff4; --chalk-soft:#d8dee9; --chalk-faint:#9aa5b8;
+  --amber:#ebcb8b; --teal:#88c0d0; --violet:#b48ead; --coral:#bf616a;
+  --f-en:'STIX Two Text'; --f-kr:'Noto Sans KR';
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--bg-deep);
+  overscroll-behavior:none;touch-action:manipulation;-webkit-text-size-adjust:100%;
+  -webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+body{color:var(--chalk);font-family:var(--f-en),var(--f-kr),serif}
+button{font:inherit;color:inherit}
+.viewport{position:fixed;inset:0}
+.stage{position:absolute;top:0;left:0;width:1600px;height:900px;transform-origin:0 0;background:var(--bg);overflow:hidden}
+.sheet{height:100%;display:flex;flex-direction:column;gap:10px;padding:10px 20px 14px}
+
+/* ── 머리말 ── */
+.head{flex:0 0 56px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--line);padding-bottom:8px}
+.title{font-family:var(--f-kr);font-size:36px;font-weight:700;color:var(--amber);white-space:nowrap;margin-right:auto}
+.prog{font-size:26px;color:var(--chalk-faint);font-variant-numeric:tabular-nums;min-width:96px;text-align:right;white-space:nowrap}
+.fbtn{font-family:var(--f-kr);font-size:25px;font-weight:700;cursor:pointer;background:var(--panel-2);
+  border:1.5px solid var(--line-strong);border-radius:10px;padding:7px 16px;white-space:nowrap}
+.fbtn.go{background:color-mix(in srgb,var(--violet) 18%,transparent);border-color:var(--violet);padding:7px 26px}
+.fbtn:active{transform:scale(.97)}
+.ctl{position:absolute;right:34px;bottom:24px;display:flex;align-items:center;gap:6px;z-index:5}
+.ctl .fbtn{font-size:22px;height:44px;padding:0 16px;opacity:.85;display:flex;align-items:center;justify-content:center}
+.ctl .fbtn.ib{width:44px;padding:0;color:var(--chalk-soft)}
+.ctl .prog{font-size:22px;min-width:0;margin-right:4px}
+
+/* ── 칠판 배치 ── */
+.board{flex:1 1 auto;min-height:0;display:grid;gap:12px;
+  grid-template-columns:700px 1fr;grid-template-rows:auto 1fr}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:10px 20px 12px;min-width:0;position:relative}
+#bin{grid-column:1 / 3}
+.sh{display:flex;align-items:center;gap:14px;font-family:var(--f-kr);font-size:29px;font-weight:700;white-space:nowrap;height:44px}
+.tag{font-family:var(--f-kr);font-size:24px;font-weight:700;color:var(--bg);background:var(--amber);border-radius:8px;padding:1px 12px}
+.tag.t{background:var(--teal)}
+.lab{font-family:var(--f-kr);font-size:24px;font-weight:500;color:var(--chalk-faint);white-space:nowrap}
+
+/* ── 수식 ── */
+.m{font-family:var(--f-en),serif;font-variant-numeric:tabular-nums;white-space:nowrap}
+.v{font-style:italic}
+.frac{display:inline-flex;flex-direction:column;align-items:stretch;text-align:center;
+  vertical-align:middle;margin:0 .1em;transform:translateY(-.08em);line-height:1.04;font-size:.84em;white-space:nowrap}
+.frac>.num{padding:0 .16em .06em;border-bottom:.058em solid currentColor}
+.frac>.den{padding:.08em .16em 0}
+.bp{display:inline-block;transform:scaleY(1.55);transform-origin:50% 55%}
+sup,sub{font-size:.62em;line-height:0;position:relative;vertical-align:baseline}
+sup{top:-.62em;margin-left:.04em}
+sup.hi{top:-1.22em}
+sub{top:.3em}
+sub.pl{margin-right:.03em}
+.cb{white-space:nowrap;margin-right:.05em}
+.op{margin:0 .2em}
+.dim{color:var(--chalk-soft)}
+
+/* ── 빈칸 ── */
+.blank{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;
+  border:2.5px dashed var(--violet);border-radius:10px;background:color-mix(in srgb,var(--violet) 13%,transparent);
+  cursor:pointer;padding:2px 8px;margin:1px .08em;min-width:56px;min-height:58px;transition:background .2s,border-color .2s}
+.blank>span{visibility:hidden}
+.blank.open{border-style:solid;border-color:transparent;background:transparent;color:var(--amber)}
+.blank.open>span{visibility:visible}
+.hid{visibility:hidden;opacity:0}
+.rv{transition:opacity .3s}
+
+/* ── 예 ── */
+.etab{display:grid;grid-template-columns:repeat(3,74px) 1fr;align-items:center;column-gap:8px;margin-top:4px}
+.etab .eh{font-family:var(--f-kr);font-size:24px;color:var(--chalk-faint);text-align:center;height:36px;line-height:36px;
+  border-bottom:1.5px solid var(--line-strong)}
+.etab .eh.l{text-align:left;padding-left:12px}
+.erow{display:contents}
+.pat{grid-column:1 / 4;display:grid;grid-template-columns:repeat(3,1fr);font-size:50px;line-height:1;text-align:center;width:100%;margin:0}
+.pat .o{color:var(--teal)} .pat .x{color:var(--chalk-soft)}
+.ecell{font-size:36px;height:70px;display:flex;align-items:center;padding-left:6px}
+.pc{font-size:50px;line-height:1;height:70px;display:flex;align-items:center;justify-content:center}
+.pc .o{color:var(--teal)} .pc .x{color:var(--chalk-soft)}
+.patb{display:flex!important;width:100%}
+.eres{margin-top:10px;display:flex;align-items:flex-start;gap:8px;font-size:38px}
+.eres .m{display:flex;align-items:flex-start}
+.ub{display:inline-flex;flex-direction:column;align-items:center}
+.ub .lab{font-size:22px;margin-top:2px}
+.eq{height:62px;display:flex;align-items:center;margin:1px .22em}
+.leg{font-family:var(--f-kr);font-size:24px;color:var(--chalk-faint);margin-left:auto;font-weight:500}
+.leg b{font-family:var(--f-en);font-size:36px;font-weight:400;margin:0 6px 0 14px}
+
+/* ── 일반화 ── */
+.gtab{display:grid;grid-template-columns:auto 150px 150px 1fr;align-items:center;column-gap:14px;margin-top:4px}
+.gtab .gh{font-family:var(--f-kr);font-size:23px;color:var(--chalk-faint);text-align:center;height:44px;line-height:44px;
+  border-bottom:1.5px solid var(--line-strong);white-space:nowrap}
+.grow{display:contents}
+.gl{font-family:var(--f-kr);font-size:29px;font-weight:700;white-space:nowrap;height:76px;display:flex;align-items:center}
+.gl .m{font-size:34px;font-weight:400}
+.gc{font-size:36px;height:76px;display:flex;align-items:center;justify-content:center}
+.gc.l{justify-content:flex-start}
+.thm{margin-top:8px;border:2px solid var(--amber);border-radius:12px;background:color-mix(in srgb,var(--amber) 7%,transparent);padding:6px 18px 8px}
+.thm .tt{font-family:var(--f-kr);font-size:24px;line-height:1.32;color:var(--chalk-soft);white-space:nowrap}
+.thm .tt .m{font-size:28px;color:var(--chalk)}
+.thm .tf{display:flex;align-items:center;gap:16px;font-size:42px;margin-top:2px}
+.thm .tf .rng{font-size:28px;color:var(--chalk-soft)}
+
+/* ── 확률분포표 ── */
+#bin .sh .m{font-size:34px;font-weight:400}
+.dtab{border-collapse:collapse;margin-top:6px;width:100%;table-layout:auto}
+.dtab th,.dtab td{border:1.5px solid var(--line-strong);text-align:center;white-space:nowrap;padding:0 10px}
+.dtab th{background:var(--panel-2);font-family:var(--f-kr);font-size:25px;font-weight:700;color:var(--chalk-soft);width:96px}
+.dtab td{font-size:34px}
+.dtab tr.rr td{font-size:34px;height:42px;color:var(--amber)}
+.dtab tr.cs td{height:56px;font-family:var(--f-kr);font-size:24px;color:var(--chalk-soft)}
+.dtab tr.cs td .m{font-size:30px;color:var(--chalk)}
+.dtab tr.cs .o,.dtab tr.cs .x{color:var(--teal);font-family:var(--f-en);font-size:40px;line-height:1}
+.dtab tr.cs .x{color:var(--chalk-soft)}
+.dtab tr.pp td{height:68px}
+.dtab td.dots{width:52px;font-size:34px;color:var(--chalk-soft)}
+.dtab .blank{min-height:52px}
+.sum{display:flex;align-items:flex-start;gap:12px;margin-top:4px;font-size:34px}
+.sum>.lab{height:62px;display:flex;align-items:center;font-size:24px}
+.sum .m{display:flex;align-items:flex-start}
+.sum .eq{height:62px}
+.sum .ub .lab{font-size:22px;color:var(--teal)}
+
+button:focus{outline:none}
+button:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="viewport"><div class="stage" id="stage"><div class="sheet">
+
+  <header class="head">
+    <div class="title">독립시행의 확률 개념 복습</div>
+  </header>
+
+  <main class="board" id="board">
+    <section class="card" id="ex"></section>
+    <section class="card" id="gen"></section>
+    <section class="card" id="bin"></section>
+  </main>
+
+  <div class="ctl">
+    <div class="prog" id="prog"></div>
+    <button class="fbtn" id="prevBtn">◀ 이전</button>
+    <button class="fbtn go" id="nextBtn">다음 ▶</button>
+    <button class="fbtn ib" id="allBtn" title="모두 보기 (A)"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
+    <button class="fbtn ib" id="resetBtn" title="초기화 (R)"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 12a8.5 8.5 0 1 0 2.5-6"/><path d="M3 3.5v4.5h4.5"/></svg></button>
+    <button class="fbtn ib" id="fsBtn" title="전체화면 (F)"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+  </div>
+</div></div></div>
+
+<script>
+/* ═══ 1. 스테이지 스케일링 ═══ */
+const STAGE_W=1600, STAGE_H=900, stage=document.getElementById('stage');
+function fitStage(){
+  const vv=window.visualViewport;
+  const w=vv?vv.width:innerWidth, h=vv?vv.height:innerHeight;
+  const s=Math.min(w/STAGE_W,h/STAGE_H);
+  stage.style.transform=`translate(${Math.round((w-STAGE_W*s)/2)}px,${Math.round((h-STAGE_H*s)/2)}px) scale(${s})`;
+}
+const fitSoon=()=>[0,60,300,700].forEach(t=>setTimeout(fitStage,t));
+addEventListener('resize',fitStage); addEventListener('orientationchange',fitSoon);
+if(window.visualViewport) visualViewport.addEventListener('resize',fitStage);
+document.addEventListener('fullscreenchange',fitSoon);
+fitSoon();
+
+/* ═══ 2. 수식 조각 ═══ */
+const F=(a,b)=>`<span class="frac"><span class="num">${a}</span><span class="den">${b}</span></span>`;
+const V=s=>`<span class="v">${s}</span>`;
+const M=s=>`<span class="m">${s}</span>`;
+const n=V('n'), r=V('r'), k=V('k'), p=V('p'), q=V('q'), A=V('A');
+const C=(a,b)=>`<span class="cb"><sub class="pl">${a}</sub>C<sub>${b}</sub></span>`;
+const PW=(b,e)=>`${b}<sup>${e}</sup>`;
+const PF=(a,b,e)=>`<span class="bp">(</span>${F(a,b)}<span class="bp">)</span><sup class="hi">${e}</sup>`;
+const X=`<span class="op">×</span>`, PL=`<span class="op">+</span>`, EQ=`<span class="op">=</span>`, MI='−';
+const DOTS='⋯';
+
+/* 순서 번호: 만드는 순서 = 다음 버튼 순서 */
+let Q=0; const nq=()=>++Q;
+const B=(s,cls='')=>`<span class="blank ${cls}" data-q="${nq()}"><span>${s}</span></span>`;
+const ub=(inner,label)=>`<span class="ub">${inner}<span class="lab">${label}</span></span>`;
+
+/* ═══ 3. 예 : 주사위 3번, 1의 눈 2번 ═══ */
+const O='<span class="o">○</span>', Xx='<span class="x">×</span>';
+const pats=[[1,1,0],[1,0,1],[0,1,1]];
+let exRows='';
+pats.forEach(pt=>{
+  const prod=M(pt.map(b=>b?F(1,6):F(5,6)).join(X));
+  exRows+=`<div class="erow">${pt.map(b=>`<div class="pc m">${b?O:Xx}</div>`).join('')}
+    <div class="ecell">${B(prod)}</div></div>`;
+});
+const resQ=nq();
+const exRes=`<div class="eres hid rv" data-q="${resQ}"><span class="m">
+  ${ub(B(C(3,2)),'경우의 수')}<span class="eq">${X}</span>
+  ${ub(B(PF(1,6,2)+PF(5,6,1)),'한 경우의 확률')}<span class="eq">${EQ}</span>
+  ${B(F(5,72))}</span></div>`;
+document.getElementById('ex').innerHTML=`
+  <div class="sh"><span class="tag">예</span>주사위를 3번 던질 때 1의 눈이 2번 나올 확률</div>
+  <div class="etab">
+    <div class="eh">1회</div><div class="eh">2회</div><div class="eh">3회</div>
+    <div class="eh l" style="display:flex">확률<span class="leg"><b class="o" style="color:var(--teal)">○</b>1의 눈<b>×</b>다른 눈</span></div>
+    ${exRows}
+  </div>${exRes}`;
+
+/* ═══ 4. 일반화 ═══ */
+const genQ=nq();
+const r2Q=nq(), r2a=B(C(5,2)), r2b=B(PF(1,6,2)+PF(5,6,3));
+const r3Q=nq(), r3p=p, r3a=B(C(n,r)), r3b=B(PW(p,r)+`(1 ${MI} ${p})`+`<sup>${n}${MI}${r}</sup>`);
+const thQ=nq(), thF=B(C(n,r)+PW(p,r)+`(1 ${MI} ${p})`+`<sup>${n}${MI}${r}</sup>`);
+const gl=(a,b)=>`<div class="gl"><span>${M(a)}번 중 ${M(b)}번</span></div>`;
+document.getElementById('gen').innerHTML=`
+  <div>
+  <div class="gtab">
+    <div class="gh" style="text-align:left;border-bottom:none"><span class="tag t">일반화</span></div><div class="gh">한 번의 확률</div><div class="gh">경우의 수</div><div class="gh">한 경우의 확률</div>
+    <div class="grow"><div class="hid rv" data-q="${genQ}">${gl(3,2)}</div><div class="gc m hid rv" data-q="${genQ}">${F(1,6)}</div><div class="gc m hid rv" data-q="${genQ}">${C(3,2)}</div><div class="gc m hid rv" data-q="${genQ}">${PF(1,6,2)+PF(5,6,1)}</div></div>
+    <div class="grow"><div class="hid rv" data-q="${r2Q}">${gl(5,2)}</div><div class="gc m hid rv" data-q="${r2Q}">${F(1,6)}</div>
+      <div class="gc m hid rv" data-q="${r2Q}">${r2a}</div><div class="gc m hid rv" data-q="${r2Q}">${r2b}</div></div>
+    <div class="grow"><div class="hid rv" data-q="${r3Q}">${gl(n,r)}</div><div class="gc m hid rv" data-q="${r3Q}">${r3p}</div>
+      <div class="gc m hid rv" data-q="${r3Q}">${r3a}</div><div class="gc m hid rv" data-q="${r3Q}">${r3b}</div></div>
+  </div></div>
+  <div class="thm hid rv" data-q="${thQ}">
+    <div class="tt">한 번의 시행에서 사건 ${M(A)}가 일어날 확률이 ${M(p)}일 때,<br>${M(n)}번의 독립시행에서 사건 ${M(A)}가 ${M(r)}번 일어날 확률</div>
+    <div class="tf m">${thF}<span class="rng">(단, ${r} = 0, 1, 2, ${DOTS}, ${n})</span></div>
+  </div>`;
+
+/* ═══ 5. 확률분포표와 이항정리 ═══ */
+const cols=[
+  {r:'0', cs:`<span class="x">×</span> ${M(n)}개`, c:C(n,'0'), pq:PW(p,'0')+PW(q,n)},
+  {r:'1', cs:`<span class="o">○</span> ${M('1')}개, <span class="x">×</span> ${M(`(${n}${MI}1)`)}개`, c:C(n,'1'), pq:PW(p,'1')+`${q}<sup>${n}${MI}1</sup>`},
+  {dots:true},
+  {r:k, cs:`<span class="o">○</span> ${M(k)}개, <span class="x">×</span> ${M(`(${n}${MI}${k})`)}개`, c:C(n,k), pq:PW(p,k)+`${q}<sup>${n}${MI}${k}</sup>`},
+  {dots:true},
+  {r:n, cs:`<span class="o">○</span> ${M(n)}개`, c:C(n,n), pq:PW(p,n)+PW(q,'0')}
+];
+let pendDots=[];
+cols.forEach(c=>{
+  if(c.dots){ pendDots.push(c); return; }
+  c.q=nq(); pendDots.forEach(d=>d.q=c.q); pendDots=[];
+  c.bc=B(c.c); c.bpq=B(c.pq);
+});
+const td=(c,inner,cls='')=>`<td class="${cls}">${inner}</td>`;
+const tdh=(c,inner,cls='')=>`<td class="${cls}"><div class="hid rv" data-q="${c.q}">${inner}</div></td>`;
+const rowR=cols.map(c=>c.dots?td(c,'','dots'):td(c,M(c.r))).join('');
+const rowC=cols.map(c=>c.dots?tdh(c,M(DOTS),'dots'):tdh(c,c.cs)).join('');
+const rowP=cols.map(c=>c.dots?tdh(c,M(DOTS),'dots'):tdh(c,`<span class="m">${c.bc}${c.bpq}</span>`)).join('');
+const sumQ=nq();
+const term=c=>c.c+c.pq;
+const sumExpr=[term(cols[0]),term(cols[1]),DOTS,term(cols[3]),DOTS,term(cols[5])].join(PL);
+const sumB1=B(`(${q} + ${p})<sup>${n}</sup>`), sumB2=B('1');
+document.getElementById('bin').innerHTML=`
+  <div>
+  <div class="sh"><span class="tag">확률분포표</span><span class="m">1 ${MI} ${p} = ${q}</span><span class="lab">라 하면</span></div>
+  <table class="dtab">
+    <tr class="rr"><th>${M(V('r'))}</th>${rowR}</tr>
+    <tr class="cs"><th>경우</th>${rowC}</tr>
+    <tr class="pp"><th>확률</th>${rowP}</tr>
+  </table></div>
+  <div class="sum hid rv" data-q="${sumQ}"><span class="lab">확률의 합</span><span class="m">
+    <span class="eq">${sumExpr}</span><span class="eq">${EQ}</span>
+    ${ub(sumB1,'이항정리')}<span class="eq">${EQ}</span>${sumB2}</span></div>`;
+
+/* ═══ 6. 단계 진행 ═══ */
+const TOTAL=Q;
+const els=q=>document.querySelectorAll(`[data-q="${q}"]`);
+const isBlank=q=>els(q)[0].classList.contains('blank');
+const isDone=q=>isBlank(q)?els(q)[0].classList.contains('open'):!els(q)[0].classList.contains('hid');
+function setQ(q,on){
+  els(q).forEach(e=>{ if(e.classList.contains('blank')) e.classList.toggle('open',on); else e.classList.toggle('hid',!on); });
+  if(!on && !isBlank(q)) /* 가려지는 묶음 안의 빈칸도 닫는다 */
+    els(q).forEach(e=>e.querySelectorAll('.blank').forEach(b=>b.classList.remove('open')));
+}
+function prog(){
+  let d=0; for(let i=1;i<=TOTAL;i++) if(isDone(i)) d++;
+  document.getElementById('prog').textContent=`${d} / ${TOTAL}`;
+}
+function next(){ for(let i=1;i<=TOTAL;i++) if(!isDone(i)){ setQ(i,true); break; } prog(); }
+function prev(){ for(let i=TOTAL;i>=1;i--) if(isDone(i)){ setQ(i,false); break; } prog(); }
+function all(){ for(let i=1;i<=TOTAL;i++) setQ(i,true); prog(); }
+function reset(){ for(let i=TOTAL;i>=1;i--) setQ(i,false); prog(); }
+document.getElementById('board').addEventListener('click',e=>{
+  const b=e.target.closest('.blank'); if(!b) return;
+  b.classList.toggle('open'); prog();
+});
+document.getElementById('nextBtn').onclick=next;
+document.getElementById('prevBtn').onclick=prev;
+document.getElementById('allBtn').onclick=all;
+document.getElementById('resetBtn').onclick=reset;
+
+/* ═══ 7. 키보드 · 전체화면 ═══ */
+const fsBtn=document.getElementById('fsBtn');
+fsBtn.onclick=()=>{
+  const d=document, el=d.documentElement;
+  if(d.fullscreenElement||d.webkitFullscreenElement) (d.exitFullscreen||d.webkitExitFullscreen).call(d);
+  else { const rq=el.requestFullscreen||el.webkitRequestFullscreen; if(rq) Promise.resolve(rq.call(el)).catch(()=>{}); }
+};
+const syncFs=()=>fsBtn.title=(document.fullscreenElement||document.webkitFullscreenElement)?'창으로 (F)':'전체화면 (F)';
+document.addEventListener('fullscreenchange',syncFs); document.addEventListener('webkitfullscreenchange',syncFs);
+addEventListener('keydown',e=>{
+  const key=e.key;
+  if(key===' '||key==='ArrowRight'||key==='PageDown'||key==='Enter'){ e.preventDefault(); next(); }
+  else if(key==='ArrowLeft'||key==='PageUp'||key==='Backspace'){ e.preventDefault(); prev(); }
+  else if(key==='a'||key==='A') all();
+  else if(key==='r'||key==='R') reset();
+  else if(key==='f'||key==='F') fsBtn.click();
+});
+prog();
+</script>
+</body>
+</html>
