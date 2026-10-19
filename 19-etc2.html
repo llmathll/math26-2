@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>19-etc2 시그마로 쓴 이항분포의 정규근사</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400..700;1,400..700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-deep:#0a1420; --bg:#0e1b2b; --panel:#16283e; --panel-2:#1d3350;
+  --line:rgba(214,229,245,.16); --line-strong:rgba(214,229,245,.34);
+  --chalk:#eaf1f8; --chalk-soft:#b9cadd; --chalk-faint:#7d94ad;
+  --amber:#f5b642; --teal:#49d1c0; --violet:#9d8cf5; --coral:#ff7d6a;
+  --f-en:'STIX Two Text'; --f-kr:'Noto Sans KR';
+  --ls:44px; --ls-sm:29px; --ls-q:26px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--bg-deep);
+  overscroll-behavior:none;touch-action:manipulation;-webkit-text-size-adjust:100%}
+.viewport{position:fixed;inset:0}
+.stage{width:1600px;height:900px;user-select:none;-webkit-user-select:none;transform-origin:0 0;background:var(--bg);color:var(--chalk)}
+.sheet{height:100%;display:flex;flex-direction:column;gap:12px;padding:16px 30px 14px}
+
+/* ── 본문 2단 ───────────────────────────────── */
+#body2col{flex:1 1 auto;min-height:0;display:flex;gap:18px}
+#leftCol{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:12px}
+#rightCol{flex:0 0 716px;display:flex;flex-direction:column;min-height:0;transition:flex-basis .35s}
+/* 중반 이후: 오른쪽 그림칸이 풀이 둘째 칸이 된다 */
+#body2col.ph2 #rightCol{flex-basis:880px}
+#body2col.ph2 .gpanel{display:none}
+#flow2Wrap{display:none;border-left:1px solid var(--line);padding-left:14px}
+#body2col.ph2 #flow2Wrap{display:block}
+
+/* ── 문제 카드 ─────────────────────────────── */
+.qcard{flex:0 0 auto;background:var(--panel);border:1px solid var(--line);
+  border-radius:14px;padding:11px 18px 13px}
+.qhead{display:flex;align-items:center;gap:12px;cursor:pointer}
+.qnum{background:var(--amber);color:#141d26;font-family:var(--f-kr);font-weight:700;
+  font-size:20px;padding:2px 12px;border-radius:8px;white-space:nowrap}
+.qgist{flex:1;font-family:var(--f-en),var(--f-kr),serif;font-size:25px;font-weight:500;color:var(--amber);
+  word-break:keep-all}
+.qarrow{color:var(--chalk-faint);font-size:20px;transition:transform .2s}
+.qtext{font-family:var(--f-en),var(--f-kr),serif;font-size:var(--ls-q);line-height:1.5;color:var(--chalk-soft);margin-top:9px;
+  max-height:440px;overflow:hidden;transition:max-height .25s,margin-top .25s,opacity .2s;word-break:keep-all}
+.qcard.folded .qtext{max-height:0;margin-top:0;opacity:0}
+.qcard.folded .qarrow{transform:rotate(-90deg)}
+.ztab{border-collapse:collapse;margin-top:10px;font-size:24px;font-variant-numeric:tabular-nums;color:var(--chalk)}
+.ztab td{border:1px solid var(--line-strong);padding:2px 12px;text-align:center;white-space:nowrap}
+.ztab td.h{color:var(--chalk-soft);background:var(--panel-2)}
+.fo{width:100%;height:100%;display:flex;align-items:center;font-family:var(--f-en),var(--f-kr),serif;font-weight:600;white-space:nowrap;line-height:1.1;pointer-events:none}
+
+/* ── 단계 누적 스크롤 ──────────────────────── */
+.flowWrap{position:relative;flex:1 1 auto;min-height:0}
+.flow{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;
+  touch-action:pan-y;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+  padding:2px 16px 130px 0}
+#body2col.ph2 .flow{padding-bottom:8px}
+.flow::-webkit-scrollbar{width:10px}
+.flow::-webkit-scrollbar-thumb{background:rgba(214,229,245,.28);border-radius:6px}
+.fadeTop,.fadeBot{position:absolute;left:0;right:0;height:40px;pointer-events:none;
+  opacity:0;transition:opacity .15s}
+.fadeTop{top:0;background:linear-gradient(180deg,var(--bg) 20%,transparent)}
+.fadeBot{bottom:0;background:linear-gradient(0deg,var(--bg) 20%,transparent)}
+
+.blk{padding:9px 0 13px 16px;border-left:3px solid transparent;opacity:.55;cursor:pointer}
+.blk.cur{opacity:1;border-left-color:var(--amber)}
+#body2col.ph2 .blk{opacity:.8}
+#body2col.ph2 .blk.cur,#body2col.done .blk{opacity:1}
+.bhead{display:flex;align-items:center;gap:12px}
+.bno{flex:0 0 48px;width:48px;height:48px;border-radius:50%;display:grid;place-items:center;
+  font-family:var(--f-en);font-size:25px;font-weight:700;
+  border:2px solid var(--teal);color:var(--teal);background:transparent}
+.blk.cur .bno{background:var(--amber);border-color:var(--amber);color:#141d26}
+.btitle{font-family:var(--f-kr);font-size:var(--ls-sm);font-weight:700;color:var(--chalk);
+  word-break:keep-all}
+.bbody{padding-left:60px}
+.bsm{font-family:var(--f-kr);font-size:var(--ls-sm);line-height:1.42;color:var(--chalk-soft);
+  margin-top:7px;word-break:keep-all}
+.bsm b{color:var(--chalk);font-weight:700}
+.bsm .e{font-family:var(--f-en);font-size:1.12em;white-space:nowrap}
+.bpre{margin-top:9px}
+.bpost{margin-top:8px}
+.bmath{margin-top:11px}
+#flow2 .blk{padding:4px 0 8px 16px}
+#flow2 .blk:not(.cur) .bsm{display:none}
+#flow2 .m{font-size:40px}
+#flow2 .m+.m{margin-top:4px}
+#flow2 .bmath{margin-top:6px}
+#flow2 .bno{flex-basis:44px;width:44px;height:44px}
+#flow2 .bbody{padding-left:56px}
+.side{display:flex;align-items:center;gap:18px;margin-top:2px}
+.side .bsm{flex:1 1 auto;margin-top:0}
+.side .bpost{flex:0 0 430px;margin-top:0}
+
+/* ── 수식 조판 ─────────────────────────────── */
+.m{font-family:var(--f-en),var(--f-kr),serif;font-variant-numeric:tabular-nums;
+  font-size:var(--ls);line-height:1.4;word-break:keep-all;white-space:nowrap}
+.m+.m{margin-top:8px}
+.v{font-style:italic}
+.frac{display:inline-flex;flex-direction:column;align-items:stretch;text-align:center;
+  vertical-align:middle;margin:0 .2em;transform:translateY(-.1em);
+  line-height:1.06;font-size:.84em;white-space:nowrap}
+.frac>.num{padding:0 .22em .07em;border-bottom:.058em solid currentColor}
+.frac>.den{padding:.09em .22em 0}
+.comb{display:inline-flex;align-items:baseline;white-space:nowrap;margin:0 .08em}
+.comb .cn{font-size:.58em;position:relative;top:.32em;margin-right:.06em}
+.comb .cc{font-weight:600}
+.comb .cr{font-size:.58em;position:relative;top:.32em;margin-left:.03em}
+.hl{color:var(--amber);font-weight:700}
+.ans{display:inline-flex;align-items:center;vertical-align:middle;transform:translateY(-.1em);
+  color:var(--amber);font-weight:700;padding:.05em .24em;border:2px solid var(--amber);
+  border-radius:.18em;box-shadow:0 0 20px rgba(245,182,66,.2)}
+.cv{display:block;width:100%;height:auto;touch-action:manipulation}
+.pf{white-space:nowrap}
+.qbox{display:inline-block;min-width:4.2em;text-align:center;color:var(--violet);font-weight:700;cursor:pointer;
+  border:3px dashed var(--violet);border-radius:10px;background:rgba(157,140,245,.10);padding:0 .3em;line-height:1.25}
+.pf .frac{margin:0 .04em}
+.pr{display:inline-block;transform:scale(1,1.5);font-weight:400}
+.ex{font-size:.56em;position:relative;top:-1.05em;margin:0 .1em 0 .04em;white-space:nowrap}
+.sig{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;
+  line-height:1;margin:0 .1em;transform:translateY(-.06em);white-space:nowrap}
+.sig .sg{font-size:1.45em;line-height:.92}
+.sig .sh,.sig .sl{font-size:.46em}
+#body2col.ph2 #flow .m{font-size:38px}
+
+/* ── 오른쪽 패널 ───────────────────────────── */
+.gpanel{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;gap:10px;
+  background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:11px 14px 12px}
+.mbanner{flex:0 0 auto;border-bottom:1px solid var(--line);padding-bottom:8px}
+.mbanner .t{font-family:var(--f-kr);font-size:24px;font-weight:700;color:var(--amber)}
+.mbanner .s{font-family:var(--f-en),var(--f-kr),serif;font-size:23px;color:var(--chalk-soft);margin-top:1px;
+  word-break:keep-all}
+.gwrap{flex:1 1 0;min-height:0;position:relative}
+.gwrap svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.srow{flex:0 0 44px;display:flex;align-items:center;gap:10px}
+.gbtn{font-family:var(--f-kr);font-size:19px;font-weight:700;color:var(--chalk);cursor:pointer;
+  background:rgba(157,140,245,.14);border:1.5px solid var(--violet);border-radius:10px;
+  padding:7px 15px;white-space:nowrap}
+.gbtn:active{transform:scale(.97)}
+.gbtn[hidden]{display:none}
+
+/* ── 발판 ──────────────────────────────────── */
+.foot{flex:0 0 46px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.fmeta{font-family:var(--f-kr);font-size:18px;color:var(--chalk-faint);white-space:nowrap}
+.fmeta b{color:var(--chalk-soft);font-weight:700}
+.fbtns{display:flex;gap:8px}
+.fbtn{font-family:var(--f-kr);font-size:22px;font-weight:700;color:var(--chalk);cursor:pointer;
+  background:var(--panel-2);border:1.5px solid var(--line-strong);border-radius:10px;
+  padding:8px 20px;white-space:nowrap}
+.fbtn:hover{border-color:var(--chalk-soft)}
+.fbtn:active{transform:scale(.97)}
+.fbtn.primary{background:linear-gradient(180deg,#f5b642,#e09e28);color:#141d26;border-color:transparent}
+.fbtn:disabled{opacity:.3;cursor:default;transform:none}
+
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+}
+</style>
+</head>
+<body>
+<div class="viewport"><div class="stage" id="stage"><div class="sheet">
+
+  <div id="body2col">
+    <div id="leftCol">
+
+      <!-- ▼▼ 문제 : 여기를 바꾼다 ▼▼ -->
+      <div class="qcard" id="qcard">
+        <div class="qhead" id="qhead">
+          <span class="qnum">19-etc2</span>
+          <span class="qgist" id="qgist"></span>
+          <span class="qarrow" id="qarrow">▾</span>
+        </div>
+        <div class="qtext">
+          <span id="qsum"></span> 의 값을 아래 표준정규분포표를 이용하여 구하시오.
+          <table class="ztab">
+            <tr><td class="h"><span class="v">z</span></td><td>0.5</td><td>1.0</td><td>1.5</td><td>2.0</td><td>2.5</td><td>3.0</td></tr>
+            <tr><td class="h"><span class="v">P</span>(0 ≤ <span class="v">Z</span> ≤ <span class="v">z</span>)</td><td>0.1915</td><td>0.3413</td><td>0.4332</td><td>0.4772</td><td>0.4938</td><td>0.4987</td></tr>
+          </table>
+        </div>
+      </div>
+      <!-- ▲▲ 문제 끝 ▲▲ -->
+
+      <div class="flowWrap">
+        <div class="flow" id="flow"></div>
+        <div class="fadeTop" id="fadeTop"></div>
+        <div class="fadeBot" id="fadeBot"></div>
+      </div>
+    </div>
+
+    <div id="rightCol">
+      <div class="gpanel">
+        <div class="mbanner">
+          <div class="t" id="bnT"></div>
+          <div class="s" id="bnS"></div>
+        </div>
+        <div class="gwrap" id="gwrap"><svg id="gsvg"></svg></div>
+        <div class="srow">
+          <div style="flex:1"></div>
+          <button class="gbtn" id="gbtn" hidden></button>
+        </div>
+      </div>
+      <!-- 중반 이후 풀이 둘째 칸 -->
+      <div class="flowWrap" id="flow2Wrap">
+        <div class="flow" id="flow2"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <div class="fmeta" id="pos"></div>
+    <div class="fbtns">
+      <button class="fbtn" id="resetBtn">처음부터</button>
+      <button class="fbtn" id="prevBtn">◀ 이전</button>
+      <button class="fbtn primary" id="nextBtn">풀이 보기</button>
+      <button class="fbtn" id="fsBtn">전체화면</button>
+    </div>
+  </div>
+
+</div></div></div>
+
+<script>
+/* ═══ 1. 스테이지 스케일링 ═══════════════════════════════ */
+const STAGE_W=1600, STAGE_H=900, stage=document.getElementById('stage');
+function fitStage(){
+  const vv=window.visualViewport;
+  const w=vv?vv.width:innerWidth, h=vv?vv.height:innerHeight;
+  const s=Math.min(w/STAGE_W,h/STAGE_H);
+  stage.style.transform=`translate(${Math.round((w-STAGE_W*s)/2)}px,${Math.round((h-STAGE_H*s)/2)}px) scale(${s})`;
+}
+addEventListener('resize',fitStage);
+if(window.visualViewport) visualViewport.addEventListener('resize',fitStage);
+[0,60,300,700].forEach(t=>setTimeout(fitStage,t));
+
+/* ═══ 2. 수식 조각 ═══════════════════════════════════════ */
+const F =(a,b)=>`<span class="frac"><span class="num">${a}</span><span class="den">${b}</span></span>`;
+const C =(n,r)=>`<span class="comb"><span class="cn">${n}</span><span class="cc">C</span><span class="cr">${r}</span></span>`;
+const V =s=>`<span class="v">${s}</span>`;
+const Pf=V('P'), Xf=V('X'), Zf=V('Z'), Ef=V('E'), Vf=V('V'), pf=V('p'), nf=V('n'), Sf=V('S');
+const ANS=s=>`<span class="ans">${s}</span>`;
+const E =s=>`<span class="e">${s}</span>`;           // 설명문 안 수식
+
+/* ═══ 3. 상태 ═══════════════════════════════════════════ */
+/* ▼▼ 문항마다 바꾸는 부분 ▼▼ */
+const SPLIT=2;                       // 1~2단계는 왼쪽, 3단계부터 오른쪽 칸
+const newS=()=>({ step:1, shown:[], r:[false,false,false,false,false], sum:false, z4:false, za:false, zb:false });
+const S=newS();
+const kf=V('k'), sigf=V('σ');
+const PF=(a,b)=>`<span class="pf"><span class="pr">(</span>${F(a,b)}<span class="pr">)</span></span>`;
+const EX=s=>`<span class="ex">${s}</span>`;
+const SIG=(lo,hi)=>`<span class="sig"><span class="sh">${hi}</span><span class="sg">∑</span><span class="sl">${lo}</span></span>`;
+const F910=F('9','10'), F110=F('1','10');
+/* 이항분포의 한 항: ₄₀₀C_k (9/10)^k (1/10)^(400−k) */
+const TERM=(k,rest,kc)=>{
+  const K=kc?`<span style="color:${kc}">${k}</span>`:k;
+  return `${C(400,K)}${PF('9','10')}${EX(K)}${PF('1','10')}${EX(rest)}`;
+};
+const TERMK=TERM(kf,`400 − ${kf}`);
+const SIGK=SIG(`${kf} = 351`,'369');
+document.getElementById('qgist').innerHTML=`${SIGK}${TERMK} 의 값`;
+document.getElementById('qsum').innerHTML=`${SIGK}${TERMK}`;
+
+const Z4=`${Pf}(${F('−9','6')} ≤ ${Zf} ≤ ${F('9','6')})`;
+const Z4Q=`<span class="qbox" data-hit="z4">?</span>`;
+const STEPS=[
+ { t:'이항분포 찾기', short:'이항분포',
+   sm:`400번 시행에서 확률 ${E(F910)}인 사건이<br><b>${E(kf)}번</b> 일어날 확률의 꼴.`,
+   f:()=>`<div class="m">${Xf} ~ B(400, ${F910})</div>
+          <div class="m">${Pf}(${Xf} = ${kf}) = ${TERMK}</div>` },
+
+ { t:'확률을 모두 더하기', short:'확률의 합',
+   sm:`${E(Xf)} = 351, 352, ⋯, 369일 확률을<br><b>모두 더한 것</b>.`,
+   f:()=>`<div class="m">${SIGK} ${Pf}(${Xf} = ${kf}) = ${Pf}(351 ≤ ${Xf} ≤ 369)</div>` },
+
+ { t:'평균과 분산', short:'평균·분산',
+   sm:`B(${nf}, ${pf}) → 평균 ${E(nf+pf)}, 분산 ${E(nf+pf+'(1 − '+pf+')')}.`,
+   f:()=>`<div class="m">${Ef}(${Xf}) = 400 × ${F910} = <span class="hl">360</span></div>
+          <div class="m">${Vf}(${Xf}) = 400 × ${F910} × ${F110} = <span class="hl">36</span></div>` },
+
+ { t:'정규분포로 근사', short:'정규근사',
+   sm:`400번은 충분히 크다 → 정규분포로 근사.<br>351, 369는 평균 360에서 <b>9씩</b> 떨어져 있다.`,
+   f:()=>`<div class="m">${Xf} ~ N(360, 6²)</div>
+          <div class="m">${Pf}(351 ≤ ${Xf} ≤ 369) = ${S.z4?Z4:Z4Q}</div>` },
+
+ { t:'표준정규분포표 읽기', short:'답',
+   sm:`${E('−1.5')} ~ ${E('0')}의 넓이는<br><b>${E('0')} ~ ${E('1.5')}의 넓이</b>와 같다.`, side:true,
+   post:()=>curveSVG(),
+   f:()=>`<div class="m">${Pf}(−1.5 ≤ ${Zf} ≤ 1.5) = 2 × 0.4332 = ${ANS('0.8664')}</div>` }
+];
+/* ▲▲ 여기까지 ▲▲ */
+const N=STEPS.length;
+
+/* ═══ 4. 왼쪽·오른쪽 풀이 그리기 ═════════════════════════ */
+const flow=document.getElementById('flow'), flow2=document.getElementById('flow2'),
+      fadeTop=document.getElementById('fadeTop'), fadeBot=document.getElementById('fadeBot'),
+      body2=document.getElementById('body2col');
+let scrollTarget=null;
+
+function blkHTML(i){
+  const st=STEPS[i-1], cur=i===S.step, open=cur? S.shown[i-1] : true, fx=open?st.f():'';
+  return `<div class="blk${cur?' cur':''}" id="blk${i}" data-jump="${i}">
+      <div class="bhead"><div class="bno">${i}</div><div class="btitle">${st.t}</div></div>
+      <div class="bbody">
+        ${st.pre?`<div class="bpre">${st.pre()}</div>`:''}
+        ${st.side?'<div class="side">':''}
+        ${st.sm?`<div class="bsm">${st.sm}</div>`:''}
+        ${st.post?`<div class="bpost">${st.post()}</div>`:''}
+        ${st.side?'</div>':''}
+        ${fx?`<div class="bmath">${fx}</div>`:''}
+      </div>
+    </div>`;
+}
+function paintFlow(scrollTo){
+  const ph2=S.step>SPLIT;
+  body2.classList.toggle('ph2',ph2);
+  body2.classList.toggle('done',S.step===N&&!!S.shown[N-1]);
+  let h='', h2='';
+  for(let i=1;i<=Math.min(S.step,SPLIT);i++) h+=blkHTML(i);
+  for(let i=SPLIT+1;i<=S.step;i++) h2+=blkHTML(i);
+  flow.innerHTML=h; flow2.innerHTML=h2;
+  if(ph2){
+    if(scrollTo!==false) flow.scrollTop=0;
+    const el=document.getElementById('blk'+S.step);       // 현재 단계 아래끝이 보이게
+    if(el){ const need=el.offsetTop+el.offsetHeight-flow2.clientHeight+12;
+            if(need>flow2.scrollTop) flow2.scrollTop=Math.min(need,el.offsetTop-6);
+            if(scrollTo!==false && need<=0) flow2.scrollTop=0; }
+  }else if(scrollTo!==false){
+    const el=document.getElementById('blk'+S.step);
+    if(el){ scrollTarget=Math.max(0,el.offsetTop-6);
+            flow.scrollTo({top:scrollTarget,behavior:'smooth'}); }
+  }
+  updFade();
+}
+function updFade(){
+  fadeTop.style.opacity = flow.scrollTop>6 ? 1 : 0;
+  fadeBot.style.opacity = (flow.scrollHeight-flow.clientHeight-flow.scrollTop)>10 ? 1 : 0;
+}
+flow.addEventListener('scroll',updFade,{passive:true});
+
+let downTop=0;
+[flow,flow2].forEach(fl=>{
+  fl.addEventListener('pointerdown',()=>{ downTop=fl.scrollTop; scrollTarget=null; });
+  fl.addEventListener('click',e=>{
+    if(Math.abs(fl.scrollTop-downTop)>4) return;
+    const h=e.target.closest('[data-hit]');
+    if(h){ hit(h.dataset.hit); return; }
+    const b=e.target.closest('[data-jump]');
+    if(b && +b.dataset.jump!==S.step) jump(+b.dataset.jump);
+  });
+});
+
+/* ═══ 5. SVG 도구 ═══════════════════════════════════════ */
+const SER="'STIX Two Text',serif", KR="'Noto Sans KR',sans-serif";
+function txt(x,y,s,size,fill,opt){
+  opt=opt||{};
+  return `<text x="${x}" y="${y}" text-anchor="${opt.anchor||'middle'}" dominant-baseline="central"
+    font-family="${opt.kr?KR:SER}" font-size="${size}" font-weight="${opt.w||500}" pointer-events="none"
+    fill="${fill}"${opt.op?` fill-opacity="${opt.op}"`:''}${opt.it?' font-style="italic"':''}>${s}</text>`;
+}
+function txtMix(x,y,parts,size,fill,opt){
+  opt=opt||{};
+  const inner=parts.map(p=>`<tspan font-family="${p.kr?KR:SER}"${p.it?' font-style="italic"':''}${p.c?` fill="${p.c}"`:''}>${p.s}</tspan>`).join('');
+  return `<text x="${x}" y="${y}" text-anchor="${opt.anchor||'middle'}" dominant-baseline="central" pointer-events="none"
+    font-size="${size}" font-weight="${opt.w||600}" fill="${fill}"${opt.op?` fill-opacity="${opt.op}"`:''}>${inner}</text>`;
+}
+/* HTML 수식을 SVG 안에 놓기 (조합 기호용) */
+function FO(x,y,html,size,color,anchor,w,h){
+  w=w||380; h=h||120; anchor=anchor||'middle';
+  const lx=anchor==='middle'?x-w/2:(anchor==='start'?x:x-w);
+  const jc=anchor==='middle'?'center':(anchor==='start'?'flex-start':'flex-end');
+  return `<foreignObject x="${lx}" y="${y-h/2}" width="${w}" height="${h}" pointer-events="none">
+    <div xmlns="http://www.w3.org/1999/xhtml" class="fo" style="justify-content:${jc};font-size:${size}px;color:${color}"><span>${html}</span></div></foreignObject>`;
+}
+const CSS=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const gsvg=document.getElementById('gsvg'), gwrap=document.getElementById('gwrap');
+let W=0,H=0;
+new ResizeObserver(()=>{
+  const w=Math.round(gwrap.clientWidth), h=Math.round(gwrap.clientHeight);
+  if(w===W&&h===H) return;
+  W=w; H=h; gsvg.setAttribute('viewBox',`0 0 ${W} ${H}`); draw();
+}).observe(gwrap);
+
+/* ═══ 6. 그림 ═══════════════════════════════════════════ */
+/* ▼▼ 문항마다 바꾸는 부분 ▼▼ */
+const XS=[351,352,"k",368,369];
+const bnT=document.getElementById('bnT'), bnS=document.getElementById('bnS');
+const BAN=[
+  {t:'이항분포표로 펼치기', s:`${Xf} = 351, 352, ⋯, 369 일 때의 확률`},
+  {t:'확률을 모두 더하기', s:`∑ 로 묶으면 주어진 식`}];
+
+function draw(){
+  if(S.step<=SPLIT){ const b=BAN[S.step-1]; bnT.innerHTML=b.t; bnS.innerHTML=b.s; }
+  if(!W || S.step>SPLIT) return;
+  const AM=CSS('--amber'), TE=CSS('--teal'), VI=CSS('--violet'), CH=CSS('--chalk'),
+        SO=CSS('--chalk-soft'), FA=CSS('--chalk-faint'), LS=CSS('--line-strong');
+  const o=[], st=S.step, all=S.r.every(Boolean);
+  const x0=6, cx=128, tR=W-78, pw=tR-x0-cx, px=x0+cx;
+  const hh=56, dh=30, gap=12, sh=96, concH=72;
+  const rh=Math.min(104, Math.floor((H-8-hh-2*dh-gap-sh-concH)/5));
+  const rect=(x,y,w,h,stroke,fill,extra)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}"
+      stroke="${stroke}" stroke-width="2" ${extra||'pointer-events="none"'}/>`;
+  const hitBox=(x,y,w,h,key,col,done)=>`<rect data-hit="${key}" x="${x+5}" y="${y+5}" width="${w-10}" height="${h-10}" rx="10"
+      fill="${done?'rgba(245,182,66,.08)':'rgba(157,140,245,.10)'}" stroke="${done?AM:VI}" stroke-width="3"
+      ${done?'':'stroke-dasharray="10 8"'} style="cursor:pointer"/>`;
+
+  /* 머리줄 */
+  let y=4;
+  o.push(rect(x0,y,cx,hh,LS,'rgba(29,51,80,.9)'));
+  o.push(txt(x0+cx/2,y+hh/2,'x',34,SO,{it:1,w:600}));
+  if(st===1 && !all) o.push(hitBox(px,y,pw,hh,'all',VI,false), rect(px,y,pw,hh,LS,'none'));
+  else o.push(rect(px,y,pw,hh,LS,'rgba(29,51,80,.9)'));
+  o.push(txtMix(px+pw/2,y+hh/2,[{s:'P',it:1},{s:'('},{s:'X',it:1},{s:' = '},{s:'x',it:1},{s:')'}],34,st===1&&!all?VI:SO));
+  y+=hh;
+
+  /* 351, 352, ⋮, 368, 369 */
+  const rowTop=[];
+  XS.forEach((xv,i)=>{
+    if(i===2||i===3){                            // ⋮ 줄
+      o.push(rect(x0,y,cx,dh,LS,'none'), rect(px,y,pw,dh,LS,'none'));
+      o.push(txt(x0+cx/2,y+dh/2,'⋮',30,FA,{w:700}), txt(px+pw/2,y+dh/2,'⋮',30,FA,{w:700}));
+      y+=dh;
+    }
+    rowTop.push(y);
+    const on=S.r[i];
+    o.push(rect(x0,y,cx,rh,LS,'none'));
+    o.push(txt(x0+cx/2,y+rh/2,xv,38,AM,{w:700,it:xv==="k"?1:0}));
+    if(on){
+      o.push(rect(px,y,pw,rh,LS,'rgba(73,209,192,.07)'));
+      o.push(FO(px+18,y+rh/2,xv==="k"?TERM(kf,`400 − ${kf}`,AM):TERM(xv,400-xv,AM),36,CH,'start',pw-24,rh));
+    }else{
+      o.push(rect(px,y,pw,rh,LS,'none'));
+      if(st===1) o.push(hitBox(px,y,pw,rh,'r'+i,VI,false));
+      o.push(txt(px+pw/2,y+rh/2,'?',40,VI,{w:700}));
+    }
+    y+=rh;
+  });
+  const yTop=rowTop[0], yBot=y;
+
+  /* 합 줄 */
+  y+=gap;
+  const sTop=y, sMid=y+sh/2, sOn=st===2&&S.sum, sAct=st===2&&!S.sum;
+  o.push(`<g opacity="${st===1?.38:1}">`);
+  o.push(rect(x0,y,cx,sh,sOn?AM:LS,'rgba(29,51,80,.9)'));
+  o.push(txtMix(x0+cx/2,sMid,[{s:'합',kr:1}],34,sOn?AM:SO,{w:700}));
+  if(sOn){
+    o.push(rect(px,y,pw,sh,AM,'rgba(245,182,66,.08)'));
+    o.push(FO(px+18,sMid,SIGK+TERMK,36,AM,'start',pw-24,sh));
+  }else{
+    o.push(rect(px,y,pw,sh,LS,'none'));
+    if(sAct) o.push(hitBox(px,y,pw,sh,'sum',VI,false));
+    o.push(txt(px+pw/2,sMid,'?',40,st===1?FA:VI,{w:700}));
+  }
+  o.push('</g>');
+
+  /* 묶음 괄호 → 합 줄 */
+  const bx=tR+8, bw=11, mid=(yTop+yBot)/2, r=14, vx=W-14;
+  const bcol=st===1?FA:(S.sum?AM:VI), bop=st===1?.38:1, dash=sAct?'stroke-dasharray="10 7"':'';
+  o.push(`<g opacity="${bop}" ${sAct?'data-hit="sum" style="cursor:pointer"':''}>
+    <rect x="${bx-4}" y="${yTop}" width="${W-bx}" height="${sMid-yTop+16}" fill="transparent"/>
+    <path d="M ${bx} ${yTop+3} Q ${bx+bw} ${yTop+3} ${bx+bw} ${yTop+3+r} L ${bx+bw} ${mid-r}
+      Q ${bx+bw} ${mid} ${bx+2*bw} ${mid} Q ${bx+bw} ${mid} ${bx+bw} ${mid+r} L ${bx+bw} ${yBot-3-r}
+      Q ${bx+bw} ${yBot-3} ${bx} ${yBot-3}" fill="none" stroke="${bcol}" stroke-width="3.5" ${dash}/>
+    <path d="M ${bx+2*bw+4} ${mid} L ${vx} ${mid} L ${vx} ${sMid} L ${tR+16} ${sMid}" fill="none"
+      stroke="${bcol}" stroke-width="3" ${dash}/>
+    <path d="M ${tR+4} ${sMid} l 16 -9 l 0 18 Z" fill="${bcol}"/>
+  </g>`);
+
+  /* 결론식 */
+  if(sOn) o.push(FO(10,H-40,`합 = ${Pf}(351 ≤ ${Xf} ≤ 369)`,40,AM,'start',W-20,80));
+
+  gsvg.innerHTML=o.join('');
+}
+
+/* 5단계 표준정규분포 곡선 (오른쪽 풀이 칸 안에 들어가는 그림) */
+function curveSVG(){
+  const AM=CSS('--amber'), TE=CSS('--teal'), VI=CSS('--violet'), CH=CSS('--chalk'),
+        FA=CSS('--chalk-faint'), LS=CSS('--line-strong');
+  const w=430, h=168, ZR=2.7, base=122, top=8, x0=4, x1=w-4;
+  const X=z=>x0+(z+ZR)/(2*ZR)*(x1-x0), Y=d=>base-d*(base-top), dens=z=>Math.exp(-z*z/2);
+  const area=(a,b)=>{ let d=`M ${X(a)} ${base} L ${X(a)} ${Y(dens(a))}`;
+    for(let z=a;z<b;z+=0.02) d+=` L ${X(z).toFixed(1)} ${Y(dens(z)).toFixed(1)}`;
+    return d+` L ${X(b)} ${Y(dens(b))} L ${X(b)} ${base} Z`; };
+  const part=(a,b,on,key,col)=>`<path data-hit="${key}" d="${area(a,b)}" fill="${on?col:VI}" fill-opacity="${on?.28:.10}"
+      stroke="${on?col:VI}" stroke-width="3" ${on?'':'stroke-dasharray="10 7"'} style="cursor:pointer"/>`;
+  let cd=`M ${X(-ZR)} ${Y(dens(-ZR))}`;
+  for(let z=-ZR;z<=ZR+1e-9;z+=0.02) cd+=` L ${X(z).toFixed(1)} ${Y(dens(z)).toFixed(1)}`;
+  const o=[];
+  o.push(part(-1.5,0,S.za,'za',TE), part(0,1.5,S.zb,'zb',TE));
+  o.push(`<path d="${cd}" fill="none" stroke="${CH}" stroke-width="3.5" pointer-events="none"/>`);
+  o.push(`<line x1="${x0}" y1="${base}" x2="${x1}" y2="${base}" stroke="${LS}" stroke-width="2" pointer-events="none"/>`);
+  o.push(txt(X(-0.72),base-36,S.za?'0.4332':'?',26,S.za?AM:VI,{w:700}));
+  o.push(txt(X(0.72),base-36,S.zb?'0.4332':'?',26,S.zb?AM:VI,{w:700}));
+  [[-1.5,'−1.5'],[0,'0'],[1.5,'1.5']].forEach(([z,s])=>{
+    o.push(`<line x1="${X(z)}" y1="${base}" x2="${X(z)}" y2="${base+9}" stroke="${LS}" stroke-width="2" pointer-events="none"/>`);
+    o.push(txt(X(z),base+26,s,26,CH,{w:600}));
+  });
+  o.push(txtMix(x1,base+26,[{s:'z',it:1}],26,FA,{anchor:'end'}));
+  return `<svg class="cv" viewBox="0 0 ${w} ${h}">${o.join('')}</svg>`;
+}
+
+gsvg.addEventListener('click',e=>{
+  const t=e.target.closest('[data-hit]'); if(t) hit(t.dataset.hit);
+});
+function hit(k){
+  if(/^r\d$/.test(k)&&S.step===1){ S.r[+k[1]]=true; if(!S.r.every(Boolean)){ paint(false); return; } }
+  else if(k==='all'&&S.step===1) S.r=[true,true,true,true,true];
+  else if(k==='sum'&&S.step===2) S.sum=true;
+  else if(k==='z4'&&S.step===4){ S.z4=true; paint(false); return; }
+  else if(k==='za'&&S.step===5) S.za=true;
+  else if(k==='zb'&&S.step===5) S.zb=true;
+  else return;
+  if(S.step===5 && !(S.za&&S.zb)){ paint(false); return; }   // 두 넓이를 다 읽으면 풀이 공개
+  doneNow();
+}
+
+const fold=()=>document.getElementById('qcard').classList.add('folded');
+function doneNow(){ if(S.step===1) fold(); S.shown[S.step-1]=true; paint(false); }
+
+/* 단계에 필요한 것을 한꺼번에 여는 함수 (버튼만 눌러도 진행되도록) */
+function revealAllOfStep(n,past){
+  if(n===1){ S.r=[true,true,true,true,true]; fold(); }
+  if(n===2) S.sum=true;
+  if(n===4&&past) S.z4=true;
+  if(n===5){ S.za=true; S.zb=true; }
+}
+function onEnter(n){ if(n>=2) fold(); }
+
+/* 보조 버튼 */
+function srowCfg(){
+  const st=S.step;
+  if(st===1 && !S.r.every(Boolean)) return {t:'모두 펼치기', f:()=>hit('all')};
+  if(st===2 && !S.sum) return {t:'모두 더하기', f:()=>hit('sum')};
+  return null;
+}
+/* ▲▲ 여기까지 ▲▲ */
+
+/* ═══ 7. 보조줄 · 발판 ══════════════════════════════════ */
+const gbtn=document.getElementById('gbtn'), pos=document.getElementById('pos'),
+      nextBtn=document.getElementById('nextBtn'), prevBtn=document.getElementById('prevBtn');
+let gAct=null;
+function updSrow(){
+  const c=srowCfg();
+  if(c){ gbtn.hidden=false; gbtn.textContent=c.t; gAct=c.f; } else { gbtn.hidden=true; gAct=null; }
+}
+gbtn.addEventListener('click',()=>{ if(gAct) gAct(); });
+
+function paint(scrollTo){
+  const keep=(scrollTarget!==null&&Math.abs(flow.scrollTop-scrollTarget)>2)?scrollTarget:flow.scrollTop;
+  paintFlow(scrollTo);
+  if(scrollTo===false && S.step<=SPLIT) flow.scrollTop=keep;
+  pos.innerHTML=`<b>${S.step}</b> / ${N} · ${STEPS[S.step-1].short}`;
+  prevBtn.disabled=S.step===1;
+  const opened=!!S.shown[S.step-1];
+  nextBtn.textContent = !opened ? '풀이 보기' : (S.step<N ? '다음 ▶' : '완료');
+  nextBtn.disabled = opened && S.step===N;
+  updSrow(); draw();
+}
+function next(){
+  const i=S.step-1;
+  if(!S.shown[i]){ revealAllOfStep(S.step,false); S.shown[i]=true; paint(false); return; }
+  if(S.step===4 && !S.z4){ S.z4=true; paint(false); return; }   // = 뒤를 한 번 더
+  jump(S.step+1);
+}
+function jump(n){
+  n=Math.max(1,Math.min(N,n));
+  for(let k=1;k<n;k++){ if(!S.shown[k-1]) revealAllOfStep(k,true); S.shown[k-1]=true; }
+  S.step=n; onEnter(n); paint();
+}
+function reset(){
+  Object.assign(S,newS());
+  document.getElementById('qcard').classList.remove('folded');
+  flow.scrollTop=0; flow2.scrollTop=0; scrollTarget=null; paint();
+}
+nextBtn.onclick=next;
+prevBtn.onclick=()=>jump(S.step-1);
+document.getElementById('resetBtn').onclick=reset;
+document.getElementById('fsBtn').onclick=()=>{
+  if(document.fullscreenElement) document.exitFullscreen();
+  else document.documentElement.requestFullscreen?.();
+};
+document.getElementById('qhead').onclick=()=>document.getElementById('qcard').classList.toggle('folded');
+addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' '){ e.preventDefault(); next(); }
+  else if(e.key==='ArrowLeft') jump(S.step-1);
+  else if(e.key==='r'||e.key==='R') reset();
+  else if(e.key==='f'||e.key==='F') document.getElementById('fsBtn').click();
+});
+
+paint();
+</script>
+</body>
+</html>
