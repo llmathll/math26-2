@@ -109,6 +109,7 @@ const stage=$('stage'),view=$('view');
 let p=0,s=0,tx=null,running=[],paths=[];
 const WRITE_SPEED=1.7;      // 펜 순서 쓰기 속도(비교 화면에서 고른 값)
 const STEP_MAX_MS=3200;     // 한 단계는 길어도 약 3.2초
+const UNIFORM_TOL=0.9;     // 공통 배율 기준(중앙값의 90%보다 작아져야 하는 문항만 따로 축소)
 const NS='http://www.w3.org/2000/svg';
 // 개념 앱: 각 앱을 Shadow DOM 안에 한 번만 만들어 두고, 그 페이지에서 화면에 붙인다(상태 유지)
 const appHost={};
@@ -154,8 +155,12 @@ function build(){
 function fit(){
   const d=DATA[p],W=view.clientWidth,H=view.clientHeight,r=d.w/d.h;
   if(d.kind==='app'){stage.style.width=W+'px';stage.style.height=H+'px';return}
-  let w=W,h=W/r;if(h>H){h=H;w=H*r}
-  stage.style.width=Math.floor(w)+'px';stage.style.height=Math.floor(h)+'px';
+  // 글자 크기 통일: 모든 문항에 같은 배율(공통 배율)을 쓰고, 그 배율로 넘치는 큰 문항만 들어갈 만큼 줄인다.
+  // 공통 배율 = (각 문항이 꽉 차는 배율의 중앙값 × UNIFORM_TOL) 이상인 문항들 중 가장 작은 배율
+  const fits=DATA.filter(x=>x.kind!=='app').map(x=>Math.min(W/x.w,H/x.h)).sort((a,b)=>a-b);
+  const med=fits[Math.floor(fits.length/2)],common=Math.min(...fits.filter(f=>f>=med*UNIFORM_TOL));
+  const k=Math.min(common,W/d.w,H/d.h);
+  stage.style.width=Math.floor(d.w*k)+'px';stage.style.height=Math.floor(d.h*k)+'px';
 }
 function render(animate){
   const d=DATA[p],n=d.n;
