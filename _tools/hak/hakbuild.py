@@ -51,9 +51,10 @@ def colors(im, cl):
         red=(((h < 8) | (h > 172)) & (s > 100) & (v > 110)),
         blue=((h >= 95) & (h <= 118) & (s > 25) & (v > 195)),     # 하늘색 형광/음영
         navy=((h >= 100) & (h <= 135) & (s > 140) & (v < 200)),   # 풀이 펜
+        yellow=((h >= 20) & (h <= 35) & (s > 60) & (v > 200)),    # 노란 형광펜(구분선 등)
     )
     for k in M: M[k] &= hand
-    M['ink'] = M['green'] | M['red'] | M['navy']
+    M['ink'] = M['green'] | M['red'] | M['navy'] | M['yellow']
     return M
 
 def b64(a):
@@ -92,6 +93,8 @@ for idx, it in enumerate(C.ITEMS):
         for r in steps[i].get('rects', []): take(i, r, ink)
     left = (ink | blu) & (claim < 0)
     if left.any():                                    # 남은 잉크는 가장 가까운 단계로
+        n_, lab_, st_, _ = cv2.connectedComponentsWithStats(cv2.dilate(left.astype(np.uint8), K(9)))
+        print('   남은잉크 위치:', [[round(v / S) for v in (x, y, x + w, y + h)] for (x, y, w, h, a_) in st_[1:] if a_ > 30][:8])
         best = np.full(im.shape[:2], 1e9, np.float32); lab = np.full(im.shape[:2], -1, np.int16)
         for i in range(n):
             m = claim == i
@@ -104,6 +107,13 @@ for idx, it in enumerate(C.ITEMS):
         x0, y0, x1, y1 = sc(r); base[y0:y1, x0:x1] = 255
     base[blank] = 255
     bw = np.full(base.shape, 255, np.uint8); bw[region] = base[region]
+    # paste: 문제만 PDF의 인쇄물(확률표 등)을 다른 위치에 붙여 처음부터 보이게 함. 페이지 밖(오른쪽·아래)도 허용
+    PADR, PADB = int(500 * S), int(300 * S)
+    bwP = np.full((bw.shape[0] + PADB, bw.shape[1] + PADR, 3), 255, np.uint8); bwP[:bw.shape[0], :bw.shape[1]] = bw
+    extra = []
+    for ps in it.get('paste', []):
+        src = CLEAN[ps.get('page', pg)]; x0, y0, x1, y1 = sc(ps['src']); ax, ay = sc(ps['at'])
+        bwP[ay:ay + (y1 - y0), ax:ax + (x1 - x0)] = src[y0:y1, x0:x1]; extra.append((ax, ay, ax + x1 - x0, ay + y1 - y0))
     layers = []; allink = np.zeros(im.shape[:2], bool)
     for i in range(n):
         m = claim == i
@@ -157,10 +167,16 @@ for idx, it in enumerate(C.ITEMS):
                 a=round(pth['CA'] if pth['stroke'] else pth['ca'], 2), mb=pth['bm'] == 'Multiply'))
     cont = ((cv2.cvtColor(bw, cv2.COLOR_BGR2GRAY) < 235) & region) | allink
     ys, xs = np.where(cont); pad = int(14 * S)
-    bx0, by0 = max(0, xs.min() - pad), max(0, ys.min() - pad)
-    bx1, by1 = min(bw.shape[1], xs.max() + pad), min(bw.shape[0], ys.max() + pad)
+    cx0, cy0, cx1, cy1 = xs.min(), ys.min(), xs.max(), ys.max()
+    for (ax0, ay0, ax1, ay1) in extra: cx0, cy0, cx1, cy1 = min(cx0, ax0), min(cy0, ay0), max(cx1, ax1), max(cy1, ay1)
+    bx0, by0 = max(0, cx0 - pad), max(0, cy0 - pad)
+    bx1, by1 = min(bwP.shape[1], cx1 + pad), min(bwP.shape[0], cy1 + pad)
+    # hl: 그 단계에서 확률표 행 등에 형광 강조(반투명 노랑, 곱하기)
+    for (si, r) in it.get('hl', []):
+        x0, y0, x1, y1 = sc(r); lay = np.zeros((y1 - y0, x1 - x0, 3), np.uint8); lay[:] = (92, 226, 255)
+        layers.append(dict(step=si, X=x0, Y=y0, w=int(x1 - x0), h=int(y1 - y0), src=b64(lay), hl=1))
     for L in layers: L['x'] = int(L.pop('X') - bx0); L['y'] = int(L.pop('Y') - by0)
-    base_c = bw[by0:by1, bx0:bx1]
+    base_c = bwP[by0:by1, bx0:bx1]
     rec = dict(sec=it['sec'], num=it['num'], toc=it.get('toc', it['num']), g=it.get('group', it['sec']),
                w=int(bx1 - bx0), h=int(by1 - by0), n=n, base=b64(base_c), steps=layers)
     if it.get('link'): rec['link'] = it['link']; rec['linkName'] = it.get('linkName', '연결 자료')
@@ -182,7 +198,8 @@ for idx, it in enumerate(C.ITEMS):
         rec['steps'] = [L for L in layers if False]      # 펜 획으로 그리므로 단계 그림은 싣지 않음
         cnt = np.bincount([t['s'] for t in outS], minlength=n)
         if (cnt == 0).any(): print('   ! 펜 획이 없는 단계:', [i + 1 for i in np.where(cnt == 0)[0]], '— 그 단계는 그림으로 대체')
-        if (cnt == 0).any(): rec['steps'] = [L for L in layers if L['step'] in set(np.where(cnt == 0)[0].tolist()) and not L.get('until')]
+        if (cnt == 0).any(): rec['steps'] = [L for L in layers if L['step'] in set(np.where(cnt == 0)[0].tolist()) and not L.get('until') and not L.get('hl')]
+        rec['steps'] += [L for L in layers if L.get('hl')]
     out.append(rec)
     # 점검용: 풀이 전체를 겹치고 단계 상자·번호 표시
     chk = base_c.astype(float) / 255
