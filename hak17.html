@@ -36,7 +36,7 @@ button:focus-visible{outline:2px solid var(--plum);outline-offset:2px}
 .sec{font-size:17px;font-weight:600;color:var(--ink);white-space:nowrap}
 .unit{font-size:13px;color:var(--muted);white-space:nowrap}
 .head .grow{flex:1}
-.icon{height:44px;width:44px;justify-content:center;padding:0;border:1px solid var(--rule);border-radius:8px;background:var(--paper);color:var(--muted);font-size:13px;display:inline-flex;align-items:center;gap:6px}
+.icon{height:46px;width:46px;justify-content:center;padding:0;border:1px solid var(--rule);border-radius:8px;background:var(--paper);color:var(--muted);font-size:13px;display:inline-flex;align-items:center;gap:6px}
 .icon:hover{color:var(--ink);border-color:var(--faint)}
 .icon svg{width:18px;height:18px}
 
@@ -56,8 +56,8 @@ button:focus-visible{outline:2px solid var(--plum);outline-offset:2px}
 @keyframes enter{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 
 /* 아래줄 */
-.bar{display:flex;align-items:center;gap:18px;flex-wrap:wrap;border-top:1px solid var(--rule);padding-top:8px}
-.toc{display:flex;flex-wrap:wrap;gap:6px 16px;flex:1;min-width:0}
+.bar{display:flex;align-items:center;gap:24px;flex-wrap:wrap;border-top:1px solid var(--rule);padding-top:6px}
+.toc{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px clamp(10px,1.8vw,34px);flex:1;min-width:0}
 .grp{display:flex;align-items:center;gap:4px}
 .grp span{font-size:12px;color:var(--faint);margin-right:4px;white-space:nowrap}
 .grp button{min-width:34px;height:30px;padding:0 8px;border:0;border-radius:7px;background:transparent;color:var(--muted);font-size:14px;font-weight:500;font-variant-numeric:tabular-nums}
@@ -65,28 +65,23 @@ button:focus-visible{outline:2px solid var(--plum);outline-offset:2px}
 .grp button.cur{background:var(--plum);color:#fff}
 
 .ctrl{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
-.prog{display:flex;flex-direction:column;gap:6px;min-width:150px}
-.prog .txt{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
-.prog .txt b{color:var(--ink);font-weight:600}
-.seg{display:flex;gap:3px;height:5px}
-.seg i{flex:1;border-radius:3px;background:var(--rule);transition:background .25s}
-.seg i.on{background:var(--plum)}
-.ghost{height:44px;padding:0 14px;border:1px solid var(--rule);border-radius:10px;background:var(--paper);color:var(--ink);font-size:14px;font-weight:500}
+.ghost{height:46px;padding:0 14px;border:1px solid var(--rule);border-radius:10px;background:var(--paper);color:var(--ink);font-size:14px;font-weight:500}
 .ghost:hover{border-color:var(--faint)}
 .ghost:disabled{opacity:.35;cursor:default}
 .nav{display:flex;gap:8px}
-.nav button{height:52px;min-width:120px;border-radius:12px;font-size:17px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.nav button{height:46px;min-width:132px;border-radius:12px;font-size:17px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px}
 .prev{border:1px solid var(--ink);background:var(--paper);color:var(--ink)}
 .next{border:1px solid var(--ink);background:var(--ink);color:#fff}
 .nav button:disabled{opacity:.28;cursor:default}
 .nav svg{width:18px;height:18px}
 
+@media (max-width:1500px){.grp span{display:none}.nav button{min-width:104px}.bar{gap:16px}}
 @media (max-width:760px){
   .num{font-size:26px}
   .ctrl{width:100%;justify-content:space-between}
   .nav{flex:1 1 100%}.nav button{flex:1;min-width:0}
 }
-@media (prefers-reduced-motion:reduce){.stage .layer,.seg i{transition:none}.stage.enter{animation:none}}
+@media (prefers-reduced-motion:reduce){.stage .layer{transition:none}.stage.enter{animation:none}}
 </style>
 </head>
 <body>
@@ -101,9 +96,7 @@ button:focus-visible{outline:2px solid var(--plum);outline-offset:2px}
   <a class="plink" id="plink" target="_blank" rel="noopener" hidden>Link <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h7v7M13 3L4 12"/></svg></a>
   <nav class="toc" id="toc" aria-label="문항 이동"></nav>
   <div class="ctrl">
-    <div class="prog" aria-live="polite">
-      <span class="txt" id="txt"></span>
-      <div class="seg" id="seg"></div>
+
     </div>
     <button class="ghost" id="reset" type="button">문제만</button>
     <button class="ghost" id="all" type="button">풀이 전체</button>
@@ -757,7 +750,7 @@ function build(){
   const d=DATA[p];
   stage.innerHTML='';
   window.__normalOn=d.kind==='app';
-  if(d.kind==='app'){stage.appendChild(normalHost);$('seg').innerHTML='';stage.classList.remove('enter');void stage.offsetWidth;stage.classList.add('enter');fit();return}
+  if(d.kind==='app'){stage.appendChild(normalHost);stage.classList.remove('enter');void stage.offsetWidth;stage.classList.add('enter');fit();return}
   const b=new Image();b.className='base';b.src=d.base;b.alt=d.sec+' '+d.num+' 문제';b.draggable=false;stage.appendChild(b);
   d.steps.forEach(st=>{
     const im=new Image();im.className='layer';im.src=st.src;im.alt='';im.draggable=false;
@@ -766,7 +759,6 @@ function build(){
     im.style.width=(st.w/d.w*100)+'%';im.style.height=(st.h/d.h*100)+'%';
     stage.appendChild(im);
   });
-  $('seg').innerHTML='<i></i>'.repeat(d.n);
   stage.classList.remove('enter');void stage.offsetWidth;stage.classList.add('enter');
   fit();
 }
@@ -781,13 +773,11 @@ function render(){
   $('num').textContent=d.num;
   $('sec').textContent=d.sec;
   const pl=$('plink');pl.hidden=!d.link;if(d.link){pl.href=d.link;pl.title=(d.linkName||'연결 자료')+' 열기'}
-  $('txt').innerHTML='문제 <b>'+(p+1)+'</b>/'+DATA.length+'  ·  '+(d.kind==='app'?'개념 탐구 화면':'풀이 <b>'+s+'</b>/'+n);
   $('reset').disabled=$('all').disabled=d.kind==='app';
   stage.querySelectorAll('.layer').forEach(el=>{
     const i=+el.dataset.step,u=el.dataset.until?+el.dataset.until:0;
     el.classList.toggle('on',i<s&&(!u||s<u));
   });
-  [...$('seg').children].forEach((el,i)=>el.classList.toggle('on',i<s));
   $('prev').disabled=(p===0&&s===0);
   $('next').disabled=(p===DATA.length-1&&s===n);
   $('nextTxt').textContent=(s===n&&p<DATA.length-1)?'다음 문제':'다음';
