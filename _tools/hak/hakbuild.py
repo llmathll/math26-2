@@ -25,6 +25,10 @@ def render(pdf, tag):
     return pages
 
 MARK = render(C.MARKED, 'mark'); CLEAN = render(C.CLEAN, 'clean')
+VECTOR = getattr(C, 'VECTOR', True)        # 손풀이를 PDF 펜 획(벡터)으로 그려 쓰는 순서대로 보여줌
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from pdfstrokes import extract as extract_paths
+PATHS = {}
 W = next(iter(MARK.values())).shape[1]
 S = W / 2000.0; F = DPI / 200.0
 def sc(r): return [int(round(v * S)) for v in r]
@@ -122,6 +126,35 @@ for idx, it in enumerate(C.ITEMS):
         ys, xs = np.where(gm); y0, y1, x0, x1 = ys.min(), ys.max() + 1, xs.min(), xs.max() + 1
         lay = np.full((y1 - y0, x1 - x0, 3), 255, np.uint8); sel = (thin if thin.sum() > 200 else gm)[y0:y1, x0:x1]; lay[sel] = col
         layers.append(dict(step=si, until=until, X=x0, Y=y0, w=int(x1 - x0), h=int(y1 - y0), src=b64(lay)))
+    vstrokes = []
+    if VECTOR:
+        if pg not in PATHS: PATHS[pg] = extract_paths(C.MARKED, pg)
+        kp = DPI / 72.0; rr = max(2, int(3 * F)); Hh, Ww = claim.shape
+        rx0, ry0, rx1, ry1 = sc(it['crop'])
+        for pth in PATHS[pg]:
+            rgb = pth['sc'] if pth['stroke'] else pth['fc']
+            r_, g_, b_ = [int(round(max(0, min(1, v)) * 255)) for v in rgb[:3]]
+            if abs(r_ - 130) < 15 and abs(g_ - 33) < 15 and abs(b_ - 139) < 15: continue   # 보라 = 표시 전용
+            segs = []; pts = []
+            for sub in pth['subs']:
+                for sg in sub:
+                    if sg[0] == 'Z': segs.append(('Z',)); continue
+                    q = [(x * kp, y * kp) for (x, y) in sg[1:]]; segs.append((sg[0], *q)); pts.append(q[-1])
+            if not pts: continue
+            xs = [q[0] for q in pts]; ys = [q[1] for q in pts]
+            if max(xs) < rx0 or min(xs) > rx1 or max(ys) < ry0 or min(ys) > ry1: continue
+            samp = pts[::max(1, len(pts) // 25)] + [pts[-1]]; votes = {}
+            for (x, y) in samp:
+                X, Y = int(x), int(y)
+                if not (rr <= X < Ww - rr and rr <= Y < Hh - rr): continue
+                win = claim[Y - rr:Y + rr + 1, X - rr:X + rr + 1]; win = win[win >= 0]
+                if win.size: v = int(np.bincount(win).argmax()); votes[v] = votes.get(v, 0) + 1
+            if not votes: continue
+            st_, hits = max(votes.items(), key=lambda kv: kv[1])
+            if hits < max(1, 0.3 * len(samp)): continue
+            vstrokes.append(dict(s=st_, segs=segs, c='#%02x%02x%02x' % (r_, g_, b_), w=round(pth['w'] * kp, 2),
+                f=bool(pth['fill'] and not pth['stroke']), dash=[round(x * kp, 2) for x in pth['dash']] if pth['dash'] else None,
+                a=round(pth['CA'] if pth['stroke'] else pth['ca'], 2), mb=pth['bm'] == 'Multiply'))
     cont = ((cv2.cvtColor(bw, cv2.COLOR_BGR2GRAY) < 235) & region) | allink
     ys, xs = np.where(cont); pad = int(14 * S)
     bx0, by0 = max(0, xs.min() - pad), max(0, ys.min() - pad)
@@ -131,6 +164,25 @@ for idx, it in enumerate(C.ITEMS):
     rec = dict(sec=it['sec'], num=it['num'], toc=it.get('toc', it['num']), g=it.get('group', it['sec']),
                w=int(bx1 - bx0), h=int(by1 - by0), n=n, base=b64(base_c), steps=layers)
     if it.get('link'): rec['link'] = it['link']; rec['linkName'] = it.get('linkName', '연결 자료')
+    if vstrokes:
+        outS = []
+        for t in vstrokes:
+            d = []; ln = 0.0; last = None
+            for sg in t.pop('segs'):
+                if sg[0] == 'Z': d.append('Z'); continue
+                q = [(x - bx0, y - by0) for (x, y) in sg[1:]]
+                if sg[0] == 'M': d.append('M%.1f,%.1f' % q[0])
+                elif sg[0] == 'L': d.append('L%.1f,%.1f' % q[0]); ln += float(np.hypot(q[0][0] - last[0], q[0][1] - last[1]))
+                elif sg[0] == 'C':
+                    d.append('C%.1f,%.1f %.1f,%.1f %.1f,%.1f' % (q[0] + q[1] + q[2]))
+                    ln += float(np.hypot(q[0][0] - last[0], q[0][1] - last[1]) + np.hypot(q[1][0] - q[0][0], q[1][1] - q[0][1]) + np.hypot(q[2][0] - q[1][0], q[2][1] - q[1][1]))
+                last = q[-1]
+            t['d'] = ' '.join(d); t['l'] = round(ln, 1); outS.append(t)
+        rec['strokes'] = outS
+        rec['steps'] = [L for L in layers if False]      # 펜 획으로 그리므로 단계 그림은 싣지 않음
+        cnt = np.bincount([t['s'] for t in outS], minlength=n)
+        if (cnt == 0).any(): print('   ! 펜 획이 없는 단계:', [i + 1 for i in np.where(cnt == 0)[0]], '— 그 단계는 그림으로 대체')
+        if (cnt == 0).any(): rec['steps'] = [L for L in layers if L['step'] in set(np.where(cnt == 0)[0].tolist()) and not L.get('until')]
     out.append(rec)
     # 점검용: 풀이 전체를 겹치고 단계 상자·번호 표시
     chk = base_c.astype(float) / 255

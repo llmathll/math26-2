@@ -41,6 +41,8 @@ button:focus-visible{outline:2px solid var(--plum);outline-offset:2px}
 .stage .base{width:100%;height:100%}
 .stage .layer{position:absolute;mix-blend-mode:multiply;opacity:0;transition:opacity .35s ease}
 .stage .layer.on{opacity:1}
+.stage svg.ink{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.stage svg.ink path{fill:none;stroke-linecap:round;stroke-linejoin:round}
 .stage.enter{animation:enter .28s ease}
 .plink{display:inline-flex;align-items:center;gap:6px;
   height:36px;padding:0 14px;border:1.5px solid var(--plum);border-radius:18px;background:var(--plum-soft);
@@ -104,7 +106,10 @@ __APPS__
 const DATA=__DATA__;
 const $=id=>document.getElementById(id);
 const stage=$('stage'),view=$('view');
-let p=0,s=0,tx=null;
+let p=0,s=0,tx=null,running=[],paths=[];
+const WRITE_SPEED=1.7;      // 펜 순서 쓰기 속도(비교 화면에서 고른 값)
+const STEP_MAX_MS=3200;     // 한 단계는 길어도 약 3.2초
+const NS='http://www.w3.org/2000/svg';
 // 개념 앱: 각 앱을 Shadow DOM 안에 한 번만 만들어 두고, 그 페이지에서 화면에 붙인다(상태 유지)
 const appHost={};
 (function(){const park=document.createElement('div');park.hidden=true;document.body.appendChild(park);
@@ -118,7 +123,7 @@ const isApp=()=>DATA[p].kind==='app';
 
 function build(){
   const d=DATA[p];
-  stage.innerHTML='';
+  stopAnim(true);stage.innerHTML='';paths=[];
   window.__appOn=d.kind==='app'?d.app:null;
   if(d.kind==='app'){if(appHost[d.app])stage.appendChild(appHost[d.app]);stage.classList.remove('enter');void stage.offsetWidth;stage.classList.add('enter');fit();return}
   const b=new Image();b.className='base';b.src=d.base;b.alt=d.sec+' '+d.num+' 문제';b.draggable=false;stage.appendChild(b);
@@ -129,6 +134,20 @@ function build(){
     im.style.width=(st.w/d.w*100)+'%';im.style.height=(st.h/d.h*100)+'%';
     stage.appendChild(im);
   });
+  if(d.strokes){
+    const svg=document.createElementNS(NS,'svg');svg.setAttribute('class','ink');svg.setAttribute('viewBox',`0 0 ${d.w} ${d.h}`);
+    d.strokes.forEach(t=>{
+      const el=document.createElementNS(NS,'path');el.setAttribute('d',t.d);
+      if(t.f){el.style.fill=t.c;el.style.stroke='none'}else{el.style.stroke=t.c;el.style.strokeWidth=t.w}
+      if(t.mb)el.style.mixBlendMode='multiply';
+      const op=t.a<1?t.a:1;el.style.opacity=op;
+      const fade=!!(t.f||t.dash);
+      if(t.dash)el.style.strokeDasharray=t.dash.map(v=>Math.max(v,0.01)).join(' ');
+      else if(!t.f){el.setAttribute('pathLength',1000);el.style.strokeDasharray='1000 1000'}
+      el.style.visibility='hidden';svg.appendChild(el);paths.push({t,el,op,fade});
+    });
+    stage.appendChild(svg);
+  }
   stage.classList.remove('enter');void stage.offsetWidth;stage.classList.add('enter');
   fit();
 }
@@ -138,7 +157,7 @@ function fit(){
   let w=W,h=W/r;if(h>H){h=H;w=H*r}
   stage.style.width=Math.floor(w)+'px';stage.style.height=Math.floor(h)+'px';
 }
-function render(){
+function render(animate){
   const d=DATA[p],n=d.n;
   $('num').textContent=d.num;
   $('sec').textContent=d.sec;
@@ -148,13 +167,34 @@ function render(){
     const i=+el.dataset.step,u=el.dataset.until?+el.dataset.until:0;
     el.classList.toggle('on',i<s&&(!u||s<u));
   });
+  drawInk(animate);
   $('prev').disabled=(p===0&&s===0);
   $('next').disabled=(p===DATA.length-1&&s===n);
   $('nextTxt').textContent=(s===n&&p<DATA.length-1)?'다음 문제':'다음';
   document.querySelectorAll('#toc button').forEach(b=>b.classList.toggle('cur',+b.dataset.i===p));
 }
-function go(np,ns){if(np!==p){p=np;build()}s=ns;render()}
-function next(){const n=DATA[p].n;if(s<n)go(p,s+1);else if(p<DATA.length-1)go(p+1,0)}
+// 펜 획: 지난 단계는 그대로, 방금 단계는 쓴 순서대로 그리기
+function stopAnim(cancel){running.forEach(a=>{try{cancel?a.cancel():a.finish()}catch(e){}});running=[]}
+const writing=()=>running.some(a=>a.playState==='running'||a.playState==='pending');
+function drawInk(animate){
+  stopAnim(true);if(!paths.length)return;
+  const i=s-1,d=DATA[p],cur=paths.filter(x=>x.t.s===i);
+  const pxPerMs=2.2*WRITE_SPEED*(d.w/2700),total=cur.reduce((a,x)=>a+x.t.l,0);
+  const k=Math.max(1,total/pxPerMs/STEP_MAX_MS);let t0=0;
+  paths.forEach(({t,el,op,fade})=>{
+    if(t.s<i||(t.s===i&&!animate)){el.style.visibility='visible';if(!fade)el.style.strokeDashoffset=0;return}
+    if(t.s>i){el.style.visibility='hidden';if(!fade)el.style.strokeDashoffset=1000;return}
+    el.style.visibility='visible';
+    if(fade){running.push(el.animate([{opacity:0},{opacity:op}],{duration:260,delay:t0,fill:'both'}));t0+=200;return}
+    el.style.strokeDashoffset=0;const dur=Math.max(40,t.l/pxPerMs/k);
+    running.push(el.animate([{strokeDashoffset:1000,opacity:0,offset:0},{strokeDashoffset:999,opacity:op,offset:0.01},{strokeDashoffset:0,opacity:op,offset:1}],
+      {duration:dur,delay:t0,easing:'ease-in-out',fill:'both'}));
+    t0+=dur+(dur>120?50:15);
+  });
+}
+function go(np,ns,animate){if(np!==p){p=np;build()}s=ns;render(!!animate)}
+function next(){if(writing()){stopAnim(false);return}   // 쓰는 중이면 먼저 그 단계를 완성
+  const n=DATA[p].n;if(s<n)go(p,s+1,true);else if(p<DATA.length-1)go(p+1,0)}
 function prev(){if(s>0)go(p,s-1);else if(p>0)go(p-1,DATA[p-1].n)}
 
 // 문항 목록(단원별 묶음)
