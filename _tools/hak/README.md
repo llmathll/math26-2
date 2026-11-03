@@ -10,7 +10,10 @@
 | `assemble.py <cfg> <build>` | `build/artifact.html`(아티팩트용) + `build/<OUT_NAME>`(깃허브·컴퓨터용) |
 | `shots.js <html> <outdir> [index...]` | 4K 밀도 스크린샷(문제만 / 풀이 전체) |
 | `at.js <html> 문항:단계:out.png ...` | 특정 단계 화면 스크린샷(단계 경계에 다른 단계 획이 섞였는지 확인) |
-| `template.html` | 화면 틀(조작줄, 키보드·탭, 앱 끼우기) |
+| `template.html` | 화면 틀(조작줄, 키보드·탭, 앱 끼우기) — 모든 단원이 함께 쓴다 |
+| `retemplate.py <hak17.html> <out>` | 완성된 hak 파일에 지금의 template.html을 다시 입힘(PDF 없이). 틀 수정을 지난 단원에 넣을 때 |
+| `makeindex.py <저장소> [아티팩트용]` | 저장소 최상위 html 목록으로 목차 `index.html` 생성(틀: `index_template.html`) |
+| `notes/` | 오답노트 — 단원을 만들며 겪은 실수·결정·요령(README 참고) |
 | `cfg17.py` | 17단원 설정 예시 — 새 단원은 이걸 복사해서 고친다 |
 | `cfg18.py` | 18단원 설정 — 확률표 붙이기(`paste`)·행 형광 강조(`hl`) 예시, 개념 상자와 문항이 겹친 자리 지우기 |
 

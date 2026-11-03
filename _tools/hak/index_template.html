@@ -1,0 +1,136 @@
+<title>수업 진행 목차</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=STIX+Two+Text:ital,wght@0,500;1,500&display=swap">
+<style>
+/* 판서 칠판처럼: 흰 바탕에 남색 펜 글씨, 노란 형광펜으로 '지금 볼 것' 강조. 위에 단원 수업 화면, 아래에 단원별 앱 표 */
+:root{
+  --bg:#ffffff;
+  --ink:#1c2747;        /* 손풀이 남색 */
+  --muted:#5d6782;
+  --line:#dfe3ec;
+  --tile:#f4f6fb;
+  --hl:#ffe55c;         /* 노란 형광펜 */
+  --hl-ink:#1c2747;
+  --f-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --f-num:"STIX Two Text","Times New Roman",serif;
+  --u:clamp(15px,1.05vw,44px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141a2b;--ink:#e8ecf6;--muted:#9aa3bd;--line:#2c3550;--tile:#1c2439;--hl:#ffe55c;--hl-ink:#141a2b;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#141a2b;--ink:#e8ecf6;--muted:#9aa3bd;--line:#2c3550;--tile:#1c2439;--hl:#ffe55c;--hl-ink:#141a2b;color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:var(--u);line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:120em;margin:0 auto;padding-block:1em 1.4em;display:grid;gap:1.1em}
+header{display:flex;flex-wrap:wrap;align-items:baseline;gap:.6em 1.4em}
+h1{font-size:1.9em;font-weight:700;margin:0;letter-spacing:-.01em;text-wrap:balance}
+header .site{color:var(--muted);font-size:.9em}
+header .tools{margin-left:auto;display:flex;gap:.6em;align-items:center;flex-wrap:wrap}
+.btn{font:inherit;font-size:.9em;color:var(--ink);background:var(--tile);border:1px solid var(--line);border-radius:.5em;padding:.45em .9em;cursor:pointer;text-decoration:none}
+.btn:hover{border-color:var(--ink)}
+a:focus-visible,.btn:focus-visible{outline:3px solid var(--hl);outline-offset:2px}
+.recent{background:var(--hl);color:var(--hl-ink);border-color:transparent;font-weight:500}
+h2{font-size:.85em;font-weight:500;color:var(--muted);letter-spacing:.06em;margin:0 0 .5em}
+/* 단원 수업 화면 */
+.hak{display:grid;grid-template-columns:repeat(auto-fill,minmax(19em,24em));gap:1em}
+.hak a{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:.2em 1em;padding:1.1em 1.3em;border-radius:.8em;
+  background:var(--tile);border:2px solid var(--line);color:var(--ink);text-decoration:none;min-height:5em}
+.hak a:hover{border-color:var(--ink)}
+.hak .no{grid-row:span 2;font-family:var(--f-num);font-style:italic;font-size:3.2em;line-height:1;font-variant-numeric:lining-nums}
+.hak .nm{font-size:1.35em;font-weight:700;min-width:0;text-wrap:balance}
+.hak .sub{font-size:.85em;color:var(--muted)}
+.hak a.is-recent .nm{background:linear-gradient(transparent 55%,var(--hl) 55%);color:var(--ink)}
+/* 단원별 앱 */
+.cols{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,1.15fr);gap:2em}
+.rows{display:grid;gap:0}
+.row{display:grid;grid-template-columns:3.2em minmax(0,1fr);gap:1em;align-items:start;padding:.35em 0;border-top:1px solid var(--line)}
+.row:last-child{border-bottom:1px solid var(--line)}
+.row .u{font-family:var(--f-num);font-size:1.5em;line-height:1.3;font-variant-numeric:lining-nums tabular-nums}
+.chips{display:flex;flex-wrap:wrap;gap:.45em}
+.chips a{display:inline-flex;align-items:baseline;gap:.5em;max-width:100%;padding:.4em .75em;border-radius:.45em;border:1px solid var(--line);
+  color:var(--ink);text-decoration:none;font-size:.92em;background:var(--bg)}
+.chips a:hover{border-color:var(--ink)}
+.chips a b{font-family:var(--f-num);font-weight:500;font-size:1.05em;white-space:nowrap}
+.chips a span{color:var(--muted);min-width:0;overflow-wrap:anywhere}
+.chips a.is-recent{background:var(--hl);border-color:transparent}
+.chips a.is-recent span,.chips a.is-recent b{color:var(--hl-ink)}
+.tag{font-style:normal;font-size:.75em;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 .5em;white-space:nowrap}
+.foot{color:var(--muted);font-size:.8em}
+@media (max-width:900px){.cols{grid-template-columns:minmax(0,1fr)}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>수업 진행 목차</h1>
+    <span class="site">llmathll.github.io/math26-2</span>
+    <div class="tools">
+      <a class="btn recent" id="recent" hidden></a>
+      <button class="btn" id="fs" type="button">전체화면</button>
+    </div>
+  </header>
+
+  <section aria-labelledby="h-hak">
+    <h2 id="h-hak">단원 수업 화면</h2>
+    <div class="hak" id="hak"></div>
+  </section>
+
+  <div class="cols">
+    <section aria-labelledby="h-unit">
+      <h2 id="h-unit">단원별 문항 · 개념 앱 (확률과 통계)</h2>
+      <div class="rows" id="units"></div>
+    </section>
+    <section aria-labelledby="h-tong">
+      <h2 id="h-tong">통수 문항 앱</h2>
+      <div class="rows" id="tong"></div>
+    </section>
+  </div>
+
+  <p class="foot" id="foot"></p>
+</div>
+
+<script>
+const FILES=__FILES__;
+const SITE='https://llmathll.github.io/math26-2/';
+const onPages=/github\.io$/.test(location.hostname);
+const local=location.protocol==='file:';
+// 깃허브 페이지: 같은 폴더 / 내 컴퓨터(수업진행 폴더): hak 파일은 폴더 안, 나머지는 깃허브 / 그 밖(아티팩트 등): 깃허브 주소
+const href=f=>(onPages||(local&&f.kind==='hak'))?f.file:SITE+f.file;
+let recent=null;
+try{recent=localStorage.getItem('hak-index-recent')}catch(e){}
+const remember=f=>{try{localStorage.setItem('hak-index-recent',f.file)}catch(e){}};
+const el=(tag,cls,txt)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e};
+function link(f,cls){const a=el('a',cls);a.href=href(f);a.addEventListener('click',()=>remember(f));if(f.file===recent)a.classList.add('is-recent');return a}
+
+// 단원 수업 화면
+const hak=document.getElementById('hak');
+FILES.filter(f=>f.kind==='hak').sort((a,b)=>a.unit-b.unit).forEach(f=>{
+  const a=link(f);a.append(el('span','no',f.unit),el('span','nm',f.title),el('span','sub',f.file));hak.append(a)});
+if(!hak.children.length)hak.append(el('p','foot','아직 올린 단원 수업 화면이 없습니다.'));
+
+// 단원·통수 묶음
+function group(box,list,key,label){
+  const g=new Map();list.forEach(f=>{const k=f[key];if(!g.has(k))g.set(k,[]);g.get(k).push(f)});
+  [...g.keys()].sort((a,b)=>a-b).forEach(k=>{
+    const row=el('div','row');row.append(el('div','u',label(k)));
+    const c=el('div','chips');
+    g.get(k).sort((a,b)=>a.order-b.order||a.id.localeCompare(b.id,'ko',{numeric:true})).forEach(f=>{
+      const a=link(f);a.title=f.full;a.append(el('b',null,f.short));if(f.tag)a.append(el('em','tag',f.tag));if(f.title)a.append(el('span',null,f.title));c.append(a)});
+    row.append(c);box.append(row)});
+}
+group(document.getElementById('units'),FILES.filter(f=>f.kind==='unit'),'unit',k=>String(k).padStart(2,'0'));
+group(document.getElementById('tong'),FILES.filter(f=>f.kind==='tong'),'unit',k=>String(k).padStart(2,'0'));
+
+// 최근에 연 화면
+const r=FILES.find(f=>f.file===recent);
+if(r){const a=document.getElementById('recent');a.href=href(r);a.textContent='최근: '+(r.kind==='hak'?r.unit+'단원 '+r.title:r.id);a.hidden=false}
+
+document.getElementById('foot').textContent='자료 '+FILES.length+'개 · 목차 갱신 '+'__DATE__'+(local?' · 내 컴퓨터에서 연 목차(단원 수업 화면은 폴더 안 파일, 나머지는 인터넷)':'');
+
+// 전체화면
+const fs=document.getElementById('fs');
+fs.addEventListener('click',()=>{try{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen().catch(()=>{})}catch(e){}});
+if(!document.fullscreenEnabled)fs.hidden=true;
+</script>
