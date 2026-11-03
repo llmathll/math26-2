@@ -1,0 +1,722 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>정규분포의 표준화</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400..700;1,400..700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-deep:#0a1420; --bg:#0e1b2b; --panel:#16283e; --panel-2:#1d3350;
+  --line:rgba(214,229,245,.16); --line-strong:rgba(214,229,245,.34);
+  --chalk:#eaf1f8; --chalk-soft:#b9cadd; --chalk-faint:#7d94ad;
+  --amber:#f5b642; --teal:#49d1c0; --violet:#9d8cf5; --coral:#ff7d6a;
+  --f-en:'STIX Two Text'; --f-kr:'Noto Sans KR';
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--bg-deep);
+  overscroll-behavior:none;touch-action:manipulation;-webkit-text-size-adjust:100%;
+  -webkit-tap-highlight-color:transparent}
+body{color:var(--chalk);font-family:var(--f-en),var(--f-kr),serif}
+button{font:inherit;color:inherit}
+.viewport{position:fixed;inset:0}
+.stage{position:absolute;top:0;left:0;width:1600px;height:900px;transform-origin:0 0;
+  background:var(--bg);overflow:hidden}
+.sheet{height:100%;display:flex;flex-direction:column;gap:12px;padding:12px 22px 18px}
+
+/* ── 머리말 ── */
+.head{flex:0 0 72px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--line);padding-bottom:10px}
+.title{font-family:var(--f-kr);font-size:34px;font-weight:700;color:var(--amber);white-space:nowrap}
+.tabs{flex:1;display:flex;gap:8px;margin:0 4px}
+.tab{flex:1 1 0;font-family:var(--f-en),var(--f-kr);font-size:27px;font-weight:700;color:var(--chalk-soft);
+  background:transparent;border:2px solid var(--line-strong);border-radius:12px;padding:7px 6px;
+  white-space:nowrap;cursor:pointer}
+.tab.on{background:rgba(245,182,66,.12);border-color:var(--amber);color:var(--amber)}
+.fbtn{font-family:var(--f-kr);font-size:24px;font-weight:700;cursor:pointer;background:var(--panel-2);
+  border:1.5px solid var(--line-strong);border-radius:10px;padding:10px 16px;white-space:nowrap}
+.v{font-style:italic}
+
+/* ── 본문 ── */
+.body{flex:1 1 auto;min-height:0;position:relative}
+.pane{position:absolute;inset:0;display:none;gap:16px}
+.pane.on{display:flex}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px}
+.gcard{position:relative;flex:1 1 auto;min-width:0;min-height:0}
+.gcard svg{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.side{flex:0 0 auto;display:flex;flex-direction:column;gap:14px;min-height:0}
+.col{flex-direction:column}
+.row2{flex:1 1 auto;min-height:0;display:flex;gap:16px}
+
+/* ── 수식 ── */
+.m{font-family:var(--f-en),var(--f-kr),serif;font-variant-numeric:tabular-nums;white-space:nowrap;line-height:1.45}
+.frac{display:inline-flex;flex-direction:column;align-items:stretch;text-align:center;
+  vertical-align:middle;margin:0 .14em;transform:translateY(-.08em);
+  line-height:1.06;font-size:.84em;white-space:nowrap}
+.frac>.num{padding:0 .2em .07em;border-bottom:.058em solid currentColor}
+.frac>.den{padding:.09em .2em 0}
+.bp{display:inline-block;transform:scaleY(1.5);margin:0 .03em;transform-origin:50% 55%}
+.ans{display:inline-flex;align-items:center;vertical-align:middle;color:var(--amber);font-weight:700;
+  padding:.02em .26em;border:2px solid var(--amber);border-radius:.18em;box-shadow:0 0 20px rgba(245,182,66,.2)}
+.dim{color:var(--chalk-soft)}
+.fa{color:var(--chalk-faint)}
+.tl{color:var(--teal)}
+.am{color:var(--amber)}
+.vi{color:var(--violet)}
+.kr{font-family:var(--f-kr);font-size:.82em}
+
+/* ── 버튼 ── */
+.tgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tb{font-family:var(--f-en),var(--f-kr);font-size:29px;font-weight:700;padding:13px 6px;border-radius:12px;
+  border:2px solid var(--violet);background:rgba(157,140,245,.14);color:var(--chalk);cursor:pointer;white-space:nowrap}
+.tb.wide{grid-column:span 2}
+.tb:disabled{opacity:.3;cursor:default}
+.tb.done{border-color:var(--line-strong);background:transparent;color:var(--chalk-faint)}
+.tg{font-family:var(--f-en),var(--f-kr);font-size:26px;font-weight:700;padding:12px 18px;border-radius:12px;
+  border:2px solid var(--line-strong);background:transparent;color:var(--chalk-soft);cursor:pointer;white-space:nowrap}
+.tg.on{border-color:var(--teal);color:var(--teal);background:rgba(73,209,192,.12)}
+.tb:active,.tg:active,.tab:active,.fbtn:active,.hb:active{transform:scale(.97)}
+
+/* ── 끌기 막대 ── */
+.ctrl{flex:0 0 100px;display:flex;align-items:center;gap:14px;padding:0 18px}
+.nval{font-size:46px;white-space:nowrap}
+.slider{position:relative;flex:1 1 auto;height:96px;touch-action:none;cursor:pointer}
+.sin{position:absolute;left:34px;right:34px;top:0;bottom:0}
+.strack,.sfill{position:absolute;left:0;top:26px;height:10px;border-radius:5px}
+.strack{right:0;background:rgba(214,229,245,.16)}
+.sfill{background:var(--amber);width:0}
+.stop{position:absolute;top:19px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;pointer-events:none}
+.stop i{width:4px;height:24px;background:rgba(214,229,245,.4);border-radius:2px}
+.stop span{font-size:28px;color:var(--chalk-faint);margin-top:10px;line-height:1;white-space:nowrap}
+.stop.on span{color:var(--amber);font-weight:700}
+.sthumb{position:absolute;top:31px;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;
+  background:var(--amber);box-shadow:0 0 0 7px rgba(245,182,66,.25);pointer-events:none}
+.sep{width:2px;align-self:stretch;margin:16px 4px;background:var(--line)}
+.hbs{display:flex;gap:8px}
+.hb{font-family:var(--f-kr);font-size:28px;font-weight:700;padding:10px 18px;border-radius:12px;border:2px solid var(--line-strong);
+  background:transparent;color:var(--chalk-soft);cursor:pointer;white-space:nowrap}
+.hb.on{border-color:var(--teal);color:var(--teal);background:rgba(73,209,192,.14)}
+
+/* ── 수식 줄 카드 ── */
+.flines{padding:14px 22px;display:flex;flex-direction:column;gap:2px;font-size:38px}
+.fl{min-height:58px;display:flex;align-items:center}
+.fl>span{white-space:nowrap}
+.fl.off{visibility:hidden}
+.cap{font-family:var(--f-kr);font-size:24px;color:var(--chalk-faint);font-weight:500}
+
+/* ── ① 표준화하기 ── */
+#p0 .side{width:500px}
+#p0 .tb{padding:10px 6px;font-size:28px}
+.stg{display:flex;flex-direction:column;padding:4px 0 6px 14px;border-left:5px solid transparent;border-radius:4px;transition:opacity .3s}
+.stg.off{opacity:0}
+.stg.cur{border-left-color:var(--amber)}
+.stg .fl{min-height:50px}
+.area{padding:6px 22px 8px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.area .lab{font-family:var(--f-kr);font-size:28px;color:var(--chalk-soft)}
+.area .val{font-size:42px;font-weight:700;color:var(--amber)}
+
+/* ── ② 유도 ── */
+#p1 .der{flex:1.25 1 0;min-width:0;padding:18px 28px;display:flex;flex-direction:column;gap:4px}
+#p1 .der .fl{font-size:42px;min-height:76px;transition:opacity .35s}
+#p1 .der .fl.off{visibility:visible;opacity:0}
+#p1 .der .fl.cur>span{color:var(--amber)}
+.hint{margin-top:auto;font-size:32px;padding:10px 18px;border:2px dashed var(--line-strong);border-radius:12px;color:var(--chalk-soft);transition:opacity .3s}
+.hint.off{opacity:0}
+#p1 .gcard{flex:1 1 0}
+.drow{display:flex;gap:10px;margin-top:10px}
+.drow .tb{flex:1}
+
+/* ── ③ 표 ── */
+#p2 .side{width:470px}
+.ztab{flex:0 0 auto;padding:12px 14px;display:flex;flex-direction:column;align-items:center;gap:8px}
+.ztab table{border-collapse:collapse;font-family:var(--f-en),serif;font-variant-numeric:tabular-nums}
+.ztab th,.ztab td{border:1.5px solid var(--line-strong);text-align:center;padding:9px 16px;font-size:32px;line-height:1.15;white-space:nowrap}
+.ztab th{font-weight:600;color:var(--chalk-soft);background:var(--panel-2)}
+.ztab td{color:var(--chalk-soft)}
+.ztab tr.hit td{background:rgba(245,182,66,.24);color:var(--amber);font-weight:700}
+.ztab .cap{font-size:22px}
+
+/* ── ④ 비교 ── */
+#p3 .lcol{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:16px}
+#p3 .side{width:620px}
+.res{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+.res .gcard{flex:0 0 250px}
+.rl{padding:6px 22px 12px;font-size:34px;display:flex;flex-direction:column}
+.rl .fl{min-height:56px}
+.verdict{font-family:var(--f-kr);font-size:33px;font-weight:700;color:var(--amber);padding:4px 22px 16px}
+.ask{flex:1 1 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:20px;text-align:center}
+.ask .q{font-family:var(--f-kr);font-size:40px;font-weight:700}
+.ask .raw{font-size:44px}
+
+/* ── ⑤ 정리 ── */
+#p4{flex-direction:column}
+.law{flex:0 0 auto;padding:18px 32px 20px;border-left:8px solid var(--amber)}
+.lawT{font-family:var(--f-kr);font-size:32px;font-weight:700;color:var(--amber);display:flex;justify-content:space-between;align-items:center}
+.lawB{font-family:var(--f-kr);font-size:37px;line-height:1.6;margin-top:6px;word-break:keep-all}
+.lawB .m{font-size:41px;line-height:1}
+.lawB>div{display:flex;align-items:center;flex-wrap:wrap;min-height:84px}
+.blank{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;min-width:92px;min-height:76px;
+  margin:0 .14em;border:2.5px dashed var(--violet);border-radius:12px;background:rgba(157,140,245,.12);cursor:pointer;padding:0 10px}
+.blank>span{visibility:hidden}
+.blank.open{border-style:solid;border-color:var(--amber);background:rgba(245,182,66,.12);color:var(--amber)}
+.blank.open>span{visibility:visible}
+.goal{font-family:var(--f-kr);font-size:30px;font-weight:700;color:var(--teal);margin-right:16px;white-space:nowrap}
+button:focus{outline:none}
+button:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="viewport"><div class="stage" id="stage"><div class="sheet">
+
+  <header class="head">
+    <div class="title">표준화</div>
+    <nav class="tabs" id="tabs">
+      <button class="tab on" data-t="0">① 표준화하기</button>
+      <button class="tab" data-t="1">② <span class="v">E</span>(<span class="v">Z</span>), <span class="v">V</span>(<span class="v">Z</span>)</button>
+      <button class="tab" data-t="2">③ 표로 확률</button>
+      <button class="tab" data-t="3">④ 점수 비교</button>
+      <button class="tab" data-t="4">⑤ 정리</button>
+    </nav>
+    <button class="fbtn" id="resetBtn">초기화</button>
+    <button class="fbtn" id="fsBtn">전체화면</button>
+  </header>
+
+  <main class="body">
+
+    <!-- ① 표준화하기 -->
+    <section class="pane col on" id="p0">
+      <div class="card ctrl">
+        <div class="nval m" id="mv0"></div>
+        <div class="slider" id="slM"></div>
+        <div class="sep"></div>
+        <div class="nval m" id="sv0"></div>
+        <div class="slider" id="slS"></div>
+      </div>
+      <div class="row2">
+        <div class="card gcard"><svg id="g0"></svg></div>
+        <aside class="side">
+          <div class="card flines" id="st0" style="gap:6px"></div>
+          <div class="card area"><span class="lab">색칠한 넓이</span><span class="val m" id="ar0">0.8413</span></div>
+          <div class="tgrid">
+            <button class="tb" id="b0a"></button>
+            <button class="tb" id="b0b"></button>
+            <button class="tb" id="b0c">눈금 비교</button>
+            <button class="tb" id="b0r" style="border-color:var(--line-strong);background:transparent">처음으로</button>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ② E(Z), V(Z) -->
+    <section class="pane" id="p1">
+      <div class="card der">
+        <div id="der"></div>
+        <div class="hint m off" id="hint"></div>
+        <div class="drow">
+          <button class="tb" id="b1n">다음 줄 ▶</button>
+          <button class="tb" id="b1a" style="border-color:var(--line-strong);background:transparent">모두 보기</button>
+        </div>
+      </div>
+      <div class="card gcard"><svg id="g1"></svg></div>
+    </section>
+
+    <!-- ③ 표로 확률 구하기 -->
+    <section class="pane col" id="p2">
+      <div class="card ctrl">
+        <div class="nval m" id="xv2" style="min-width:200px"></div>
+        <div class="slider" id="slX"></div>
+        <div class="hbs" id="dir2">
+          <button class="hb on" data-d="le">이하</button>
+          <button class="hb" data-d="ge">이상</button>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="card gcard"><svg id="g2"></svg></div>
+        <div class="card ztab" id="zt2"></div>
+        <aside class="side">
+          <div class="card flines" id="fl2" style="flex:1 1 auto"></div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ④ 점수 비교 -->
+    <section class="pane" id="p3">
+      <div class="lcol">
+        <div class="card gcard"><svg id="g3a"></svg></div>
+        <div class="card gcard"><svg id="g3b"></svg></div>
+      </div>
+      <aside class="side">
+        <button class="tb" id="b3" style="flex:0 0 auto">표준화해서 비교하기</button>
+        <div class="card res" id="res3"></div>
+      </aside>
+    </section>
+
+    <!-- ⑤ 정리 -->
+    <section class="pane" id="p4">
+      <div class="card law">
+        <div class="lawT">정규분포의 표준화 <button class="tg" id="allBtn" style="padding:8px 22px">모두 보기</button></div>
+        <div class="lawB" id="lawB"></div>
+      </div>
+      <div class="card law" style="border-left-color:var(--teal)">
+        <div class="lawT" style="color:var(--teal)">표준화하는 까닭</div>
+        <div class="lawB" id="lawC"></div>
+      </div>
+      <div class="card law" style="border-left-color:var(--violet)">
+        <div class="lawT" style="color:var(--violet)">예 &nbsp;<span class="m" style="font-size:34px">04</span></div>
+        <div class="lawB" id="lawD"></div>
+      </div>
+    </section>
+
+  </main>
+</div></div></div>
+
+<script>
+'use strict';
+/* ═══ 1. 스테이지 스케일링 ═══ */
+const STAGE_W=1600, STAGE_H=900, stage=document.getElementById('stage');
+function fitStage(){
+  const vv=window.visualViewport;
+  const w=vv?vv.width:innerWidth, h=vv?vv.height:innerHeight;
+  const s=Math.min(w/STAGE_W,h/STAGE_H);
+  stage.style.transform=`translate(${Math.round((w-STAGE_W*s)/2)}px,${Math.round((h-STAGE_H*s)/2)}px) scale(${s})`;
+}
+const fitSoon=()=>[0,60,300,700].forEach(t=>setTimeout(fitStage,t));
+addEventListener('resize',fitStage); addEventListener('orientationchange',fitSoon);
+if(window.visualViewport) visualViewport.addEventListener('resize',fitStage);
+document.addEventListener('fullscreenchange',fitSoon);
+fitSoon();
+
+/* ═══ 2. 수식 조각 ═══ */
+const $=id=>document.getElementById(id);
+const F=(a,b)=>`<span class="frac"><span class="num">${a}</span><span class="den">${b}</span></span>`;
+const V=s=>`<span class="v">${s}</span>`;
+const Xv=V('X'), Zv=V('Z'), Yv=V('Y'), mv=V('m'), sv=V('σ');
+const BP=(s,f)=>`${f||'P'}<span class="bp">(</span>${s}<span class="bp">)</span>`;
+const ANS=s=>`<span class="ans">${s}</span>`;
+const N=(a,b)=>`N(${a}, ${b})`;
+const sq=v=>`${v}<sup style="font-size:.6em">2</sup>`;
+const num=v=>{ const r=Math.round(v*100)/100; const s=Math.abs(r-Math.round(r))<1e-9?String(Math.round(r)):String(r); return s.replace('-','−'); };
+const p4=v=>v.toFixed(4);
+
+/* ═══ 3. 정규분포 · 표준정규분포표 ═══ */
+const phi=z=>Math.exp(-z*z/2)/Math.sqrt(2*Math.PI);
+const TBL=[[0.5,.1915],[1.0,.3413],[1.5,.4332],[2.0,.4772],[2.5,.4938],[3.0,.4987]];   /* 학습지 표 */
+const tval=z=>{ if(Math.abs(z)<1e-9) return 0; const r=TBL.find(([a])=>Math.abs(a-Math.abs(z))<1e-9); return r?r[1]:null; };
+const zs=z=>Math.abs(z)<1e-9?'0':(Math.abs(z)%1<1e-9?(z<0?'−':'')+Math.abs(z).toFixed(0):(z<0?'−':'')+Math.abs(z).toFixed(1));
+const zt=z=>Math.abs(z).toFixed(1);   /* 표의 z 표기(0.5, 1.0 …) */
+const S={m:40,sd:3};                  /* ①②③ 공용: 04번 X ~ N(40, 3²) */
+const MS=[10,20,30,40,50], SS=[1,2,3,4,5];
+
+/* ═══ 4. SVG 도구 ═══ */
+const SER="'STIX Two Text','Noto Sans KR',serif", KR="'Noto Sans KR',sans-serif";
+const CSS=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const COL={};
+function txt(x,y,s,size,fill,o){
+  o=o||{};
+  return `<text x="${x}" y="${y}" text-anchor="${o.anchor||'middle'}" dominant-baseline="central"
+    font-family="${o.kr?KR:SER}" font-size="${size}" font-weight="${o.w||500}" fill="${fill}"
+    ${o.it?'font-style="italic"':''} ${o.op!=null?`opacity="${o.op}"`:''} pointer-events="none">${s}</text>`;
+}
+function niceStep(span,target){
+  const raw=span/target, mag=10**Math.floor(Math.log10(raw)), r=raw/mag;
+  return (r<1.5?1:r<3.5?2:r<7.5?5:10)*mag;
+}
+function fitSvg(id,cb){
+  const svg=$(id), wrap=svg.parentElement;
+  new ResizeObserver(()=>{
+    const w=Math.round(wrap.clientWidth), h=Math.round(wrap.clientHeight);
+    if(!w||!h||(w===svg._w&&h===svg._h)) return;
+    svg._w=w; svg._h=h; svg.setAttribute('viewBox',`0 0 ${w} ${h}`); cb();
+  }).observe(wrap);
+  return svg;
+}
+function svgPt(svg,e){
+  const p=svg.createSVGPoint(); p.x=e.clientX; p.y=e.clientY;
+  return p.matrixTransform(svg.getScreenCTM().inverse());
+}
+/* 곡선 N(c, s²) : [a,b] 구간의 윗선 path, 넓이 path */
+function curvePts(px,py,c,s,a,b,n){
+  n=n||260; const pts=[];
+  for(let i=0;i<=n;i++){ const x=a+(b-a)*i/n; pts.push([px(x),py(phi((x-c)/s)/s)]); }
+  return pts;
+}
+const lineD=pts=>pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+','+p[1].toFixed(1)).join('');
+function areaD(px,py,c,s,a,b,base){
+  if(b<=a) return '';
+  return `M${px(a).toFixed(1)},${base}`+lineD(curvePts(px,py,c,s,a,b,160)).replace(/^M/,'L')+`L${px(b).toFixed(1)},${base}Z`;
+}
+const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+
+/* ═══ 5. 끌기 막대 ═══ */
+function makeSlider(el,labels,onIdx){
+  let L=labels;
+  const build=()=>{
+    const n=L.length, pct=i=>n>1?i/(n-1)*100:0;
+    el.innerHTML=`<div class="sin"><div class="strack"></div><div class="sfill"></div>`+
+      L.map((v,i)=>`<div class="stop" style="left:${pct(i)}%"><i></i><span class="m">${v}</span></div>`).join('')+
+      `<div class="sthumb"></div></div>`;
+  };
+  build();
+  let down=false;
+  const pick=e=>{ const sin=el.firstChild, r=sin.getBoundingClientRect(), n=L.length;
+    onIdx(Math.max(0,Math.min(n-1,Math.round((e.clientX-r.left)/r.width*(n-1))))); };
+  el.addEventListener('pointerdown',e=>{ down=true; el.setPointerCapture(e.pointerId); pick(e); });
+  el.addEventListener('pointermove',e=>{ if(down) pick(e); });
+  el.addEventListener('pointerup',()=>down=false);
+  el.addEventListener('pointercancel',()=>down=false);
+  const set=i=>{ const sin=el.firstChild, n=L.length, pct=n>1?i/(n-1)*100:0;
+    sin.querySelector('.sfill').style.width=pct+'%'; sin.querySelector('.sthumb').style.left=pct+'%';
+    sin.querySelectorAll('.stop').forEach((s,k)=>s.classList.toggle('on',k===i)); };
+  set.relabel=nl=>{ L=nl; build(); };
+  return set;
+}
+
+/* ═══ 6. ① 표준화하기 : X → X − m → (X − m)/σ ═══ */
+/* 단계 0: X ~ N(m, σ²)  1: X − m ~ N(0, σ²)  2: Z ~ N(0, 1)  3: 두 눈금 비교 */
+const A={stage:0,p:null,anim:null};
+function key0(k){
+  const m=S.m,sd=S.sd, camA=[Math.min(-1.5*sd,m-4.2*sd),m+4.2*sd], camB=[-4.2*sd,4.2*sd];
+  return [{c:m,s:sd,lo:camA[0],hi:camA[1],du:0},{c:0,s:sd,lo:camB[0],hi:camB[1],du:0},
+          {c:0,s:1,lo:camB[0],hi:camB[1],du:0},{c:0,s:1,lo:-4.2,hi:4.2,du:1}][k];
+}
+const SEG0=[[{k:['c'],d:1100},{k:['lo','hi'],d:700}],[{k:['s'],d:1300}],[{k:['lo','hi','du'],d:900}]];
+const g0=fitSvg('g0',()=>draw0());
+function draw0(){
+  const svg=g0,W=svg._w,H=svg._h; if(!W||!A.p) return;
+  const {c,s,lo,hi,du}=A.p, m=S.m, sd=S.sd;
+  const L=64,R=40,T=56,B=152,pw=W-L-R,ph=H-T-B,base=T+ph,YM=.45;
+  const px=x=>L+(x-lo)/(hi-lo)*pw, py=v=>base-v/YM*ph;
+  const AM=COL.am,TE=COL.te,FA=COL.fa,LS=COL.ls,LN=COL.ln,CH=COL.ch,VI=COL.vi;
+  const g=[`<defs><clipPath id="c0"><rect x="${L}" y="0" width="${pw}" height="${base+2}"/></clipPath></defs>`];
+  for(let v=.1;v<YM;v+=.1) g.push(`<line x1="${L}" y1="${py(v)}" x2="${L+pw}" y2="${py(v)}" stroke="${LN}" stroke-width="1"/>`);
+  const b=c+s;                                 /* 경계: 평균 + 1×표준편차 (04번 43) */
+  const a0=Math.max(lo,c-5*s), a1=Math.min(hi,c+5*s);
+  /* 원래 곡선 그림자 */
+  if(A.stage>0||A.anim){ const cm=m, cs=sd, ga=Math.max(lo,cm-5*cs), gb=Math.min(hi,cm+5*cs);
+    if(gb>ga) g.push(`<path d="${lineD(curvePts(px,py,cm,cs,ga,gb))}" fill="none" stroke="${FA}" stroke-width="2.5" stroke-dasharray="9 8" clip-path="url(#c0)"/>`); }
+  g.push(`<path d="${areaD(px,py,c,s,a0,Math.min(b,a1),base)}" fill="${TE}" fill-opacity=".38" clip-path="url(#c0)"/>`);
+  g.push(`<path d="${lineD(curvePts(px,py,c,s,a0,a1))}" fill="none" stroke="${CH}" stroke-width="4" clip-path="url(#c0)"/>`);
+  /* 평균선 · 경계선 */
+  g.push(`<line x1="${px(c)}" y1="${py(phi(0)/s)-14}" x2="${px(c)}" y2="${base}" stroke="${AM}" stroke-width="3" stroke-dasharray="12 8" clip-path="url(#c0)"/>`);
+  g.push(`<line x1="${px(b)}" y1="${py(phi(1)/s)}" x2="${px(b)}" y2="${base}" stroke="${TE}" stroke-width="4" clip-path="url(#c0)"/>`);
+  /* 표준편차 화살표 (평균 → 경계) */
+  const ya=py(phi(1)/s)-26;
+  if(px(b)-px(c)>40){
+    g.push(`<line x1="${px(c)+6}" y1="${ya}" x2="${px(b)-6}" y2="${ya}" stroke="${VI}" stroke-width="3"/>`+
+      `<path d="M${px(b)-6},${ya}l-12,-7v14z M${px(c)+6},${ya}l12,-7v14z" fill="${VI}"/>`);
+    g.push(txt((px(c)+px(b))/2,ya-24,num(s),28,VI,{w:700}));
+  }
+  g.push(`<line x1="${L}" y1="${base}" x2="${L+pw}" y2="${base}" stroke="${LS}" stroke-width="2.5"/>`);
+  /* 눈금: 평균·경계 이름표가 가까우면 일반 눈금 생략 */
+  const st=niceStep(hi-lo,9), keep=v=>Math.abs(px(v)-px(c))>48&&Math.abs(px(v)-px(b))>48;
+  for(let v=Math.ceil(lo/st-1e-9)*st;v<=hi+1e-9;v+=st){
+    g.push(`<line x1="${px(v)}" y1="${base}" x2="${px(v)}" y2="${base+10}" stroke="${LS}" stroke-width="2"/>`);
+    if(keep(v)) g.push(txt(px(v),base+34,num(v),28,FA));
+  }
+  const rn=v=>A.anim?String(Math.round(v)).replace('-','−'):num(v), close=px(b)-px(c)<62;
+  g.push(txt(px(c),base+34,rn(c),32,AM,{w:700}), txt(px(b)+(close?18:0),base+34+(close?0:0),close?'':rn(b),32,TE,{w:700}));
+  /* 축 이름 */
+  const an=A.stage>=2&&!A.anim?'Z':A.stage>=1&&!A.anim?'X − m':'X';
+  /* 두 눈금 (단계 3): Z 눈금 아래 X 값 */
+  if(du>0){
+    g.push(`<g opacity="${du}">`);
+    for(let z=-3;z<=3;z++){ if(px(z)<L||px(z)>L+pw) continue;
+      g.push(`<line x1="${px(z)}" y1="${base+56}" x2="${px(z)}" y2="${base+66}" stroke="${VI}" stroke-width="2"/>`);
+      g.push(txt(px(z),base+92,num(m+sd*z),30,z===0?AM:z===1?TE:VI,{w:700})); }
+    g.push(`<line x1="${px(-3)}" y1="${base+58}" x2="${px(3)}" y2="${base+58}" stroke="${VI}" stroke-width="1.5" stroke-dasharray="6 6"/>`);
+    g.push(txt(26,base+92,'X',32,VI,{it:1,w:700}), txt(26,base+34,'Z',32,CH,{it:1,w:700}));
+    g.push(`</g>`);
+  }
+  if(du<1) g.push(`<text x="${L+pw}" y="${base+92}" text-anchor="end" dominant-baseline="central" font-family="${SER}" font-size="32" font-style="italic" fill="${CH}" opacity="${1-du}" pointer-events="none">${an.replace('−','<tspan font-style="normal">−</tspan>')}</text>`);
+  svg.innerHTML=g.join('');
+}
+function side0(){
+  const m=S.m, sd=S.sd, a=m+sd, st=A.anim?A.anim.to:A.stage;
+  const rows=[
+    [`${Xv} ~ ${N(m,sq(sd))}`, `P(${Xv} ≤ ${a})`],
+    [`${Xv} − ${m} ~ ${N(0,sq(sd))}`, `P(${Xv} − ${m} ≤ ${sd})`],
+    [`${Zv} = ${F(`${Xv} − ${m}`,sd)} ~ ${N(0,1)}`, `P(${Zv} ≤ 1)`]];
+  $('st0').innerHTML=rows.map((r,i)=>`<div class="stg${i>Math.min(2,st)?' off':''}${i===Math.min(2,st)?' cur':''}">`+
+    `<div class="fl m"><span class="${i===Math.min(2,st)?'am':''}">${r[0]}</span></div>`+
+    `<div class="fl m"><span class="${i===Math.min(2,st)?'tl':'dim'}">${r[1]}</span></div></div>`).join('');
+  $('b0a').innerHTML=`${Xv} − ${mv} 옮기기`; $('b0b').innerHTML=`÷ ${sv} 줄이기`;
+  [['b0a',0],['b0b',1],['b0c',2]].forEach(([id,k])=>{ const bt=$(id); bt.disabled=st!==k; bt.classList.toggle('done',st>k); });
+  $('mv0').innerHTML=`${mv} = <span class="am">${m}</span>`; $('sv0').innerHTML=`${sv} = <span class="am">${sd}</span>`;
+}
+function step0(){
+  if(A.anim){ finish0(); return; }
+  if(A.stage>=3) return;
+  const from=A.stage, to=from+1, tgt=key0(to), segs=SEG0[from];
+  A.anim={to,segs,i:0,t0:performance.now(),start:{...A.p},tgt};
+  side0(); requestAnimationFrame(tick0);
+}
+function tick0(now){
+  const an=A.anim; if(!an) return;
+  const sg=an.segs[an.i], t=Math.min(1,(now-an.t0)/sg.d), e=ease(t);
+  sg.k.forEach(k=>A.p[k]=an.start[k]+(an.tgt[k]-an.start[k])*e);
+  draw0();
+  if(t>=1){ an.i++; an.t0=now; an.start={...A.p}; if(an.i>=an.segs.length){ A.stage=an.to; A.anim=null; A.p={...an.tgt}; draw0(); side0(); return; } }
+  requestAnimationFrame(tick0);
+}
+function finish0(){ const an=A.anim; if(!an) return; A.stage=an.to; A.p={...an.tgt}; A.anim=null; draw0(); side0(); }
+function reset0(){ A.anim=null; A.stage=0; A.p=key0(0); draw0(); side0(); setM(MS.indexOf(S.m)); setS(SS.indexOf(S.sd)); }
+const setM=makeSlider($('slM'),MS,i=>{ if(MS[i]!==S.m){ S.m=MS[i]; onParam(); } });
+const setS=makeSlider($('slS'),SS,i=>{ if(SS[i]!==S.sd){ S.sd=SS[i]; onParam(); } });
+function onParam(){ reset0(); paint1(); X2.k=Math.min(Math.max(X2.k,0),12); relabel2(); paint2(); }
+$('b0a').onclick=step0; $('b0b').onclick=step0; $('b0c').onclick=step0; $('b0r').onclick=reset0;
+
+/* ═══ 7. ② E(Z) = 0, V(Z) = 1 ═══ */
+const D1={n:1};
+const DER=()=>[
+  `${Xv} ~ ${N(mv,sq(sv))} <span class="kr dim">일 때</span> &nbsp;<span class="dim">${V('E')}(${Xv}) = ${mv}, ${V('V')}(${Xv}) = ${sq(sv)}</span>`,
+  `${Zv} = ${F(`${Xv} − ${mv}`,sv)} <span class="kr dim">라 두면</span>`,
+  `${V('E')}(${Zv}) = ${BP(F(`${Xv} − ${mv}`,sv),V('E'))} = ${F(1,sv)}{${V('E')}(${Xv}) − ${mv}} = <span class="am">0</span>`,
+  `${V('V')}(${Zv}) = ${BP(F(`${Xv} − ${mv}`,sv),V('V'))} = ${F(1,sq(sv))}${V('V')}(${Xv}) = <span class="am">1</span>`,
+  `∴ ${Zv} ~ ${N(0,1)} &nbsp;<span class="kr tl">← 표준정규분포</span>`,
+  `${Yv} ~ ${N(V('m')+'<sub>2</sub>',sq(V('σ')+'<sub>2</sub>'))} <span class="kr dim">도</span> ${Zv} = ${F(`${Yv} − ${V('m')}<sub>2</sub>`,V('σ')+'<sub>2</sub>')} <span class="kr dim">로 두면</span> ${Zv} ~ ${N(0,1)}`];
+function paint1(){
+  const L=DER(), n=D1.n;
+  $('der').innerHTML=L.map((s,i)=>`<div class="fl m${i>=n?' off':''}${i===n-1&&n>1?' cur':''}"><span>${s}</span></div>`).join('');
+  $('hint').innerHTML=`<span class="kr">참고</span> &nbsp;${V('E')}(${V('a')}${Xv} + ${V('b')}) = ${V('a')}${V('E')}(${Xv}) + ${V('b')}, &nbsp;${V('V')}(${V('a')}${Xv} + ${V('b')}) = ${V('a')}<sup style="font-size:.6em">2</sup>${V('V')}(${Xv})`;
+  $('hint').classList.toggle('off',!(n>=3&&n<=4));
+  $('b1n').disabled=n>=L.length; $('b1a').textContent=n>=L.length?'처음으로':'모두 보기';
+  draw1();
+}
+$('b1n').onclick=()=>{ D1.n=Math.min(6,D1.n+1); paint1(); };
+$('b1a').onclick=()=>{ D1.n=D1.n>=6?1:6; paint1(); };
+const g1=fitSvg('g1',()=>draw1());
+function draw1(){
+  const svg=g1,W=svg._w,H=svg._h; if(!W) return;
+  const m=S.m, sd=S.sd, n=D1.n;
+  const AM=COL.am,TE=COL.te,FA=COL.fa,LS=COL.ls,CH=COL.ch,VI=COL.vi;
+  const L=70,R=40,pw=W-L-R, zx=z=>L+(z+3.8)/7.6*pw;
+  const hc=Math.min(200,(H-330)/2);      /* 곡선 높이 */
+  const yA=104+hc, yB=yA+170+hc;          /* 위 X축, 아래 Z축 */
+  const g=[`<text x="${W/2}" y="34" text-anchor="middle" dominant-baseline="central" font-size="32" fill="${CH}" pointer-events="none"><tspan font-family="${KR}" font-size="28" fill="${FA}">예</tspan><tspan font-family="${SER}" font-style="italic" dx="14">X</tspan><tspan font-family="${SER}"> ~ N(${m}, ${sd}</tspan><tspan font-family="${SER}" font-size="20" dy="-12">2</tspan><tspan font-family="${SER}" dy="12">)</tspan></text>`];
+  const curve=(base,col)=>{ let d=''; for(let i=0;i<=200;i++){ const z=-3.8+7.6*i/200; d+=(i?'L':'M')+zx(z).toFixed(1)+','+(base-phi(z)/phi(0)*hc).toFixed(1); } return `<path d="${d}" fill="none" stroke="${col}" stroke-width="3.5"/>`; };
+  [[yA,'X'],[yB,'Z']].forEach(([y,lab],j)=>{
+    g.push(curve(y,CH));
+    g.push(`<line x1="${L}" y1="${y}" x2="${L+pw}" y2="${y}" stroke="${LS}" stroke-width="2.5"/>`);
+    g.push(txt(L-36,y,lab,34,j?AM:CH,{it:1,w:700}));
+    for(let z=-3;z<=3;z++){
+      g.push(`<line x1="${zx(z)}" y1="${y}" x2="${zx(z)}" y2="${y+10}" stroke="${LS}" stroke-width="2"/>`);
+      g.push(txt(zx(z),y+34,j?num(z):num(m+sd*z),28,z===0&&n>=3?AM:FA,{w:z===0&&n>=3?700:500}));
+    }
+  });
+  /* 대응선 X → Z */
+  if(n>=2) for(let z=-3;z<=3;z++){
+    const hi=z===0&&n>=3;
+    g.push(`<line x1="${zx(z)}" y1="${yA+54}" x2="${zx(z)}" y2="${yB-hc-12}" stroke="${hi?AM:VI}" stroke-width="${hi?3:2}" stroke-dasharray="7 7" opacity="${hi?1:.55}"/>`);
+  }
+  if(n>=2){ const ym=(yA+54+yB-hc-12)/2; g.push(`<rect x="${zx(1.2)}" y="${ym-26}" width="${zx(3.6)-zx(1.2)}" height="52" rx="10" fill="${COL.p}" />`);
+    g.push(txt((zx(1.2)+zx(3.6))/2,ym,`− ${m}, ÷ ${sd}`,30,VI,{w:700})); }
+  /* 평균 */
+  if(n>=3){ g.push(txt(zx(-1.5),yA-hc*.55,`평균 ${m}`,28,AM,{w:700,kr:1}), txt(zx(-1.5),yB-hc*.55,'평균 0',28,AM,{w:700,kr:1})); }
+  /* 표준편차 */
+  if(n>=4){ [[yA,`표준편차 ${sd}`],[yB,'표준편차 1']].forEach(([y,s])=>{ const yy=y-phi(1)/phi(0)*hc-22;
+    g.push(`<line x1="${zx(0)+5}" y1="${yy}" x2="${zx(1)-5}" y2="${yy}" stroke="${TE}" stroke-width="3"/>`+
+      `<path d="M${zx(1)-5},${yy}l-12,-7v14z M${zx(0)+5},${yy}l12,-7v14z" fill="${TE}"/>`);
+    g.push(txt(zx(1)+14,yy,s,28,TE,{w:700,kr:1,anchor:'start'})); }); }
+  svg.innerHTML=g.join('');
+}
+
+/* ═══ 8. ③ 표로 확률 구하기 ═══ */
+const X2={k:8,dir:'le'};          /* z = (k − 6)/2,  기본 z = 1 (x = 43) */
+const zOf=k=>(k-6)/2, xOf=k=>S.m+S.sd*zOf(k);
+const lab2=()=>Array.from({length:13},(_,k)=>num(xOf(k)));
+const setX=makeSlider($('slX'),lab2(),k=>{ if(k!==X2.k){ X2.k=k; paint2(); } });
+function relabel2(){ setX.relabel(lab2()); }
+$('dir2').onclick=e=>{ const b=e.target.closest('[data-d]'); if(b){ X2.dir=b.dataset.d; paint2(); } };
+const g2=fitSvg('g2',()=>draw2());
+function prob2(z,dir){ const t=tval(z); const le=z>=0?.5+t:.5-t; return dir==='le'?le:1-le; }
+function paint2(){
+  const k=X2.k, z=zOf(k), x=xOf(k), m=S.m, sd=S.sd, le=X2.dir==='le', t=tval(z), op=le?'≤':'≥';
+  setX(k);
+  $('dir2').querySelectorAll('.hb').forEach(b=>b.classList.toggle('on',b.dataset.d===X2.dir));
+  $('xv2').innerHTML=`${V('x')} = <span class="am">${num(x)}</span>`;
+  const L=[`P(${Xv} ${op} ${num(x)})`, `= ${BP(`${Zv} ${op} ${F(`${num(x)} − ${m}`,sd)}`)}`, `= P(${Zv} ${op} ${zs(z)})`];
+  if(Math.abs(z)<1e-9) L.push(`= ${ANS('0.5')}`);
+  else{
+    const plus=(z>0)===le, mid=`P(0 ≤ ${Zv} ≤ ${zs(Math.abs(z))})`;
+    L.push(`= 0.5 ${plus?'+':'−'} ${mid}`, `= 0.5 ${plus?'+':'−'} <span class="am">${p4(t)}</span>`, `= ${ANS(p4(prob2(z,X2.dir)))}`);
+  }
+  $('fl2').innerHTML=L.map(s=>`<div class="fl m"><span>${s}</span></div>`).join('');
+  $('zt2').innerHTML=`<div class="cap">표준정규분포표</div><table><tr><th class="m">${V('z')}</th><th class="m">P(0 ≤ ${Zv} ≤ ${V('z')})</th></tr>`+
+    TBL.map(([a,v])=>`<tr class="${Math.abs(Math.abs(z)-a)<1e-9?'hit':''}"><td class="m">${a.toFixed(1)}</td><td class="m">${p4(v)}</td></tr>`).join('')+`</table>`;
+  draw2();
+}
+function draw2(){
+  const svg=g2,W=svg._w,H=svg._h; if(!W) return;
+  const z=zOf(X2.k), le=X2.dir==='le', m=S.m, sd=S.sd, t=tval(z);
+  const L=56,R=30,T=96,B=150,pw=W-L-R,ph=H-T-B,base=T+ph,lo=-3.6,hi=3.6;
+  const px=v=>L+(v-lo)/(hi-lo)*pw, py=v=>base-v/.43*ph;
+  const AM=COL.am,TE=COL.te,FA=COL.fa,LS=COL.ls,CH=COL.ch,VI=COL.vi;
+  const g=[];
+  const [ta,tb]=le?[lo,z]:[z,hi];
+  g.push(`<path d="${areaD(px,py,0,1,ta,tb,base)}" fill="${TE}" fill-opacity=".34"/>`);
+  if(Math.abs(z)>1e-9){ const [a,b]=[Math.min(0,z),Math.max(0,z)];
+    g.push(`<path d="${areaD(px,py,0,1,a,b,base)}" fill="${AM}" fill-opacity=".42" stroke="${AM}" stroke-width="2.5"/>`);
+    g.push(txt(px((a+b)/2),py(Math.min(phi((a+b)/2)*.5,.2)),p4(t),30,AM,{w:700}));
+    const halfIn=(z>0)===le; if(halfIn){ const hx=z>0?-1.1:1.1; g.push(txt(px(hx),py(.09),'0.5',30,TE,{w:700})); }
+  }else g.push(txt(px(le?-1.1:1.1),py(.09),'0.5',30,TE,{w:700}));
+  g.push(`<path d="${lineD(curvePts(px,py,0,1,lo,hi))}" fill="none" stroke="${CH}" stroke-width="4"/>`);
+  g.push(`<line x1="${px(0)}" y1="${py(phi(0))-10}" x2="${px(0)}" y2="${base}" stroke="${FA}" stroke-width="2" stroke-dasharray="8 7"/>`);
+  g.push(`<line x1="${px(z)}" y1="${T-36}" x2="${px(z)}" y2="${base}" stroke="${AM}" stroke-width="4"/>`);
+  g.push(`<line x1="${L}" y1="${base}" x2="${L+pw}" y2="${base}" stroke="${LS}" stroke-width="2.5"/>`);
+  for(let v=-3;v<=3;v+=.5){
+    const on=Math.abs(v-z)<1e-9, big=Math.abs(v%1)<1e-9;
+    g.push(`<line x1="${px(v)}" y1="${base}" x2="${px(v)}" y2="${base+(big?12:7)}" stroke="${LS}" stroke-width="2"/>`);
+    if(on||(big&&Math.abs(px(v)-px(z))>62)){ g.push(txt(px(v),base+36,zs(v),on?32:28,on?AM:FA,{w:on?700:500}));
+      g.push(txt(px(v),base+92,num(m+sd*v),on?32:28,on?AM:VI,{w:on?700:500})); }
+  }
+  g.push(txt(L-30,base+36,'Z',30,CH,{it:1,w:700}), txt(L-30,base+92,'X',30,VI,{it:1,w:700}));
+  const pr=p4(prob2(z,X2.dir)), lab=`P(Z ${le?'≤':'≥'} ${zs(z)}) = ${Math.abs(z)<1e-9?'0.5':pr}`;
+  g.push(`<text x="${L+pw/2}" y="${T-60}" text-anchor="middle" dominant-baseline="central" font-family="${SER}" font-size="34" font-weight="700" fill="${TE}" pointer-events="none">${lab.replace('Z','<tspan font-style="italic">Z</tspan>')}</text>`);
+  svg.innerHTML=g.join('');
+}
+/* 그래프를 눌러 x 고르기 */
+(function(){ let down=false; const pick=e=>{ const W=g2._w,L=56,R=30,pw=W-L-R,p=svgPt(g2,e),v=-3.6+(p.x-L)/pw*7.2;
+  const k=Math.max(0,Math.min(12,Math.round(v*2)+6)); if(k!==X2.k){ X2.k=k; paint2(); } };
+  g2.addEventListener('pointerdown',e=>{ down=true; g2.setPointerCapture(e.pointerId); pick(e); });
+  g2.addEventListener('pointermove',e=>{ if(down) pick(e); });
+  g2.addEventListener('pointerup',()=>down=false); g2.addEventListener('pointercancel',()=>down=false); })();
+
+/* ═══ 9. ④ 두 과목 점수 비교 ═══ */
+const SUB=[{name:'수학',mu:60,sd:10,k:8,col:'am'},{name:'영어',mu:80,sd:4,k:6,col:'te'}];   /* 수학 80점(z=2), 영어 84점(z=1) */
+const C3={on:false};
+const sc=s=>s.mu+s.sd*(s.k-4)/2;            /* k = 0~8 → z = −2 ~ 2 (0.5 간격) */
+const zc=s=>(s.k-4)/2;
+const g3=[fitSvg('g3a',()=>draw3(0)),fitSvg('g3b',()=>draw3(1))];
+function draw3(i){
+  const svg=g3[i],W=svg._w,H=svg._h; if(!W) return;
+  const s=SUB[i], col=COL[s.col], z=zc(s), x=sc(s);
+  const L=40,R=40,T=70,B=78,pw=W-L-R,ph=H-T-B,base=T+ph, lo=s.mu-3.6*s.sd, hi=s.mu+3.6*s.sd;
+  const px=v=>L+(v-lo)/(hi-lo)*pw, py=v=>base-v/(phi(0)/s.sd*1.12)*ph;
+  const g=[];
+  g.push(`<path d="${areaD(px,py,s.mu,s.sd,x,hi,base)}" fill="${col}" fill-opacity="${s.col==='am'?.5:.35}"/>`);
+  g.push(`<path d="${lineD(curvePts(px,py,s.mu,s.sd,lo,hi))}" fill="none" stroke="${COL.ch}" stroke-width="3.5"/>`);
+  g.push(`<line x1="${px(s.mu)}" y1="${py(phi(0)/s.sd)-8}" x2="${px(s.mu)}" y2="${base}" stroke="${COL.fa}" stroke-width="2" stroke-dasharray="8 7"/>`);
+  g.push(`<line x1="${px(x)}" y1="${T-6}" x2="${px(x)}" y2="${base}" stroke="${col}" stroke-width="4"/>`);
+  g.push(`<line x1="${L}" y1="${base}" x2="${L+pw}" y2="${base}" stroke="${COL.ls}" stroke-width="2.5"/>`);
+  for(let k=-3;k<=3;k++){ const v=s.mu+k*s.sd;
+    g.push(`<line x1="${px(v)}" y1="${base}" x2="${px(v)}" y2="${base+10}" stroke="${COL.ls}" stroke-width="2"/>`);
+    if(Math.abs(px(v)-px(x))>40) g.push(txt(px(v),base+34,num(v),28,COL.fa)); }
+  g.push(txt(px(x),base+34,num(x),32,col,{w:700}));
+  g.push(`<text x="${L+6}" y="${T-34}" dominant-baseline="central" font-size="34" font-weight="700" fill="${col}" pointer-events="none"><tspan font-family="${KR}">${s.name}</tspan><tspan font-family="${SER}" dx="16" fill="${COL.ch}">N(${s.mu}, ${s.sd}</tspan><tspan font-family="${SER}" font-size="22" dy="-12" fill="${COL.ch}">2</tspan><tspan font-family="${SER}" dy="12" fill="${COL.ch}">)</tspan></text>`);
+  const lx=Math.min(L+pw-70,Math.max(L+70,px(x)));
+  g.push(`<text x="${lx}" y="${T-34}" text-anchor="middle" dominant-baseline="central" font-size="34" font-weight="700" fill="${col}" pointer-events="none"><tspan font-family="${SER}">${num(x)}</tspan><tspan font-family="${KR}" font-size="28">점</tspan></text>`);
+  svg.innerHTML=g.join('');
+}
+g3.forEach((svg,i)=>{ let down=false; const pick=e=>{ const s=SUB[i],W=svg._w,L=40,R=40,pw=W-L-R,p=svgPt(svg,e),lo=s.mu-3.6*s.sd,hi=s.mu+3.6*s.sd;
+    const v=lo+(p.x-L)/pw*(hi-lo), k=Math.max(0,Math.min(8,Math.round((v-s.mu)/s.sd*2)+4)); if(k!==s.k){ s.k=k; paint3(); } };
+  svg.addEventListener('pointerdown',e=>{ down=true; svg.setPointerCapture(e.pointerId); pick(e); });
+  svg.addEventListener('pointermove',e=>{ if(down) pick(e); });
+  svg.addEventListener('pointerup',()=>down=false); svg.addEventListener('pointercancel',()=>down=false); });
+function upper(z){ const t=tval(z); return z>=0?.5-t:.5+t; }
+function paint3(){
+  draw3(0); draw3(1);
+  const [a,b]=SUB, xa=sc(a), xb=sc(b), za=zc(a), zb=zc(b);
+  $('b3').textContent=C3.on?'점수만 보기':'표준화해서 비교하기';
+  const res=$('res3');
+  if(!C3.on){
+    const cmp=xa>xb?'&gt;':xa<xb?'&lt;':'=';
+    res.innerHTML=`<div class="ask"><div class="q">어느 과목을 더 잘했을까?</div>`+
+      `<div class="raw m"><span class="kr am">수학</span> ${num(xa)}<span class="kr">점</span> &nbsp;${cmp}&nbsp; <span class="kr tl">영어</span> ${num(xb)}<span class="kr">점</span></div>`+
+      `<div class="cap" style="font-size:28px">점수를 끌어서 바꿀 수 있어요</div></div>`;
+    return;
+  }
+  const line=(s,x,z,c)=>{ const t=tval(z), u=upper(z);
+    return `<div class="fl m"><span><span class="kr ${c}" style="font-weight:700">${s.name}</span> &nbsp;${Zv} = ${F(`${num(x)} − ${s.mu}`,s.sd)} = <span class="${c}">${zs(z)}</span></span></div>`+
+      `<div class="fl m" style="padding-left:78px"><span class="dim"><span class="kr">상위</span> ${Math.abs(z)<1e-9?'0.5':`0.5 ${z>0?'−':'+'} ${p4(t)} = `}<span class="${c}">${Math.abs(z)<1e-9?'':p4(u)}</span></span></div>`; };
+  const v=za>zb?'<span class="m">Z</span> 값이 큰 수학이 상대적으로 더 잘했다':za<zb?'<span class="m">Z</span> 값이 큰 영어가 상대적으로 더 잘했다':'<span class="m">Z</span> 값이 같아 상대적 위치가 같다';
+  res.innerHTML=`<div class="card gcard" style="border:0;background:transparent"><svg id="g3z"></svg></div>`+
+    `<div class="rl">${line(a,xa,za,'am')}${line(b,xb,zb,'tl')}</div><div class="verdict">→ ${v}</div>`;
+  const svg=$('g3z'); requestAnimationFrame(()=>drawZ3(svg));
+}
+function drawZ3(svg){
+  const W=svg.parentElement.clientWidth,H=svg.parentElement.clientHeight; if(!W) return;
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  const L=40,R=40,T=50,B=56,pw=W-L-R,ph=H-T-B,base=T+ph,lo=-3.4,hi=3.4;
+  const px=v=>L+(v-lo)/(hi-lo)*pw, py=v=>base-v/.43*ph;
+  const g=[`<path d="${lineD(curvePts(px,py,0,1,lo,hi))}" fill="none" stroke="${COL.ch}" stroke-width="3.5"/>`,
+    `<line x1="${L}" y1="${base}" x2="${L+pw}" y2="${base}" stroke="${COL.ls}" stroke-width="2.5"/>`];
+  const zz=SUB.map(zc);
+  for(let z=-3;z<=3;z++){ g.push(`<line x1="${px(z)}" y1="${base}" x2="${px(z)}" y2="${base+10}" stroke="${COL.ls}" stroke-width="2"/>`);
+    if(!zz.some(v=>Math.abs(v-z)<.3)) g.push(txt(px(z),base+32,num(z),26,COL.fa)); }
+  SUB.forEach((s,i)=>{ const z=zz[i], c=COL[s.col], same=Math.abs(zz[0]-zz[1])<1e-9;
+    g.push(`<line x1="${px(z)}" y1="${T-6+i*20}" x2="${px(z)}" y2="${base}" stroke="${c}" stroke-width="4"/>`);
+    g.push(txt(px(z)+(same?(i?40:-40):0),T-24+(same?0:i*20),s.name,26,c,{w:700,kr:1}));
+    g.push(txt(px(z),base+32,zs(z),28,c,{w:700})); });
+  g.push(txt(L+6,T-24,'Z',30,COL.ch,{it:1,w:700,anchor:'start'}));
+  svg.innerHTML=g.join('');
+}
+$('b3').onclick=()=>{ C3.on=!C3.on; paint3(); };
+
+/* ═══ 10. ⑤ 정리 ═══ */
+const BL=[F(`${Xv} − ${mv}`,sv),'0','1',F(`${V('a')} − ${mv}`,sv),F(`${V('b')} − ${mv}`,sv),'표준정규분포표',`${Zv}<span class="kr">값</span>`,'0.8413'];
+const blank=i=>`<span class="blank m" data-b="${i}"><span>${BL[i]}</span></span>`;
+$('lawB').innerHTML=
+  `<div>확률변수 <span class="m">&nbsp;${Xv} ~ ${N(mv,sq(sv))}&nbsp;</span> 일 때 <span class="m">&nbsp;${Zv} =</span>${blank(0)}로 두면 <span class="m">&nbsp;${Zv} ~ N(</span>${blank(1)}<span class="m">,</span>${blank(2)}<span class="m">)</span></div>`+
+  `<div><span class="m">P(${V('a')} ≤ ${Xv} ≤ ${V('b')}) = P</span><span class="m bp" style="font-size:41px">(</span>${blank(3)}<span class="m">≤ ${Zv} ≤</span>${blank(4)}<span class="m bp" style="font-size:41px">)</span></div>`;
+$('lawC').innerHTML=
+  `<div><span class="goal">목표 1</span>정규분포의 확률을 ${blank(5)}를 이용해 계산할 수 있다.</div>`+
+  `<div><span class="goal">목표 2</span>평균·표준편차가 다른 정규분포도 ${blank(6)}으로 바꾸어 비교할 수 있다.</div>`;
+$('lawD').innerHTML=`<div><span class="m">${Xv} ~ N(40, ${sq(3)}) &nbsp;:&nbsp; P(${Xv} ≤ 43) = ${BP(`${Zv} ≤ ${F('43 − 40',3)}`)} = P(${Zv} ≤ 1) = 0.5 + 0.3413 = </span>${blank(7)}</div>`;
+const allBtn=$('allBtn');
+const blanks=()=>document.querySelectorAll('#p4 .blank');
+function syncAll(){ allBtn.textContent=[...blanks()].every(b=>b.classList.contains('open'))?'가리기':'모두 보기'; }
+$('p4').addEventListener('click',e=>{ const b=e.target.closest('.blank'); if(b){ b.classList.toggle('open'); syncAll(); } });
+allBtn.onclick=()=>{ const open=allBtn.textContent==='모두 보기'; blanks().forEach(b=>b.classList.toggle('open',open)); syncAll(); };
+
+/* ═══ 11. 탭 · 키보드 · 전체화면 · 초기화 ═══ */
+let tab=0;
+const tabs=document.querySelectorAll('.tab'), panes=document.querySelectorAll('.pane');
+function setTab(t){
+  tab=Math.max(0,Math.min(4,t));
+  tabs.forEach((b,i)=>b.classList.toggle('on',i===tab));
+  panes.forEach((p,i)=>p.classList.toggle('on',i===tab));
+  if(tab===3) paint3();
+}
+$('tabs').onclick=e=>{ const b=e.target.closest('[data-t]'); if(b) setTab(+b.dataset.t); };
+/* 초기화 : 지금 보고 있는 탭만 처음 상태로 */
+function resetTab(){
+  if(tab===0){ S.m=40; S.sd=3; reset0(); relabel2(); paint1(); paint2(); }
+  else if(tab===1){ D1.n=1; paint1(); }
+  else if(tab===2){ X2.k=8; X2.dir='le'; paint2(); }
+  else if(tab===3){ SUB[0].k=8; SUB[1].k=6; C3.on=false; paint3(); }
+  else { blanks().forEach(b=>b.classList.remove('open')); syncAll(); }
+}
+$('resetBtn').onclick=resetTab;
+const fsBtn=$('fsBtn');
+fsBtn.onclick=()=>{
+  const d=document, el=d.documentElement;
+  if(d.fullscreenElement||d.webkitFullscreenElement) (d.exitFullscreen||d.webkitExitFullscreen).call(d);
+  else { const r=el.requestFullscreen||el.webkitRequestFullscreen; if(r) Promise.resolve(r.call(el)).catch(()=>{}); }
+};
+const syncFs=()=>fsBtn.textContent=(document.fullscreenElement||document.webkitFullscreenElement)?'창으로':'전체화면';
+document.addEventListener('fullscreenchange',syncFs); document.addEventListener('webkitfullscreenchange',syncFs);
+addEventListener('keydown',e=>{
+  const k=e.key;
+  if(k>='1'&&k<='5') setTab(+k-1);
+  else if(k==='ArrowRight') setTab(tab+1);
+  else if(k==='ArrowLeft') setTab(tab-1);
+  else if(k==='f'||k==='F') fsBtn.click();
+  else if(k==='r'||k==='R') resetTab();
+  else if(k===' '){ e.preventDefault();
+    if(tab===0) step0(); else if(tab===1){ D1.n=Math.min(6,D1.n+1); paint1(); } else if(tab===3){ C3.on=!C3.on; paint3(); } }
+  else if(k==='ArrowUp'||k==='ArrowDown'){
+    e.preventDefault(); const dl=k==='ArrowUp'?1:-1;
+    if(tab===2){ X2.k=Math.max(0,Math.min(12,X2.k+dl)); paint2(); }
+  }
+});
+
+/* ═══ 시작 ═══ */
+Object.assign(COL,{am:CSS('--amber'),te:CSS('--teal'),vi:CSS('--violet'),co:CSS('--coral'),ch:CSS('--chalk'),
+  fa:CSS('--chalk-faint'),ls:CSS('--line-strong'),ln:CSS('--line'),p:CSS('--panel'),p2:CSS('--panel-2'),bg:CSS('--bg')});
+reset0(); paint1(); paint2(); paint3();
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{ draw0(); draw1(); draw2(); if(tab===3) paint3(); });
+</script>
+</body>
+</html>
