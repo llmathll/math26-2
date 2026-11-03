@@ -17,7 +17,8 @@ COLOR_MAP = {'#0a1420': '#ffffff', '#0e1b2b': '#ffffff', '#16283e': '#f7f8fb', '
   '#f5b642': '#d9480f', 'rgba(245,182,66,.12)': 'rgba(217,72,15,.08)', 'rgba(245,182,66,.25)': 'rgba(217,72,15,.18)',
   '#49d1c0': '#0f8577', 'rgba(73,209,192,.12)': 'rgba(15,133,119,.10)',
   '#9d8cf5': '#5d3b8f', 'rgba(157,140,245,.12)': 'rgba(93,59,143,.08)', 'rgba(157,140,245,.14)': 'rgba(93,59,143,.10)',
-  '#ff7d6a': '#d6453a'}
+  '#ff7d6a': '#d6453a',
+  'rgba(245,182,66,.24)': 'rgba(217,72,15,.16)', 'rgba(245,182,66,.2)': 'rgba(217,72,15,.12)', 'rgba(73,209,192,.14)': 'rgba(15,133,119,.12)'}
 for a, b in KEEP_COLORS.items(): js = js.replace(a, b)
 for a, b in COLOR_MAP.items(): css = css.replace(a, b); js = js.replace(a, b)
 css = css.replace(':root{', ':host{position:absolute;inset:0;display:block;')

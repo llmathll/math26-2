@@ -214,11 +214,15 @@ for idx, it in enumerate(C.ITEMS):
     for L in layers: L['x'] = int(L.pop('X') - bx0); L['y'] = int(L.pop('Y') - by0)
     base_c = bwP[by0:by1, bx0:bx1]
     rec = dict(sec=it['sec'], num=it['num'], toc=it.get('toc', it['num']), g=it.get('group', it['sec']),
-               w=int(bx1 - bx0), h=int(by1 - by0), n=n, base=b64(base_c), steps=layers)
+               w=int(bx1 - bx0), h=int(by1 - by0), n=n - it.get('pre', 0), base=b64(base_c), steps=layers)
     if it.get('follow'): rec['follow'] = 1            # 폭에만 맞춰 공통 배율, 넘치는 아래쪽은 화면이 따라 내려감
     if it.get('scale'): rec['scale'] = it['scale']    # 공통 배율에 곱하는 값(예 0.9: 이 문항만 조금 작게)
     if it.get('solo'): rec['solo'] = 1                # 공통 배율 계산에서 뺌(이 문항만 필요하면 조금 더 축소)
     if it.get('link'): rec['link'] = it['link']; rec['linkName'] = it.get('linkName', '연결 자료')
+    PRE = it.get('pre', 0)                            # pre: 앞의 PRE개 단계는 처음부터 한꺼번에 보임(단계 번호 −1)
+    if PRE:
+        for t in vstrokes: t['s'] = -1 if t['s'] < PRE else t['s'] - PRE
+        for L in layers: L['step'] = -1 if L['step'] < PRE else L['step'] - PRE
     if vstrokes:
         outS = []
         for t in vstrokes:
@@ -235,7 +239,7 @@ for idx, it in enumerate(C.ITEMS):
             t['d'] = ' '.join(d); t['l'] = round(ln, 1); outS.append(t)
         rec['strokes'] = outS
         rec['steps'] = [L for L in layers if False]      # 펜 획으로 그리므로 단계 그림은 싣지 않음
-        cnt = np.bincount([t['s'] for t in outS], minlength=n)
+        cnt = np.bincount([t['s'] for t in outS if t['s'] >= 0], minlength=n - PRE)
         if (cnt == 0).any(): print('   ! 펜 획이 없는 단계:', [i + 1 for i in np.where(cnt == 0)[0]], '— 그 단계는 그림으로 대체')
         if (cnt == 0).any(): rec['steps'] = [L for L in layers if L['step'] in set(np.where(cnt == 0)[0].tolist()) and not L.get('until') and not L.get('hl')]
         rec['steps'] += [L for L in layers if L.get('hl')]
