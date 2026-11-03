@@ -68,8 +68,31 @@ for idx, it in enumerate(C.ITEMS):
         out.append(dict(kind='app', app=it['app'], sec=it['sec'], num=it['num'], toc=it.get('toc', it['num']), g=it.get('group', it['sec']), w=1600, h=900, n=0, steps=[]))
         print(idx, 'APP', it['app']); continue
     pg = it['page']; im = MARK[pg]; cl = CLEAN[pg]
-    if pg not in cache: cache[pg] = colors(im, cl)
-    M = cache[pg]
+    PIECES = it.get('pieces')
+    def piece_of(x, y):                               # 원래 좌표(2000 기준) -> 그 점을 담은 조각
+        for P in PIECES:
+            for r in P['src']:
+                if r[0] <= x <= r[2] and r[1] <= y <= r[3]: return P
+        return None
+    def mv(r):                                        # 원래 좌표 사각형 -> 옮긴 좌표 (중심이 든 조각 기준)
+        P = piece_of((r[0] + r[2]) / 2, (r[1] + r[3]) / 2) if PIECES else None
+        if not P: return r
+        dx, dy = P['to']; return [r[0] + dx, r[1] + dy, r[2] + dx, r[3] + dy]
+    if PIECES:                                        # pieces: 문항 조각을 옮겨 새로 배치한 가상 페이지
+        vim = np.full_like(im, 255); vcl = np.full_like(cl, 255)
+        for P in PIECES:
+            dx, dy = sc([P['to'][0], P['to'][1]])
+            for r in P['src']:
+                x0, y0, x1, y1 = sc(r)
+                vim[y0 + dy:y1 + dy, x0 + dx:x1 + dx] = im[y0:y1, x0:x1]
+                if P.get('base', True): vcl[y0 + dy:y1 + dy, x0 + dx:x1 + dx] = cl[y0:y1, x0:x1]
+        im, cl = vim, vcl
+        M = colors(im, cl)
+        it = dict(it); it['steps'] = [dict(st, **{k: [mv(r) for r in st[k]] for k in ('rects', 'blue', 'g') if k in st}) for st in it['steps']]
+        it['cm'] = [(a, mv(r), c) for (a, r, c) in it.get('cm', [])]
+    else:
+        if pg not in cache: cache[pg] = colors(im, cl)
+        M = cache[pg]
     region = rectmask(im.shape, [it['crop']])
     blank = rectmask(im.shape, it.get('blank', []))
     rule = rectmask(im.shape, getattr(C, 'RULES', {}).get(pg, []))
@@ -110,10 +133,13 @@ for idx, it in enumerate(C.ITEMS):
     # paste: 문제만 PDF의 인쇄물(확률표 등)을 다른 위치에 붙여 처음부터 보이게 함. 페이지 밖(오른쪽·아래)도 허용
     PADR, PADB = int(500 * S), int(300 * S)
     bwP = np.full((bw.shape[0] + PADB, bw.shape[1] + PADR, 3), 255, np.uint8); bwP[:bw.shape[0], :bw.shape[1]] = bw
-    extra = []
+    extra = []; plays = []
     for ps in it.get('paste', []):
         src = CLEAN[ps.get('page', pg)]; x0, y0, x1, y1 = sc(ps['src']); ax, ay = sc(ps['at'])
-        bwP[ay:ay + (y1 - y0), ax:ax + (x1 - x0)] = src[y0:y1, x0:x1]; extra.append((ax, ay, ax + x1 - x0, ay + y1 - y0))
+        if 'step' in ps:                              # step: 처음엔 없다가 그 단계에서 나타남
+            plays.append(dict(step=ps['step'] - 1, X=ax, Y=ay, w=int(x1 - x0), h=int(y1 - y0), src=b64(src[y0:y1, x0:x1].copy()), hl=1))
+        else: bwP[ay:ay + (y1 - y0), ax:ax + (x1 - x0)] = src[y0:y1, x0:x1]
+        extra.append((ax, ay, ax + x1 - x0, ay + y1 - y0))
     layers = []; allink = np.zeros(im.shape[:2], bool)
     for i in range(n):
         m = claim == i
@@ -151,6 +177,15 @@ for idx, it in enumerate(C.ITEMS):
                     if sg[0] == 'Z': segs.append(('Z',)); continue
                     q = [(x * kp, y * kp) for (x, y) in sg[1:]]; segs.append((sg[0], *q)); pts.append(q[-1])
             if not pts: continue
+            if PIECES:                                # 획이 대부분 들어 있는 조각을 따라 옮김
+                cnt_ = {}
+                for (x, y) in pts:
+                    P = piece_of(x / S, y / S)
+                    if P is not None: cnt_[id(P)] = cnt_.get(id(P), 0) + 1
+                if not cnt_: continue
+                P = next(Q for Q in PIECES if id(Q) == max(cnt_, key=cnt_.get)); ox, oy = P['to'][0] * S, P['to'][1] * S
+                segs = [sg if sg[0] == 'Z' else (sg[0], *[(x + ox, y + oy) for (x, y) in sg[1:]]) for sg in segs]
+                pts = [(x + ox, y + oy) for (x, y) in pts]
             xs = [q[0] for q in pts]; ys = [q[1] for q in pts]
             if max(xs) < rx0 or min(xs) > rx1 or max(ys) < ry0 or min(ys) > ry1: continue
             samp = pts[::max(1, len(pts) // 25)] + [pts[-1]]; votes = {}
@@ -172,6 +207,7 @@ for idx, it in enumerate(C.ITEMS):
     bx0, by0 = max(0, cx0 - pad), max(0, cy0 - pad)
     bx1, by1 = min(bwP.shape[1], cx1 + pad), min(bwP.shape[0], cy1 + pad)
     # hl: 그 단계에서 확률표 행 등에 형광 강조(반투명 노랑, 곱하기)
+    layers += plays
     for (si, r) in it.get('hl', []):
         x0, y0, x1, y1 = sc(r); lay = np.zeros((y1 - y0, x1 - x0, 3), np.uint8); lay[:] = (92, 226, 255)
         layers.append(dict(step=si, X=x0, Y=y0, w=int(x1 - x0), h=int(y1 - y0), src=b64(lay), hl=1))
@@ -179,6 +215,7 @@ for idx, it in enumerate(C.ITEMS):
     base_c = bwP[by0:by1, bx0:bx1]
     rec = dict(sec=it['sec'], num=it['num'], toc=it.get('toc', it['num']), g=it.get('group', it['sec']),
                w=int(bx1 - bx0), h=int(by1 - by0), n=n, base=b64(base_c), steps=layers)
+    if it.get('solo'): rec['solo'] = 1                # 공통 배율 계산에서 뺌(이 문항만 필요하면 조금 더 축소)
     if it.get('link'): rec['link'] = it['link']; rec['linkName'] = it.get('linkName', '연결 자료')
     if vstrokes:
         outS = []

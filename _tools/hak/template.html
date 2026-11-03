@@ -157,7 +157,7 @@ function fit(){
   if(d.kind==='app'){stage.style.width=W+'px';stage.style.height=H+'px';return}
   // 글자 크기 통일: 모든 문항에 같은 배율(공통 배율)을 쓰고, 그 배율로 넘치는 큰 문항만 들어갈 만큼 줄인다.
   // 공통 배율 = (각 문항이 꽉 차는 배율의 중앙값 × UNIFORM_TOL) 이상인 문항들 중 가장 작은 배율
-  const fits=DATA.filter(x=>x.kind!=='app').map(x=>Math.min(W/x.w,H/x.h)).sort((a,b)=>a-b);
+  const fits=DATA.filter(x=>x.kind!=='app'&&!x.solo).map(x=>Math.min(W/x.w,H/x.h)).sort((a,b)=>a-b);
   const med=fits[Math.floor(fits.length/2)],common=Math.min(...fits.filter(f=>f>=med*UNIFORM_TOL));
   const k=Math.min(common,W/d.w,H/d.h);
   stage.style.width=Math.floor(d.w*k)+'px';stage.style.height=Math.floor(d.h*k)+'px';
