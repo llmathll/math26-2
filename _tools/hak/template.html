@@ -35,8 +35,8 @@ button:focus-visible{outline:2px solid var(--plum);outline-offset:2px}
 .icon svg{width:18px;height:18px}
 
 /* 칠판 */
-.view{flex:1;min-height:0;display:flex;align-items:flex-start;justify-content:flex-start}
-.stage{position:relative;background:#fff;overflow:hidden}
+.view{flex:1;min-height:0;display:flex;align-items:flex-start;justify-content:flex-start;overflow:hidden}
+.stage{position:relative;background:#fff;overflow:hidden;transition:transform .6s ease}
 .stage img{display:block;user-select:none;-webkit-user-drag:none}
 .stage .base{width:100%;height:100%}
 .stage .layer{position:absolute;mix-blend-mode:multiply;opacity:0;transition:opacity .35s ease}
@@ -124,7 +124,7 @@ const isApp=()=>DATA[p].kind==='app';
 
 function build(){
   const d=DATA[p];
-  stopAnim(true);stage.innerHTML='';paths=[];
+  stopAnim(true);stage.innerHTML='';paths=[];stepY=null;stage.style.transform='';
   window.__appOn=d.kind==='app'?d.app:null;
   if(d.kind==='app'){if(appHost[d.app])stage.appendChild(appHost[d.app]);stage.classList.remove('enter');void stage.offsetWidth;stage.classList.add('enter');fit();return}
   const b=new Image();b.className='base';b.src=d.base;b.alt=d.sec+' '+d.num+' 문제';b.draggable=false;stage.appendChild(b);
@@ -157,10 +157,25 @@ function fit(){
   if(d.kind==='app'){stage.style.width=W+'px';stage.style.height=H+'px';return}
   // 글자 크기 통일: 모든 문항에 같은 배율(공통 배율)을 쓰고, 그 배율로 넘치는 큰 문항만 들어갈 만큼 줄인다.
   // 공통 배율 = (각 문항이 꽉 차는 배율의 중앙값 × UNIFORM_TOL) 이상인 문항들 중 가장 작은 배율
-  const fits=DATA.filter(x=>x.kind!=='app'&&!x.solo).map(x=>Math.min(W/x.w,H/x.h)).sort((a,b)=>a-b);
+  const fits=DATA.filter(x=>x.kind!=='app'&&!x.solo).map(x=>x.follow?W/x.w:Math.min(W/x.w,H/x.h)).sort((a,b)=>a-b);
   const med=fits[Math.floor(fits.length/2)],common=Math.min(...fits.filter(f=>f>=med*UNIFORM_TOL));
-  const k=Math.min(common,W/d.w,H/d.h);
+  const k=d.follow?Math.min(common,W/d.w):Math.min(common,W/d.w,H/d.h);
   stage.style.width=Math.floor(d.w*k)+'px';stage.style.height=Math.floor(d.h*k)+'px';
+  follow(true);
+}
+// follow: 화면보다 긴 문항은 지금 쓰는 단계가 보이도록 화면이 따라 내려간다
+let stepY=null;
+function follow(instant){
+  const d=DATA[p];if(d.kind==='app'||!d.follow){stage.style.transform='';return}
+  const k=stage.clientWidth/d.w,H=view.clientHeight,over=d.h*k-H;
+  if(over<=0){stage.style.transform='';return}
+  if(!stepY){stepY={};paths.forEach(({t,el})=>{try{const b=el.getBBox();const r=stepY[t.s]||(stepY[t.s]=[1e9,-1e9]);r[0]=Math.min(r[0],b.y);r[1]=Math.max(r[1],b.y+b.height)}catch(e){}});}
+  let off=0;
+  if(s>0){const r=stepY[s-1],pad=0.04*H;let bot=-1e9;for(let i=0;i<s;i++)if(stepY[i])bot=Math.max(bot,stepY[i][1]);   // 지금까지 쓴 것 중 가장 아래가 보이게
+    if(bot>-1e9)off=Math.max(0,bot*k+pad-H);if(r&&r[0]*k-pad<off)off=Math.max(0,r[0]*k-pad)}       // 단, 지금 단계의 윗부분은 보이게
+  off=Math.min(off,over);
+  if(instant){stage.style.transition='none';stage.style.transform=`translateY(${-off}px)`;void stage.offsetWidth;stage.style.transition=''}
+  else stage.style.transform=`translateY(${-off}px)`;
 }
 function render(animate){
   const d=DATA[p],n=d.n;
@@ -173,6 +188,7 @@ function render(animate){
     el.classList.toggle('on',i<s&&(!u||s<u));
   });
   drawInk(animate);
+  follow(!animate);
   $('prev').disabled=(p===0&&s===0);
   $('next').disabled=(p===DATA.length-1&&s===n);
   $('nextTxt').textContent=(s===n&&p<DATA.length-1)?'다음 문제':'다음';

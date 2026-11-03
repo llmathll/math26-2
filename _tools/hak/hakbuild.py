@@ -215,6 +215,7 @@ for idx, it in enumerate(C.ITEMS):
     base_c = bwP[by0:by1, bx0:bx1]
     rec = dict(sec=it['sec'], num=it['num'], toc=it.get('toc', it['num']), g=it.get('group', it['sec']),
                w=int(bx1 - bx0), h=int(by1 - by0), n=n, base=b64(base_c), steps=layers)
+    if it.get('follow'): rec['follow'] = 1            # 폭에만 맞춰 공통 배율, 넘치는 아래쪽은 화면이 따라 내려감
     if it.get('solo'): rec['solo'] = 1                # 공통 배율 계산에서 뺌(이 문항만 필요하면 조금 더 축소)
     if it.get('link'): rec['link'] = it['link']; rec['linkName'] = it.get('linkName', '연결 자료')
     if vstrokes:
