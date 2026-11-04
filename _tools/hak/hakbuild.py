@@ -25,6 +25,12 @@ def render(pdf, tag):
     return pages
 
 MARK = render(C.MARKED, 'mark'); CLEAN = render(C.CLEAN, 'clean')
+# CLEAN_FROM_MARK: 손풀이 PDF에만 있는 인쇄물(교사가 붙인 표 그림 등)을 문제 바탕에 그대로 씀 {쪽: [사각형...]}
+for _pg, _rs in getattr(C, 'CLEAN_FROM_MARK', {}).items():
+    _W = MARK[_pg].shape[1] / 2000.0
+    for _r in _rs:
+        _x0, _y0, _x1, _y1 = [int(round(v * _W)) for v in _r]
+        CLEAN[_pg][_y0:_y1, _x0:_x1] = MARK[_pg][_y0:_y1, _x0:_x1]
 VECTOR = getattr(C, 'VECTOR', True)        # 손풀이를 PDF 펜 획(벡터)으로 그려 쓰는 순서대로 보여줌
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from pdfstrokes import extract as extract_paths
@@ -53,6 +59,8 @@ def colors(im, cl):
         navy=((h >= 100) & (h <= 135) & (s > 140) & (v < 200)),   # 풀이 펜
         yellow=((h >= 20) & (h <= 35) & (s > 60) & (v > 200)),    # 노란 형광펜(구분선 등)
     )
+    pink = (((h < 10) | (h > 168)) & (s > 50) & (s < 150) & (v > 190))    # 분홍 네모 = 답 가리개 표시(화면엔 안 나옴)
+    M['red'] &= ~cv2.dilate(pink.astype(np.uint8), K(3)).astype(bool)
     for k in M: M[k] &= hand
     M['ink'] = M['green'] | M['red'] | M['navy'] | M['yellow']
     return M
@@ -167,10 +175,39 @@ for idx, it in enumerate(C.ITEMS):
         if pg not in PATHS: PATHS[pg] = extract_paths(C.MARKED, pg)
         kp = DPI / 72.0; rr = max(2, int(3 * F)); Hh, Ww = claim.shape
         rx0, ry0, rx1, ry1 = sc(it['crop'])
+        # 분홍 네모(COVER_RGB) = 답 가리개: 그 안의 획은 처음엔 네모로 가려지고, 교사가 네모를 누르면 쓰인다
+        CR = getattr(C, 'COVER_RGB', (230, 124, 131))
+        isCover = lambda r_, g_, b_: abs(r_ - CR[0]) < 15 and abs(g_ - CR[1]) < 15 and abs(b_ - CR[2]) < 15
+        boxes = []
+        for pth in PATHS[pg]:
+            rgb = pth['sc'] if pth['stroke'] else pth['fc']
+            if not isCover(*[int(round(max(0, min(1, v)) * 255)) for v in rgb[:3]]): continue
+            q = [(x * kp, y * kp) for sub in pth['subs'] for sg in sub if sg[0] != 'Z' for (x, y) in sg[1:]]
+            if not q: continue
+            if PIECES:
+                P = piece_of(q[0][0] / S, q[0][1] / S)
+                if P is None: continue
+                q = [(x + P['to'][0] * S, y + P['to'][1] * S) for (x, y) in q]
+            b = [min(x for x, _ in q), min(y for _, y in q), max(x for x, _ in q), max(y for _, y in q)]
+            if b[2] < rx0 or b[0] > rx1 or b[3] < ry0 or b[1] > ry1: continue
+            g2 = 3 * S                                # 한 네모를 여러 획으로 그렸으면 합침
+            for o in boxes:
+                if b[0] <= o[2] + g2 and o[0] <= b[2] + g2 and b[1] <= o[3] + g2 and o[1] <= b[3] + g2:
+                    o[:] = [min(o[0], b[0]), min(o[1], b[1]), max(o[2], b[2]), max(o[3], b[3])]; break
+            else: boxes.append(b)
+        boxS = [[] for _ in boxes]
+        # join: [(사각형, (x, y))] 그 사각형 안의 획(초록 9² 등)을 점 (x, y)가 든 가리개에 묶음 → 가리개를 열 때 함께 쓰임
+        joins = []
+        for (jr, jp) in it.get('join', []):
+            jr = sc(mv(jr)); q = mv([jp[0], jp[1], jp[0], jp[1]]); px_, py_ = q[0] * S, q[1] * S
+            bi = next((i for i, b in enumerate(boxes) if b[0] - 2 * S <= px_ <= b[2] + 2 * S and b[1] - 2 * S <= py_ <= b[3] + 2 * S), None)
+            if bi is None: print('   ! join 점이 가리개 안에 없음', jp)
+            else: joins.append((jr, bi))
         for pth in PATHS[pg]:
             rgb = pth['sc'] if pth['stroke'] else pth['fc']
             r_, g_, b_ = [int(round(max(0, min(1, v)) * 255)) for v in rgb[:3]]
             if abs(r_ - 130) < 15 and abs(g_ - 33) < 15 and abs(b_ - 139) < 15: continue   # 보라 = 표시 전용
+            if isCover(r_, g_, b_): continue
             segs = []; pts = []
             for sub in pth['subs']:
                 for sg in sub:
@@ -200,6 +237,14 @@ for idx, it in enumerate(C.ITEMS):
             vstrokes.append(dict(s=st_, segs=segs, c='#%02x%02x%02x' % (r_, g_, b_), w=round(pth['w'] * kp, 2),
                 f=bool(pth['fill'] and not pth['stroke']), dash=[round(x * kp, 2) for x in pth['dash']] if pth['dash'] else None,
                 a=round(pth['CA'] if pth['stroke'] else pth['ca'], 2), mb=pth['bm'] == 'Multiply'))
+            pd_ = 1.5 * S; allp = samp
+            for bi, b in enumerate(boxes):            # 가리개 안에 든 획(점의 60% 이상)
+                if sum(1 for (x, y) in allp if b[0] - pd_ <= x <= b[2] + pd_ and b[1] - pd_ <= y <= b[3] + pd_) >= 0.6 * len(allp):
+                    vstrokes[-1]['k'] = bi; boxS[bi].append(st_); break
+            else:
+                for (jr, bi) in joins:
+                    if sum(1 for (x, y) in allp if jr[0] <= x <= jr[2] and jr[1] <= y <= jr[3]) >= 0.6 * len(allp):
+                        vstrokes[-1]['k'] = bi; break
     cont = ((cv2.cvtColor(bw, cv2.COLOR_BGR2GRAY) < 235) & region) | allink
     ys, xs = np.where(cont); pad = int(14 * S)
     cx0, cy0, cx1, cy1 = xs.min(), ys.min(), xs.max(), ys.max()
@@ -231,10 +276,23 @@ for idx, it in enumerate(C.ITEMS):
     if it.get('scale'): rec['scale'] = it['scale']    # 공통 배율에 곱하는 값(예 0.9: 이 문항만 조금 작게)
     if it.get('solo'): rec['solo'] = 1                # 공통 배율 계산에서 뺌(이 문항만 필요하면 조금 더 축소)
     if it.get('link'): rec['link'] = it['link']; rec['linkName'] = it.get('linkName', '연결 자료')
+    if VECTOR and boxes:
+        covs = []
+        for bi, b in enumerate(boxes):
+            if boxS[bi]: cs = max(set(boxS[bi]), key=boxS[bi].count)
+            else:
+                x0, y0, x1, y1 = [int(v) for v in b]; w_ = claim[y0:y1 + 1, x0:x1 + 1]; w_ = w_[w_ >= 0]
+                cs = int(np.bincount(w_).argmax()) if w_.size else 0
+            covs.append(dict(s=cs, x=round(b[0] - bx0, 1), y=round(b[1] - by0, 1), w=round(b[2] - b[0], 1), h=round(b[3] - b[1], 1)))
+        for t in vstrokes:                            # 다른 단계 획이 가리개에 잡히면 풀어 줌
+            if 'k' in t and covs[t['k']]['s'] != t['s']: del t['k']
+        rec['covers'] = covs
+        print('   가리개', len(covs), '개:', [(c['s'] + 1, sum(1 for t in vstrokes if t.get('k') == i)) for i, c in enumerate(covs)])
     PRE = it.get('pre', 0)                            # pre: 앞의 PRE개 단계는 처음부터 한꺼번에 보임(단계 번호 −1)
     if PRE:
         for t in vstrokes: t['s'] = -1 if t['s'] < PRE else t['s'] - PRE
         for L in layers: L['step'] = -1 if L['step'] < PRE else L['step'] - PRE
+        for c in rec.get('covers', []): c['s'] = -1 if c['s'] < PRE else c['s'] - PRE
     if vstrokes:
         outS = []
         for t in vstrokes:
@@ -267,6 +325,8 @@ for idx, it in enumerate(C.ITEMS):
         if L.get('until'): continue
         cv2.rectangle(chk, (L['x'], L['y']), (L['x'] + L['w'], L['y'] + L['h']), (0, 140, 255), max(2, int(F)))
         cv2.putText(chk, str(L['step'] + 1), (L['x'] + 4, L['y'] + int(26 * F)), cv2.FONT_HERSHEY_SIMPLEX, 0.9 * F, (0, 0, 230), max(2, int(1.5 * F)))
+    for c in rec.get('covers', []):                  # 가리개(분홍)
+        cv2.rectangle(chk, (int(c['x']), int(c['y'])), (int(c['x'] + c['w']), int(c['y'] + c['h'])), (131, 124, 230), max(2, int(F)))
     cv2.imwrite(f'{outdir}/check/{idx:02d}.png', cv2.resize(chk, None, fx=1200 / chk.shape[1], fy=1200 / chk.shape[1]))
     print(idx, it['sec'], it['num'], '단계', n, '남은잉크', int(left.sum()), '크기', base_c.shape[1], base_c.shape[0])
 json.dump(out, open(f'{outdir}/data.json', 'w'))

@@ -43,11 +43,15 @@ button:focus-visible{outline:2px solid var(--plum);outline-offset:2px}
 .stage .layer.on{opacity:1}
 .stage svg.ink{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
 .stage svg.ink path{fill:none;stroke-linecap:round;stroke-linejoin:round}
+/* 답 가리개(분홍 네모): 교사가 눌러서 엶 */
+.stage svg.ink g.cov{pointer-events:all;cursor:pointer}
+.stage svg.ink g.cov rect.face{fill:#fde4e7;stroke:#e0707a}
 .stage.enter{animation:enter .28s ease}
 .plink{display:inline-flex;align-items:center;gap:6px;
   height:36px;padding:0 14px;border:1.5px solid var(--plum);border-radius:18px;background:var(--plum-soft);
   color:var(--plum);font-size:15px;font-weight:600;text-decoration:none;white-space:nowrap}
 .plink:hover{background:var(--plum);color:#fff}
+.plink[hidden]{display:none}
 .plink svg{width:14px;height:14px}
 @keyframes enter{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 
@@ -106,7 +110,7 @@ __APPS__
 const DATA=__DATA__;
 const $=id=>document.getElementById(id);
 const stage=$('stage'),view=$('view');
-let p=0,s=0,tx=null,running=[],paths=[];
+let p=0,s=0,tx=null,running=[],paths=[],covEls=[],rev=new Set(),autoTok=0;
 const WRITE_SPEED=1.7;      // 펜 순서 쓰기 속도(비교 화면에서 고른 값)
 const STEP_MAX_MS=3200;     // 한 단계는 길어도 약 3.2초
 const UNIFORM_TOL=0.9;     // 공통 배율 기준(중앙값의 90%보다 작아져야 하는 문항만 따로 축소)
@@ -124,7 +128,7 @@ const isApp=()=>DATA[p].kind==='app';
 
 function build(){
   const d=DATA[p];
-  stopAnim(true);stage.innerHTML='';paths=[];stepY=null;stage.style.transform='';
+  stopAnim(true);stage.innerHTML='';paths=[];covEls=[];stepY=null;stage.style.transform='';
   window.__appOn=d.kind==='app'?d.app:null;
   if(d.kind==='app'){if(appHost[d.app])stage.appendChild(appHost[d.app]);stage.classList.remove('enter');void stage.offsetWidth;stage.classList.add('enter');fit();return}
   const b=new Image();b.className='base';b.src=d.base;b.alt=d.sec+' '+d.num+' 문제';b.draggable=false;stage.appendChild(b);
@@ -146,6 +150,15 @@ function build(){
       if(t.dash)el.style.strokeDasharray=t.dash.map(v=>Math.max(v,0.01)).join(' ');
       else if(!t.f){el.setAttribute('pathLength',1000);el.style.strokeDasharray='1000 1000'}
       el.style.visibility='hidden';svg.appendChild(el);paths.push({t,el,op,fade});
+    });
+    // 답 가리개: 그 단계를 쓸 때 네모로 가려 두고, 누르면 그 안의 답을 씀. 네모를 모두 열면 다음 단계로
+    (d.covers||[]).forEach((c,k)=>{
+      const sc=d.w/2700,pd=3*sc,hp=16*sc,g=document.createElementNS(NS,'g');g.setAttribute('class','cov');
+      g.innerHTML=`<rect x="${c.x-hp}" y="${c.y-hp}" width="${c.w+2*hp}" height="${c.h+2*hp}" fill="transparent"/>`+
+        `<rect class="face" x="${c.x-pd}" y="${c.y-pd}" width="${c.w+2*pd}" height="${c.h+2*pd}" rx="${10*sc}" stroke-width="${5*sc}"/>`;
+      g.style.visibility='hidden';
+      g.addEventListener('click',e=>{e.stopPropagation();if(dragged)return;if(parseFloat(getComputedStyle(g).opacity)<.5||g.style.visibility==='hidden')return;reveal(k)});
+      svg.appendChild(g);covEls.push({c,g,k});
     });
     stage.appendChild(svg);
   }
@@ -204,19 +217,24 @@ function render(animate){
   drawInk(animate);
   follow(!animate);
   $('prev').disabled=(p===0&&s===0);
-  $('next').disabled=(p===DATA.length-1&&s===n);
-  $('nextTxt').textContent=(s===n&&p<DATA.length-1)?'다음 문제':'다음';
+  nextLabel();
   document.querySelectorAll('#toc button').forEach(b=>b.classList.toggle('cur',+b.dataset.i===p));
 }
 // 펜 획: 지난 단계는 그대로, 방금 단계는 쓴 순서대로 그리기
 function stopAnim(cancel){running.forEach(a=>{try{cancel?a.cancel():a.finish()}catch(e){}});running=[]}
 const writing=()=>running.some(a=>a.playState==='running'||a.playState==='pending');
+const hidCov=t=>t.k!=null&&DATA[p].covers[t.k].s===s-1&&!rev.has(t.k);   // 지금 단계의 아직 안 연 가리개 속 획
+const pending=()=>covEls.some(o=>o.c.s===s-1&&!rev.has(o.k));
 function drawInk(animate){
   stopAnim(true);if(!paths.length)return;
-  const i=s-1,d=DATA[p],cur=paths.filter(x=>x.t.s===i);
+  const i=s-1,d=DATA[p],cur=paths.filter(x=>x.t.s===i&&!hidCov(x.t));
   const pxPerMs=2.2*WRITE_SPEED*(d.w/2700),total=cur.reduce((a,x)=>a+x.t.l,0);
-  const k=Math.max(1,total/pxPerMs/STEP_MAX_MS);let t0=0;
+  const k=Math.max(1,total/pxPerMs/STEP_MAX_MS);let t0=0;const shown=new Set();
+  covEls.forEach(({c,g,k:ck})=>{const on=c.s===i&&!rev.has(ck);g.style.visibility=on?'visible':'hidden';g.style.opacity=on?1:0});
   paths.forEach(({t,el,op,fade})=>{
+    if(hidCov(t)){el.style.visibility='hidden';if(!fade)el.style.strokeDashoffset=1000;
+      if(animate&&!shown.has(t.k)){shown.add(t.k);running.push(covEls[t.k].g.animate([{opacity:0},{opacity:1}],{duration:260,delay:t0,fill:'both'}));t0+=220}
+      return}
     if(t.s<i||(t.s===i&&!animate)){el.style.visibility='visible';if(!fade)el.style.strokeDashoffset=0;return}
     if(t.s>i){el.style.visibility='hidden';if(!fade)el.style.strokeDashoffset=1000;return}
     el.style.visibility='visible';
@@ -227,10 +245,33 @@ function drawInk(animate){
     t0+=dur+(dur>120?50:15);
   });
 }
-function go(np,ns,animate){manual=null;if(np!==p){p=np;build()}s=ns;render(!!animate)}
+function reveal(k){
+  if(rev.has(k))return;rev.add(k);const o=covEls[k],d=DATA[p],pxPerMs=2.2*WRITE_SPEED*(d.w/2700);
+  o.g.style.opacity=0;o.g.style.visibility='hidden';
+  running.push(o.g.animate([{opacity:1,visibility:'visible'},{opacity:0,visibility:'visible'}],{duration:220}));
+  let t0=120;
+  paths.filter(x=>x.t.k===k).forEach(({t,el,op,fade})=>{
+    el.style.visibility='visible';
+    if(fade){running.push(el.animate([{opacity:0},{opacity:op}],{duration:260,delay:t0,fill:'both'}));t0+=200;return}
+    el.style.strokeDashoffset=0;const dur=Math.max(40,t.l/pxPerMs);
+    running.push(el.animate([{strokeDashoffset:1000,opacity:0,offset:0},{strokeDashoffset:999,opacity:op,offset:0.01},{strokeDashoffset:0,opacity:op,offset:1}],
+      {duration:dur,delay:t0,easing:'ease-in-out',fill:'both'}));
+    t0+=dur+(dur>120?50:15);
+  });
+  nextLabel();
+  if(!pending()&&s<DATA[p].n){                   // 이 단계 가리개를 모두 열면 다 쓴 뒤 잠깐 쉬고 다음 단계로
+    const tok=++autoTok,pp=p,ss=s;
+    Promise.all(running.map(a=>a.finished.catch(()=>{}))).then(()=>setTimeout(()=>{if(tok===autoTok&&p===pp&&s===ss)go(p,s+1,true)},800));
+  }
+}
+function go(np,ns,animate,all){manual=null;autoTok++;if(np!==p){p=np;build()}s=ns;rev=new Set(all?covEls.map(o=>o.k):[]);render(!!animate)}
 function next(){if(writing()){stopAnim(false);return}   // 쓰는 중이면 먼저 그 단계를 완성
-  const n=DATA[p].n;if(s<n)go(p,s+1,true);else if(p<DATA.length-1)go(p+1,0)}
-function prev(){if(s>0)go(p,s-1);else if(p>0)go(p-1,DATA[p-1].n)}
+  const n=DATA[p].n;
+  if(s===n&&pending()){covEls.filter(o=>o.c.s===s-1&&!rev.has(o.k)).forEach(o=>reveal(o.k));return}   // 마지막 단계 가리개: 다음 = 답 보이기, 한 번 더 = 다음 문제
+  if(s<n)go(p,s+1,true);else if(p<DATA.length-1)go(p+1,0)}
+function nextLabel(){const n=DATA[p].n;$('nextTxt').textContent=(s===n&&p<DATA.length-1&&!pending())?'다음 문제':'다음';
+  $('next').disabled=(p===DATA.length-1&&s===n&&!pending())}
+function prev(){if(s>0)go(p,s-1);else if(p>0)go(p-1,DATA[p-1].n,false,true)}
 
 // 문항 목록(단원별 묶음)
 (function(){
@@ -247,7 +288,7 @@ function prev(){if(s>0)go(p,s-1);else if(p>0)go(p-1,DATA[p-1].n)}
 
 $('next').onclick=next;$('prev').onclick=prev;
 $('reset').onclick=()=>go(p,0);
-$('all').onclick=()=>go(p,DATA[p].n);
+$('all').onclick=()=>go(p,DATA[p].n,false,true);
 $('toc').onclick=e=>{const b=e.target.closest('button');if(b)go(+b.dataset.i,0)};
 $('fs').onclick=()=>{
   try{
@@ -261,12 +302,12 @@ document.addEventListener('keydown',e=>{
   if(e.target.closest&&e.target.closest('button')&&(e.key===' '||e.key==='Enter'))return;
   if(['ArrowRight','ArrowDown','PageDown',' ','Enter'].includes(e.key)){e.preventDefault();next()}
   else if(['ArrowLeft','ArrowUp','PageUp','Backspace'].includes(e.key)){e.preventDefault();prev()}
-  else if(e.key==='Home'){go(p,0)}else if(e.key==='End'){go(p,DATA[p].n)}
+  else if(e.key==='Home'){go(p,0)}else if(e.key==='End'){go(p,DATA[p].n,false,true)}
 });
 view.addEventListener('touchstart',e=>{tx=e.changedTouches[0].clientX},{passive:true});
 view.addEventListener('touchend',e=>{if(tx===null||isApp()||dragged){tx=null;return}const dx=e.changedTouches[0].clientX-tx;tx=null;if(Math.abs(dx)>60)(dx<0?next:prev)()});
 let dragY=null,dragX=0,drag0=0,dragged=false;
-view.addEventListener('click',e=>{if(dragged){dragged=false;return}if(!isApp()&&e.target.closest('.stage'))next()});
+view.addEventListener('click',e=>{if(dragged){dragged=false;return}if(!isApp()&&e.target.closest('.stage')){if(!writing()&&pending())return;next()}});   // 가리개가 남아 있으면 화면 탭으로 넘어가지 않음(아래 다음 버튼·키는 넘어감)
 // 위아래 끌기·휠: 긴 문항을 직접 올려 보기
 view.addEventListener('wheel',e=>{if(isApp()||overOf()<=0)return;e.preventDefault();manual=curOff+e.deltaY;follow(true)},{passive:false});
 view.addEventListener('pointerdown',e=>{if(isApp()||overOf()<=0)return;dragY=e.clientY;dragX=e.clientX;drag0=curOff;dragged=false});

@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>이항분포의 정규분포 근사</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400..700;1,400..700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-deep:#0a1420; --bg:#0e1b2b; --panel:#16283e; --panel-2:#1d3350;
+  --line:rgba(214,229,245,.16); --line-strong:rgba(214,229,245,.34);
+  --chalk:#eaf1f8; --chalk-soft:#b9cadd; --chalk-faint:#7d94ad;
+  --amber:#f5b642; --teal:#49d1c0; --violet:#9d8cf5; --coral:#ff7d6a;
+  --f-en:'STIX Two Text'; --f-kr:'Noto Sans KR';
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--bg-deep);
+  overscroll-behavior:none;touch-action:manipulation;-webkit-text-size-adjust:100%;
+  -webkit-tap-highlight-color:transparent}
+body{color:var(--chalk);font-family:var(--f-en),var(--f-kr),serif}
+button{font:inherit;color:inherit}
+.viewport{position:fixed;inset:0}
+.stage{position:absolute;top:0;left:0;width:1600px;height:900px;transform-origin:0 0;
+  background:var(--bg);overflow:hidden}
+.sheet{height:100%;display:flex;flex-direction:column;gap:12px;padding:12px 22px 18px}
+
+/* ── 머리말 ── */
+.head{flex:0 0 72px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--line);padding-bottom:10px}
+.title{font-family:var(--f-kr);font-size:34px;font-weight:700;color:var(--amber);white-space:nowrap}
+.tabs{flex:1;display:flex;gap:8px;margin:0 4px}
+.tab{flex:1 1 0;font-family:var(--f-en),var(--f-kr);font-size:27px;font-weight:700;color:var(--chalk-soft);
+  background:transparent;border:2px solid var(--line-strong);border-radius:12px;padding:7px 6px;
+  white-space:nowrap;cursor:pointer}
+.tab.on{background:rgba(245,182,66,.12);border-color:var(--amber);color:var(--amber)}
+.fbtn{font-family:var(--f-kr);font-size:24px;font-weight:700;cursor:pointer;background:var(--panel-2);
+  border:1.5px solid var(--line-strong);border-radius:10px;padding:10px 16px;white-space:nowrap}
+.v{font-style:italic}
+
+/* ── 본문 ── */
+.body{flex:1 1 auto;min-height:0;position:relative}
+.pane{position:absolute;inset:0;display:none;gap:16px}
+.pane.on{display:flex}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px}
+.gcard{position:relative;flex:1 1 auto;min-width:0;min-height:0}
+.gcard svg{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.side{flex:0 0 auto;display:flex;flex-direction:column;gap:14px;min-height:0}
+.col{flex-direction:column}
+.row2{flex:1 1 auto;min-height:0;display:flex;gap:16px}
+
+/* ── 수식 ── */
+.m{font-family:var(--f-en),var(--f-kr),serif;font-variant-numeric:tabular-nums;white-space:nowrap;line-height:1.45}
+.frac{display:inline-flex;flex-direction:column;align-items:stretch;text-align:center;
+  vertical-align:middle;margin:0 .14em;transform:translateY(-.08em);
+  line-height:1.06;font-size:.84em;white-space:nowrap}
+.frac>.num{padding:0 .2em .07em;border-bottom:.058em solid currentColor}
+.frac>.den{padding:.09em .2em 0}
+.bp{display:inline-block;transform:scaleY(1.5);margin:0 .03em;transform-origin:50% 55%}
+.ans{display:inline-flex;align-items:center;vertical-align:middle;color:var(--amber);font-weight:700;
+  padding:.02em .26em;border:2px solid var(--amber);border-radius:.18em;box-shadow:0 0 20px rgba(245,182,66,.2)}
+.dim{color:var(--chalk-soft)}
+.fa{color:var(--chalk-faint)}
+.tl{color:var(--teal)}
+.am{color:var(--amber)}
+.vi{color:var(--violet)}
+.co{color:var(--coral)}
+.kr{font-family:var(--f-kr);font-size:.82em}
+
+/* ── 버튼 ── */
+.tb{font-family:var(--f-en),var(--f-kr);font-size:29px;font-weight:700;padding:13px 6px;border-radius:12px;
+  border:2px solid var(--violet);background:rgba(157,140,245,.14);color:var(--chalk);cursor:pointer;white-space:nowrap}
+.tb:disabled{opacity:.3;cursor:default}
+.tg{font-family:var(--f-en),var(--f-kr);font-size:26px;font-weight:700;padding:12px 18px;border-radius:12px;
+  border:2px solid var(--line-strong);background:transparent;color:var(--chalk-soft);cursor:pointer;white-space:nowrap}
+.tg.on{border-color:var(--teal);color:var(--teal);background:rgba(73,209,192,.12)}
+.tb:active,.tg:active,.tab:active,.fbtn:active,.hb:active{transform:scale(.97)}
+
+/* ── 끌기 막대 ── */
+.ctrl{flex:0 0 100px;display:flex;align-items:center;gap:14px;padding:0 18px}
+.nval{font-size:46px;white-space:nowrap}
+.slider{position:relative;flex:1 1 auto;height:96px;touch-action:none;cursor:pointer}
+.sin{position:absolute;left:34px;right:34px;top:0;bottom:0}
+.strack,.sfill{position:absolute;left:0;top:26px;height:10px;border-radius:5px}
+.strack{right:0;background:rgba(214,229,245,.16)}
+.sfill{background:var(--amber);width:0}
+.stop{position:absolute;top:19px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;pointer-events:none}
+.stop i{width:4px;height:24px;background:rgba(214,229,245,.4);border-radius:2px}
+.stop span{font-size:28px;color:var(--chalk-faint);margin-top:10px;line-height:1;white-space:nowrap}
+.stop.on span{color:var(--amber);font-weight:700}
+.sthumb{position:absolute;top:31px;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;
+  background:var(--amber);box-shadow:0 0 0 7px rgba(245,182,66,.25);pointer-events:none}
+.sep{width:2px;align-self:stretch;margin:16px 4px;background:var(--line)}
+.hbs{display:flex;gap:8px;align-items:center}
+.hbs .lab{font-size:40px;margin-right:6px}
+.hb{font-family:var(--f-en);font-size:30px;font-weight:700;padding:10px 18px;border-radius:12px;border:2px solid var(--line-strong);
+  background:transparent;color:var(--chalk-soft);cursor:pointer;white-space:nowrap}
+.hb.on{border-color:var(--amber);color:var(--amber);background:rgba(245,182,66,.12)}
+
+/* ── 식 카드 ── */
+.flines{padding:14px 22px;display:flex;flex-direction:column;gap:2px;font-size:38px}
+.fl{min-height:58px;display:flex;align-items:center}
+.fl>span{white-space:nowrap}
+.cap{font-family:var(--f-kr);font-size:24px;color:var(--chalk-faint);font-weight:500}
+
+/* ── ① n을 키우면 ── */
+#p0 .side{width:540px}
+#p0 .flines{flex:1 1 auto;gap:4px}
+#p0 .fl{min-height:62px}
+.cond{display:flex;flex-direction:column;gap:6px;padding:12px 22px;font-size:36px}
+.cond .ttl{font-family:var(--f-kr);font-size:26px;font-weight:700;color:var(--chalk-soft)}
+.ok{color:var(--teal);font-weight:700}
+.no{color:var(--coral);font-weight:700}
+.verdict{font-family:var(--f-kr);font-size:31px;font-weight:700;line-height:1.35;padding:12px 22px;word-break:keep-all}
+.verdict.good{color:var(--teal)}
+.verdict.bad{color:var(--coral)}
+
+/* ── ② 15번으로 확인 ── */
+#p1 .der{flex:0 0 690px;min-width:0;padding:16px 26px;display:flex;flex-direction:column;gap:2px}
+#p1 .der .fl{font-size:38px;min-height:68px;transition:opacity .35s}
+#p1 .der .fl.off{opacity:0}
+#p1 .der .fl.cur>span{color:var(--amber)}
+#p1 .der .fl.cur>span .ans{color:var(--amber)}
+.drow{display:flex;gap:10px;margin-top:auto}
+.drow .tb{flex:1}
+
+/* ── ③ 정리 ── */
+#p1{flex-direction:column}
+.law{flex:0 0 auto;padding:16px 32px 18px;border-left:8px solid var(--amber)}
+.lawT{font-family:var(--f-kr);font-size:32px;font-weight:700;color:var(--amber);display:flex;justify-content:space-between;align-items:center}
+.lawB{font-family:var(--f-kr);font-size:37px;line-height:1.6;margin-top:4px;word-break:keep-all}
+.lawB .m{font-size:41px;line-height:1}
+.lawB>div{display:flex;align-items:center;flex-wrap:wrap;min-height:84px}
+.blank{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;min-width:92px;min-height:76px;
+  margin:0 .14em;border:2.5px dashed var(--violet);border-radius:12px;background:rgba(157,140,245,.12);cursor:pointer;padding:0 10px}
+.blank>span{visibility:hidden}
+.blank.open{border-style:solid;border-color:var(--amber);background:rgba(245,182,66,.12);color:var(--amber)}
+.blank.open>span{visibility:visible}
+.goal{font-family:var(--f-kr);font-size:30px;font-weight:700;color:var(--teal);margin-right:16px;white-space:nowrap}
+button:focus{outline:none}
+button:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="viewport"><div class="stage" id="stage"><div class="sheet">
+
+  <header class="head">
+    <div class="title">정규분포로 근사</div>
+    <nav class="tabs" id="tabs">
+      <button class="tab on" data-t="0">① <span class="v">n</span>을 키우면</button>
+      <button class="tab" data-t="1">② 정리</button>
+    </nav>
+    <button class="fbtn" id="resetBtn">초기화</button>
+    <button class="fbtn" id="fsBtn">전체화면</button>
+  </header>
+
+  <main class="body">
+
+    <!-- ① n을 키우면 -->
+    <section class="pane col on" id="p0">
+      <div class="card ctrl">
+        <div class="nval m" id="nv0" style="min-width:190px"></div>
+        <div class="slider" id="slN"></div>
+        <div class="sep"></div>
+        <div class="hbs" id="pb0"><span class="lab m"><span class="v">p</span> =</span>
+          <button class="hb" data-p="0">0.1</button><button class="hb on" data-p="1">0.2</button><button class="hb" data-p="2">0.5</button></div>
+      </div>
+      <div class="row2">
+        <div class="card gcard"><svg id="g0"></svg></div>
+        <aside class="side">
+          <div class="card flines" id="fl0"></div>
+          <div class="card cond" id="cd0"></div>
+          <div class="card verdict" id="vd0"></div>
+          <button class="tg on" id="cv0">정규분포 곡선 보기</button>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ② 정리 -->
+    <section class="pane" id="p1">
+      <div class="card law">
+        <div class="lawT">이항분포와 정규분포의 관계 <button class="tg" id="allBtn" style="padding:8px 22px">모두 보기</button></div>
+        <div class="lawB" id="lawB"></div>
+      </div>
+      <div class="card law" style="border-left-color:var(--teal)">
+        <div class="lawT" style="color:var(--teal)">그래서</div>
+        <div class="lawB" id="lawC"></div>
+      </div>
+      <div class="card law" style="border-left-color:var(--violet)">
+        <div class="lawT" style="color:var(--violet)">예 &nbsp;<span class="kr" style="font-size:28px;color:var(--chalk-soft)">동전 100번 던질 때 앞면이 나오는 횟수</span></div>
+        <div class="lawB" id="lawD"></div>
+      </div>
+    </section>
+
+  </main>
+</div></div></div>
+<script>
+'use strict';
+/* ═══ 1. 스테이지 스케일링 ═══ */
+const STAGE_W=1600, STAGE_H=900, stage=document.getElementById('stage');
+function fitStage(){
+  const vv=window.visualViewport;
+  const w=vv?vv.width:innerWidth, h=vv?vv.height:innerHeight;
+  const s=Math.min(w/STAGE_W,h/STAGE_H);
+  stage.style.transform=`translate(${Math.round((w-STAGE_W*s)/2)}px,${Math.round((h-STAGE_H*s)/2)}px) scale(${s})`;
+}
+const fitSoon=()=>[0,60,300,700].forEach(t=>setTimeout(fitStage,t));
+addEventListener('resize',fitStage); addEventListener('orientationchange',fitSoon);
+if(window.visualViewport) visualViewport.addEventListener('resize',fitStage);
+document.addEventListener('fullscreenchange',fitSoon);
+fitSoon();
+
+/* ═══ 2. 수식 조각 ═══ */
+const $=id=>document.getElementById(id);
+const F=(a,b)=>`<span class="frac"><span class="num">${a}</span><span class="den">${b}</span></span>`;
+const V=s=>`<span class="v">${s}</span>`;
+const Xv=V('X'), Zv=V('Z'), nv=V('n'), pv=V('p'), qv=V('q');
+const BP=(s,f)=>`${f==null?'P':f}<span class="bp">(</span>${s}<span class="bp">)</span>`;
+const ANS=s=>`<span class="ans">${s}</span>`;
+const sq=v=>`${v}<sup style="font-size:.6em">2</sup>`;
+const num=v=>{ const r=Math.round(v*100)/100; const s=Math.abs(r-Math.round(r))<1e-9?String(Math.round(r)):String(r); return s.replace('-','−'); };
+const p4=v=>v.toFixed(4);
+
+/* ═══ 3. 이항분포 · 정규분포 ═══ */
+const phi=z=>Math.exp(-z*z/2)/Math.sqrt(2*Math.PI);
+function binom(n,p){             /* P(X=k), k=0..n (로그로 계산) */
+  const lf=[0]; for(let i=1;i<=n;i++) lf[i]=lf[i-1]+Math.log(i);
+  const out=[]; for(let k=0;k<=n;k++) out.push(Math.exp(lf[n]-lf[k]-lf[n-k]+(k?k*Math.log(p):0)+(n-k?(n-k)*Math.log(1-p):0)));
+  return out;
+}
+const NS0=[5,10,25,50,100,200,400], PS=[0.1,0.2,0.5];
+const A={ni:1,pi:1,curve:true};
+
+/* ═══ 4. SVG 도구 ═══ */
+const SER="'STIX Two Text','Noto Sans KR',serif", KR="'Noto Sans KR',sans-serif";
+const CSS=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const COL={};
+function txt(x,y,s,size,fill,o){
+  o=o||{};
+  return `<text x="${x}" y="${y}" text-anchor="${o.anchor||'middle'}" dominant-baseline="central"
+    font-family="${o.kr?KR:SER}" font-size="${size}" font-weight="${o.w||500}" fill="${fill}"
+    ${o.it?'font-style="italic"':''} ${o.op!=null?`opacity="${o.op}"`:''} pointer-events="none">${s}</text>`;
+}
+function niceStep(span,target){
+  const raw=span/target, mag=10**Math.floor(Math.log10(raw)), r=raw/mag;
+  return (r<1.5?1:r<3.5?2:r<7.5?5:10)*mag;
+}
+function fitSvg(id,cb){
+  const svg=$(id), wrap=svg.parentElement;
+  new ResizeObserver(()=>{
+    const w=Math.round(wrap.clientWidth), h=Math.round(wrap.clientHeight);
+    if(!w||!h||(w===svg._w&&h===svg._h)) return;
+    svg._w=w; svg._h=h; svg.setAttribute('viewBox',`0 0 ${w} ${h}`); cb();
+  }).observe(wrap);
+  return svg;
+}
+const lineD=pts=>pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+','+p[1].toFixed(1)).join('');
+function curvePts(px,py,c,s,a,b,n){ n=n||260; const pts=[];
+  for(let i=0;i<=n;i++){ const x=a+(b-a)*i/n; pts.push([px(x),py(phi((x-c)/s)/s)]); } return pts; }
+function areaD(px,py,c,s,a,b,base){
+  if(b<=a) return '';
+  return `M${px(a).toFixed(1)},${base}`+lineD(curvePts(px,py,c,s,a,b,160)).replace(/^M/,'L')+`L${px(b).toFixed(1)},${base}Z`;
+}
+/* 위 첨자 2를 포함한 SVG 글: N(80, 8²) */
+const svgN=(x,y,m,sd,size,fill,o)=>{ o=o||{};
+  return `<text x="${x}" y="${y}" text-anchor="${o.anchor||'start'}" dominant-baseline="central" font-family="${SER}" font-size="${size}" font-weight="700" fill="${fill}" pointer-events="none">${o.pre||''}N(${m}, ${sd}<tspan font-size="${size*.62}" dy="${-size*.36}">2</tspan><tspan dy="${size*.36}">)</tspan></text>`; };
+
+/* ═══ 5. 끌기 막대 ═══ */
+function makeSlider(el,labels,onIdx){
+  let L=labels;
+  const build=()=>{
+    const n=L.length, pct=i=>n>1?i/(n-1)*100:0;
+    el.innerHTML=`<div class="sin"><div class="strack"></div><div class="sfill"></div>`+
+      L.map((v,i)=>`<div class="stop" style="left:${pct(i)}%"><i></i><span class="m">${v}</span></div>`).join('')+
+      `<div class="sthumb"></div></div>`;
+  };
+  build();
+  let down=false;
+  const pick=e=>{ const sin=el.firstChild, r=sin.getBoundingClientRect(), n=L.length;
+    onIdx(Math.max(0,Math.min(n-1,Math.round((e.clientX-r.left)/r.width*(n-1))))); };
+  el.addEventListener('pointerdown',e=>{ down=true; el.setPointerCapture(e.pointerId); pick(e); });
+  el.addEventListener('pointermove',e=>{ if(down) pick(e); });
+  el.addEventListener('pointerup',()=>down=false);
+  el.addEventListener('pointercancel',()=>down=false);
+  const set=i=>{ const sin=el.firstChild, n=L.length, pct=n>1?i/(n-1)*100:0;
+    sin.querySelector('.sfill').style.width=pct+'%'; sin.querySelector('.sthumb').style.left=pct+'%';
+    sin.querySelectorAll('.stop').forEach((s,k)=>s.classList.toggle('on',k===i)); };
+  return set;
+}
+
+/* ═══ 6. ① n을 키우면 : B(n, p) 막대 위에 N(np, npq) 곡선 ═══ */
+const g0=fitSvg('g0',()=>draw0());
+/* 막대그래프 + 곡선 공용 그리기 */
+function drawBars(svg,o){
+  const W=svg._w,H=svg._h; if(!W) return '';
+  const {n,p,lo,hi,curve,L,R,T,B}=o, mu=n*p, sd=Math.sqrt(n*p*(1-p)), P=binom(n,p);
+  const pw=W-L-R, ph=H-T-B, base=T+ph;
+  let ymax=0; for(let k=Math.max(0,Math.ceil(lo));k<=Math.min(n,Math.floor(hi));k++) ymax=Math.max(ymax,P[k]);
+  if(curve) ymax=Math.max(ymax,phi(0)/sd);
+  ymax*=1.1;
+  const px=x=>L+(x-lo)/(hi-lo)*pw, py=v=>base-v/ymax*ph, bw=pw/(hi-lo);
+  const g=[];
+  /* 가로 눈금줄 */
+  const ys=niceStep(ymax,4);
+  for(let v=ys;v<ymax;v+=ys){ g.push(`<line x1="${L}" y1="${py(v)}" x2="${L+pw}" y2="${py(v)}" stroke="${COL.ln}" stroke-width="1"/>`);
+    g.push(txt(L-10,py(v),v.toFixed(ys<0.01?3:2).replace(/^0/,''),24,COL.fa,{anchor:'end'})); }
+  /* 막대 */
+  const hiSet=o.hl||null;
+  let bars='';
+  for(let k=Math.max(0,Math.ceil(lo));k<=Math.min(n,Math.floor(hi));k++){
+    const x0=px(k-.5), y0=py(P[k]), on=hiSet&&k>=hiSet[0]&&k<=hiSet[1];
+    bars+=`<rect x="${(x0+Math.min(1.5,bw*.08)).toFixed(1)}" y="${y0.toFixed(1)}" width="${Math.max(1,bw-Math.min(3,bw*.16)).toFixed(1)}" height="${(base-y0).toFixed(1)}" fill="${on?COL.am:COL.vi}" fill-opacity="${on?.45:.42}" stroke="${on?COL.am:COL.vi}" stroke-width="${bw>14?1.5:0}"/>`;
+  }
+  g.push(`<defs><clipPath id="${svg.id}c"><rect x="${L}" y="0" width="${pw}" height="${base+1}"/></clipPath></defs>`);
+  if(o.area){ const [a,b]=o.area; g.push(`<path d="${areaD(px,py,mu,sd,a,b,base)}" fill="${COL.te}" fill-opacity=".34" clip-path="url(#${svg.id}c)"/>`); }
+  g.push(`<g clip-path="url(#${svg.id}c)">${bars}</g>`);
+  if(curve) g.push(`<path d="${lineD(curvePts(px,py,mu,sd,lo,hi,320))}" fill="none" stroke="${COL.am}" stroke-width="4.5" clip-path="url(#${svg.id}c)"/>`);
+  /* 평균선 */
+  g.push(`<line x1="${px(mu)}" y1="${T-6}" x2="${px(mu)}" y2="${base}" stroke="${COL.fa}" stroke-width="2" stroke-dasharray="8 7"/>`);
+  /* x축 */
+  g.push(`<line x1="${L}" y1="${base}" x2="${L+pw}" y2="${base}" stroke="${COL.ls}" stroke-width="2.5"/>`);
+  const st=o.step||Math.max(1,niceStep(hi-lo,10));
+  for(let v=Math.ceil(lo/st-1e-9)*st;v<=hi+1e-9;v+=st){ if(v<0||v>n) continue;
+    g.push(`<line x1="${px(v)}" y1="${base}" x2="${px(v)}" y2="${base+10}" stroke="${COL.ls}" stroke-width="2"/>`);
+    const em=o.em&&o.em.includes(v);
+    g.push(txt(px(v),base+32,num(v),em?30:27,em?COL.am:COL.fa,{w:em?700:500})); }
+  return {g,px,py,base,pw,ph,mu,sd,P,ymax,L,T};
+}
+function draw0(){
+  const svg=g0; if(!svg._w) return;
+  const n=NS0[A.ni], p=PS[A.pi], mu=n*p, sd=Math.sqrt(n*p*(1-p));
+  let lo,hi;
+  if(n<=50){ lo=-.5; hi=n+.5; } else { lo=Math.max(-.5,mu-4.6*sd); hi=Math.min(n+.5,mu+4.6*sd); }
+  const r=drawBars(svg,{n,p,lo,hi,curve:A.curve,L:74,R:30,T:70,B:62});
+  if(!r) return;
+  const g=r.g;
+  /* 이름표 */
+  g.push(`<text x="${svg._w-36}" y="34" text-anchor="end" dominant-baseline="central" font-family="${SER}" font-size="34" font-weight="700" fill="${COL.vi}" pointer-events="none">B(${n}, ${p})</text>`);
+  if(A.curve){ const v=n*p*(1-p);           /* 표준편차가 정수일 때만 σ² 꼴 */
+    g.push(Math.abs(sd-Math.round(sd))<1e-9?svgN(svg._w-36,74,num(mu),num(sd),32,COL.am,{anchor:'end'})
+      :txt(svg._w-36,74,`N(${num(mu)}, ${num(v)})`,32,COL.am,{anchor:'end',w:700})); }
+  g.push(txt(r.px(mu),52,`평균 ${num(mu)}`,26,COL.fa,{kr:1,w:700}));
+  svg.innerHTML=g.join('');
+}
+function side0(){
+  const n=NS0[A.ni], p=PS[A.pi], q=+(1-p).toFixed(1), mu=n*p, v=n*p*(1-p), sd=Math.sqrt(v), nq=n*q;
+  setN(A.ni);
+  $('nv0').innerHTML=`${nv} = <span class="am">${n}</span>`;
+  $('pb0').querySelectorAll('.hb').forEach(b=>b.classList.toggle('on',+b.dataset.p===A.pi));
+  $('fl0').innerHTML=[
+    `${Xv} ~ B(<span class="am">${n}</span>, ${p})`,
+    `${V('E')}(${Xv}) = ${nv}${pv} = <span class="am">${num(mu)}</span>`,
+    `${V('V')}(${Xv}) = ${nv}${pv}${qv} = <span class="am">${num(v)}</span>`,
+    `<span class="${A.curve?'am':'fa'}">→ N(${num(mu)}, ${Math.abs(sd-Math.round(sd))<1e-9?sq(num(sd)):num(v)})</span>`
+  ].map(s=>`<div class="fl m"><span>${s}</span></div>`).join('');
+  const a=mu>=5, b=nq>=5;
+  $('cd0').innerHTML=`<div class="ttl">${nv}이 충분히 큰가?</div>`+
+    `<div class="m"><span>${nv}${pv} = ${num(mu)} <span class="${a?'ok':'no'}">${a?'≥':'&lt;'} 5</span></span></div>`+
+    `<div class="m"><span>${nv}${qv} = ${num(nq)} <span class="${b?'ok':'no'}">${b?'≥':'&lt;'} 5</span></span></div>`;
+  const vd=$('vd0');
+  vd.className='card verdict '+(a&&b?'good':'bad');
+  vd.textContent=a&&b?'종 모양 — 정규분포 곡선에 잘 맞는다':'아직 한쪽으로 치우쳐 곡선과 어긋난다';
+  $('cv0').classList.toggle('on',A.curve);
+  $('cv0').textContent=A.curve?'정규분포 곡선 보기':'정규분포 곡선 숨김';
+  draw0();
+}
+const setN=makeSlider($('slN'),NS0,i=>{ if(i!==A.ni){ A.ni=i; side0(); } });
+$('pb0').onclick=e=>{ const b=e.target.closest('[data-p]'); if(b){ A.pi=+b.dataset.p; side0(); } };
+$('cv0').onclick=()=>{ A.curve=!A.curve; side0(); };
+function reset0(){ A.ni=1; A.pi=1; A.curve=true; side0(); }
+
+/* ═══ 7. ② 정리 ═══ */
+const BL=[`${nv}${pv}`,`${nv}${pv}${qv}`,`${nv}${pv} ≥ 5`,`${nv}${qv} ≥ 5`,'표준정규분포표','50',sq(5),'0.6826'];
+const blank=i=>`<span class="blank m" data-b="${i}"><span>${BL[i]}</span></span>`;
+$('lawB').innerHTML=
+  `<div>확률변수 <span class="m">&nbsp;${Xv}</span>가 이항분포 <span class="m">&nbsp;B(${nv}, ${pv})</span>를 따를 때,&nbsp;<span class="m">${nv}</span>이 충분히 크면</div>`+
+  `<div><span class="m">${Xv}</span>는 근사적으로 정규분포 <span class="m">&nbsp;N(</span>${blank(0)}<span class="m">,</span>${blank(1)}<span class="m">)</span>을 따른다. <span class="m dim" style="font-size:34px">&nbsp;(단, ${qv} = 1 − ${pv})</span></div>`+
+  `<div><span class="goal">충분히 크다</span>보통 ${blank(2)}, ${blank(3)} 일 때</div>`;
+$('lawC').innerHTML=
+  `<div>이항분포의 확률을 일일이 더하지 않고 ${blank(4)}로 구할 수 있다.</div>`;
+$('lawD').innerHTML=`<div><span class="m">${Xv} ~ B${BP(`100, ${F(1,2)}`,'')} &nbsp;→&nbsp; ${Xv} ~ N(</span>${blank(5)}<span class="m">,</span>${blank(6)}<span class="m">)</span>`+
+  `<span class="m">&nbsp;&nbsp; P(45 ≤ ${Xv} ≤ 55) = P(−1 ≤ ${Zv} ≤ 1) =</span>${blank(7)}</div>`;
+const allBtn=$('allBtn');
+const blanks=()=>document.querySelectorAll('#p1 .blank');
+function syncAll(){ allBtn.textContent=[...blanks()].every(b=>b.classList.contains('open'))?'가리기':'모두 보기'; }
+$('p1').addEventListener('click',e=>{ const b=e.target.closest('.blank'); if(b){ b.classList.toggle('open'); syncAll(); } });
+allBtn.onclick=()=>{ const open=allBtn.textContent==='모두 보기'; blanks().forEach(b=>b.classList.toggle('open',open)); syncAll(); };
+
+/* ═══ 9. 탭 · 키보드 · 전체화면 · 초기화 ═══ */
+let tab=0;
+const tabs=document.querySelectorAll('.tab'), panes=document.querySelectorAll('.pane');
+function setTab(t){
+  tab=Math.max(0,Math.min(1,t));
+  tabs.forEach((b,i)=>b.classList.toggle('on',i===tab));
+  panes.forEach((p,i)=>p.classList.toggle('on',i===tab));
+}
+$('tabs').onclick=e=>{ const b=e.target.closest('[data-t]'); if(b) setTab(+b.dataset.t); };
+/* 초기화 : 지금 보고 있는 탭만 처음 상태로 */
+function resetTab(){
+  if(tab===0) reset0();
+  else { blanks().forEach(b=>b.classList.remove('open')); syncAll(); }
+}
+$('resetBtn').onclick=resetTab;
+const fsBtn=$('fsBtn');
+fsBtn.onclick=()=>{
+  const d=document, el=d.documentElement;
+  if(d.fullscreenElement||d.webkitFullscreenElement) (d.exitFullscreen||d.webkitExitFullscreen).call(d);
+  else { const r=el.requestFullscreen||el.webkitRequestFullscreen; if(r) Promise.resolve(r.call(el)).catch(()=>{}); }
+};
+const syncFs=()=>fsBtn.textContent=(document.fullscreenElement||document.webkitFullscreenElement)?'창으로':'전체화면';
+document.addEventListener('fullscreenchange',syncFs); document.addEventListener('webkitfullscreenchange',syncFs);
+addEventListener('keydown',e=>{
+  const k=e.key;
+  if(k>='1'&&k<='2') setTab(+k-1);
+  else if(k==='ArrowRight') setTab(tab+1);
+  else if(k==='ArrowLeft') setTab(tab-1);
+  else if(k==='f'||k==='F') fsBtn.click();
+  else if(k==='r'||k==='R') resetTab();
+  else if(k===' '){ e.preventDefault();
+    if(tab===0){ A.curve=!A.curve; side0(); } }
+  else if(k==='ArrowUp'||k==='ArrowDown'){
+    e.preventDefault(); const dl=k==='ArrowUp'?1:-1;
+    if(tab===0){ A.ni=Math.max(0,Math.min(NS0.length-1,A.ni+dl)); side0(); }
+  }
+});
+
+/* ═══ 시작 ═══ */
+Object.assign(COL,{am:CSS('--amber'),te:CSS('--teal'),vi:CSS('--violet'),co:CSS('--coral'),ch:CSS('--chalk'),
+  fa:CSS('--chalk-faint'),ls:CSS('--line-strong'),ln:CSS('--line'),p:CSS('--panel'),p2:CSS('--panel-2'),bg:CSS('--bg')});
+reset0();
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{ draw0(); });
+</script>
+</body>
+</html>
