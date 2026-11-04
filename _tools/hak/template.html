@@ -39,7 +39,6 @@ button:focus-visible{outline:2px solid var(--plum);outline-offset:2px}
 .stage{position:relative;background:#fff;overflow:hidden;transition:transform .6s ease}
 .stage img{display:block;user-select:none;-webkit-user-drag:none}
 .stage .base{width:100%;height:100%}
-.view.fadeTop{-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 48px);mask-image:linear-gradient(to bottom,transparent 0,#000 48px)}
 .stage .layer{position:absolute;mix-blend-mode:multiply;opacity:0;transition:opacity .35s ease}
 .stage .layer.on{opacity:1}
 .stage svg.ink{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
@@ -93,7 +92,6 @@ button:focus-visible{outline:2px solid var(--plum);outline-offset:2px}
 
     </div>
     <button class="ghost" id="reset" type="button">문제만</button>
-    <button class="ghost" id="peek" type="button" hidden>↑ 문제 보기</button>
     <button class="ghost" id="all" type="button">풀이 전체</button>
     <div class="nav">
       <button class="prev" id="prev" type="button"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4l-6 6 6 6"/></svg>이전</button>
@@ -176,10 +174,10 @@ function autoOff(){
   if(s>0){const r=stepY[s-1],pad=0.04*H;let bot=-1e9;for(let i=0;i<s;i++)if(stepY[i])bot=Math.max(bot,stepY[i][1]);   // 지금까지 쓴 것 중 가장 아래가 보이게
     if(bot>-1e9)off=Math.max(0,bot*k+pad-H);if(r&&r[0]*k-pad<off)off=Math.max(0,r[0]*k-pad)}       // 단, 지금 단계의 윗부분은 보이게
   off=Math.min(off,over);
-  if(off>0&&d.gaps&&d.gaps.length){            // 위 끝을 줄 사이 빈 띠에 맞춤(글자 윗부분이 잘리지 않게)
-    const r=stepY[s-1],pad=0.04*H,top=r?r[0]*k-pad:1e9;
-    const up=d.gaps.map(g=>g*k).filter(g=>g>=off-1&&g<=Math.min(over,top));
-    if(up.length)off=Math.min(...up);          // 빈 띠가 없으면 그대로 두고 위 끝을 흐리게(아래 .fadeTop)
+  if(off>0&&d.gaps&&d.gaps.length){            // 위 끝을 항상 줄 사이 빈 띠에 맞춤(글자가 잘리지 않게).
+    const r=stepY[s-1],pad=0.04*H,top=r?r[0]*k-pad:1e9;   // 필요하면 문항 끝보다 더 올려도 됨(아래는 빈 곳)
+    const ok=d.gaps.map(g=>g*k).filter(g=>g>=off-1&&g<=top);    // 지금까지 쓴 것이 다 보이는 빈 띠 중
+    if(ok.length)off=Math.min(...ok);                           // 가장 덜 올리는 것(단계가 갈수록 위치는 그대로거나 내려감)
   }
   return off;
 }
@@ -187,16 +185,12 @@ function setOff(off,instant){
   curOff=off;
   if(instant){stage.style.transition='none';stage.style.transform=off?`translateY(${-off}px)`:'';void stage.offsetWidth;stage.style.transition=''}
   else stage.style.transform=`translateY(${-off}px)`;
-  const pk=$('peek'),over=overOf();
-  pk.hidden=!(over>0&&(curOff>1||manual!==null));
-  pk.textContent=curOff>1?'↑ 문제 보기':'↓ 풀이로';
-  view.classList.toggle('fadeTop',curOff>1);
-  view.style.touchAction=over>0?'none':'';
+  view.style.touchAction=overOf()>0?'none':'';
 }
 function follow(instant){
   const over=overOf();
   if(over<=0){manual=null;setOff(0,true);return}
-  if(manual!==null){manual=Math.max(0,Math.min(manual,over));setOff(manual,instant)}else setOff(autoOff(),instant);
+  if(manual!==null){manual=Math.max(0,Math.min(manual,Math.max(over,autoOff())));setOff(manual,instant)}else setOff(autoOff(),instant);
 }
 function render(animate){
   const d=DATA[p],n=d.n;
@@ -273,7 +267,6 @@ view.addEventListener('touchstart',e=>{tx=e.changedTouches[0].clientX},{passive:
 view.addEventListener('touchend',e=>{if(tx===null||isApp()||dragged){tx=null;return}const dx=e.changedTouches[0].clientX-tx;tx=null;if(Math.abs(dx)>60)(dx<0?next:prev)()});
 let dragY=null,dragX=0,drag0=0,dragged=false;
 view.addEventListener('click',e=>{if(dragged){dragged=false;return}if(!isApp()&&e.target.closest('.stage'))next()});
-$('peek').onclick=()=>{manual=curOff>1?0:null;follow(false)};
 // 위아래 끌기·휠: 긴 문항을 직접 올려 보기
 view.addEventListener('wheel',e=>{if(isApp()||overOf()<=0)return;e.preventDefault();manual=curOff+e.deltaY;follow(true)},{passive:false});
 view.addEventListener('pointerdown',e=>{if(isApp()||overOf()<=0)return;dragY=e.clientY;dragX=e.clientX;drag0=curOff;dragged=false});
