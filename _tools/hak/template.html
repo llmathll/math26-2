@@ -39,6 +39,7 @@ button:focus-visible{outline:2px solid var(--plum);outline-offset:2px}
 .stage{position:relative;background:#fff;overflow:hidden;transition:transform .6s ease}
 .stage img{display:block;user-select:none;-webkit-user-drag:none}
 .stage .base{width:100%;height:100%}
+.view.fadeTop{-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 48px);mask-image:linear-gradient(to bottom,transparent 0,#000 48px)}
 .stage .layer{position:absolute;mix-blend-mode:multiply;opacity:0;transition:opacity .35s ease}
 .stage .layer.on{opacity:1}
 .stage svg.ink{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
@@ -174,7 +175,13 @@ function autoOff(){
   let off=0;
   if(s>0){const r=stepY[s-1],pad=0.04*H;let bot=-1e9;for(let i=0;i<s;i++)if(stepY[i])bot=Math.max(bot,stepY[i][1]);   // 지금까지 쓴 것 중 가장 아래가 보이게
     if(bot>-1e9)off=Math.max(0,bot*k+pad-H);if(r&&r[0]*k-pad<off)off=Math.max(0,r[0]*k-pad)}       // 단, 지금 단계의 윗부분은 보이게
-  return Math.min(off,over);
+  off=Math.min(off,over);
+  if(off>0&&d.gaps&&d.gaps.length){            // 위 끝을 줄 사이 빈 띠에 맞춤(글자 윗부분이 잘리지 않게)
+    const r=stepY[s-1],pad=0.04*H,top=r?r[0]*k-pad:1e9;
+    const up=d.gaps.map(g=>g*k).filter(g=>g>=off-1&&g<=Math.min(over,top));
+    if(up.length)off=Math.min(...up);          // 빈 띠가 없으면 그대로 두고 위 끝을 흐리게(아래 .fadeTop)
+  }
+  return off;
 }
 function setOff(off,instant){
   curOff=off;
@@ -183,6 +190,7 @@ function setOff(off,instant){
   const pk=$('peek'),over=overOf();
   pk.hidden=!(over>0&&(curOff>1||manual!==null));
   pk.textContent=curOff>1?'↑ 문제 보기':'↓ 풀이로';
+  view.classList.toggle('fadeTop',curOff>1);
   view.style.touchAction=over>0?'none':'';
 }
 function follow(instant){
@@ -239,7 +247,7 @@ function prev(){if(s>0)go(p,s-1);else if(p>0)go(p-1,DATA[p-1].n)}
     let G=groups.find(x=>x.name===g);if(!G){G={name:g,items:[]};groups.push(G)}
     G.items.push({i,label:d.toc||d.num});
   });
-  const short={'이항분포 복습':'이항분포 복습','중단원 학습 점검':'중단원','대단원 학습 평가':'대단원','교과서 외 문제':'교과서 외'};
+  const short={'이항분포 복습':'이항분포 복습','중단원 학습 점검':'중단원','대단원 학습 평가':'대단원','수학 익힘책':'익힘책','교과서 외 문제':'교과서 외'};
   $('toc').innerHTML=groups.map(G=>'<div class="grp"><span>'+(short[G.name]||G.name)+'</span>'+
     G.items.map(it=>'<button type="button" data-i="'+it.i+'">'+it.label+'</button>').join('')+'</div>').join('');
 })();
@@ -271,7 +279,7 @@ $('peek').onclick=()=>{manual=curOff>1?0:null;follow(false)};
 view.addEventListener('wheel',e=>{if(isApp()||overOf()<=0)return;e.preventDefault();manual=curOff+e.deltaY;follow(true)},{passive:false});
 view.addEventListener('pointerdown',e=>{if(isApp()||overOf()<=0)return;dragY=e.clientY;dragX=e.clientX;drag0=curOff;dragged=false});
 view.addEventListener('pointermove',e=>{if(dragY===null)return;const dy=e.clientY-dragY;
-  if(!dragged&&Math.abs(dy)>12&&Math.abs(dy)>Math.abs(e.clientX-dragX))dragged=true;
+  if(!dragged&&Math.abs(dy)>28&&Math.abs(dy)>Math.abs(e.clientX-dragX)*1.5)dragged=true;
   if(dragged){manual=drag0-dy;follow(true)}});
 ['pointerup','pointercancel'].forEach(t=>view.addEventListener(t,()=>{dragY=null;if(dragged)setTimeout(()=>{dragged=false},350)}));
 new ResizeObserver(fit).observe(view);

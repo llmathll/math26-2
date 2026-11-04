@@ -216,6 +216,18 @@ for idx, it in enumerate(C.ITEMS):
     rec = dict(sec=it['sec'], num=it['num'], toc=it.get('toc', it['num']), g=it.get('group', it['sec']),
                w=int(bx1 - bx0), h=int(by1 - by0), n=n - it.get('pre', 0), base=b64(base_c), steps=layers)
     if it.get('follow'): rec['follow'] = 1            # 폭에만 맞춰 공통 배율, 넘치는 아래쪽은 화면이 따라 내려감
+    if it.get('follow'):                              # 줄 사이 빈 띠(문항 px): 따라 내려갈 때 화면 위 끝이 글자 중간을 자르지 않게
+        ink = cv2.cvtColor(base_c, cv2.COLOR_BGR2GRAY) < 200
+        al = np.zeros(ink.shape, bool); sub = allink[by0:by1, bx0:bx1]; al[:sub.shape[0], :sub.shape[1]] = sub
+        row = (ink | al).any(axis=1); gaps = []; y = 0; H_ = len(row)
+        while y < H_:
+            if not row[y]:
+                y1 = y
+                while y1 < H_ and not row[y1]: y1 += 1
+                if y1 - y >= int(4 * F): gaps.append(int((y + y1) // 2))
+                y = y1
+            else: y += 1
+        rec['gaps'] = gaps
     if it.get('scale'): rec['scale'] = it['scale']    # 공통 배율에 곱하는 값(예 0.9: 이 문항만 조금 작게)
     if it.get('solo'): rec['solo'] = 1                # 공통 배율 계산에서 뺌(이 문항만 필요하면 조금 더 축소)
     if it.get('link'): rec['link'] = it['link']; rec['linkName'] = it.get('linkName', '연결 자료')
