@@ -143,7 +143,11 @@ for idx, it in enumerate(C.ITEMS):
     bwP = np.full((bw.shape[0] + PADB, bw.shape[1] + PADR, 3), 255, np.uint8); bwP[:bw.shape[0], :bw.shape[1]] = bw
     extra = []; plays = []
     for ps in it.get('paste', []):
-        src = CLEAN[ps.get('page', pg)]; x0, y0, x1, y1 = sc(ps['src']); ax, ay = sc(ps['at'])
+        if 'img' in ps:                               # img: 따로 만든 그림(500dpi 기준 px)을 붙임
+            src = cv2.imread(os.path.join(os.path.dirname(os.path.abspath(cfg_path)), ps['img'])); x0, y0 = 0, 0; y1, x1 = src.shape[:2]
+        else:
+            src = CLEAN[ps.get('page', pg)]; x0, y0, x1, y1 = sc(ps['src'])
+        ax, ay = sc(ps['at'])
         if 'step' in ps:                              # step: 처음엔 없다가 그 단계에서 나타남
             plays.append(dict(step=ps['step'] - 1, X=ax, Y=ay, w=int(x1 - x0), h=int(y1 - y0), src=b64(src[y0:y1, x0:x1].copy()), hl=1))
         else: bwP[ay:ay + (y1 - y0), ax:ax + (x1 - x0)] = src[y0:y1, x0:x1]
