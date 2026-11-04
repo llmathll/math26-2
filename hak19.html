@@ -542,8 +542,6 @@ const DATA=[{"kind": "app", "app": "19binorm", "sec": "개념 · 이항분포의
 const $=id=>document.getElementById(id);
 const stage=$('stage'),view=$('view');
 let p=0,s=0,tx=null,running=[],paths=[],covEls=[],rev=new Set(),autoTok=0;
-const WRITE_SPEED=1.7;      // 펜 순서 쓰기 속도(비교 화면에서 고른 값)
-const STEP_MAX_MS=3200;     // 한 단계는 길어도 약 3.2초
 const UNIFORM_TOL=0.9;     // 공통 배율 기준(중앙값의 90%보다 작아져야 하는 문항만 따로 축소)
 const NS='http://www.w3.org/2000/svg';
 // 개념 앱: 각 앱을 Shadow DOM 안에 한 번만 만들어 두고, 그 페이지에서 화면에 붙인다(상태 유지)
@@ -579,7 +577,6 @@ function build(){
       const op=t.a<1?t.a:1;el.style.opacity=op;
       const fade=!!(t.f||t.dash);
       if(t.dash)el.style.strokeDasharray=t.dash.map(v=>Math.max(v,0.01)).join(' ');
-      else if(!t.f){el.setAttribute('pathLength',1000);el.style.strokeDasharray='1000 1000'}
       el.style.visibility='hidden';svg.appendChild(el);paths.push({t,el,op,fade});
     });
     // 답 가리개: 그 단계를 쓸 때 네모로 가려 두고, 누르면 그 안의 답을 씀. 네모를 모두 열면 다음 단계로
@@ -656,39 +653,41 @@ function stopAnim(cancel){running.forEach(a=>{try{cancel?a.cancel():a.finish()}c
 const writing=()=>running.some(a=>a.playState==='running'||a.playState==='pending');
 const hidCov=t=>t.k!=null&&DATA[p].covers[t.k].s===s-1&&!rev.has(t.k);   // 지금 단계의 아직 안 연 가리개 속 획
 const pending=()=>covEls.some(o=>o.c.s===s-1&&!rev.has(o.k));
+// 단계 보이기: 그 단계 영역이 왼쪽 → 오른쪽으로 펼쳐짐(펜 순서 쓰기 대신, 19단원부터)
+const WIPE_MIN_MS=350, WIPE_MAX_MS=1300;   // 한 단계 펼치는 시간(영역 폭에 비례, 문항 전체 폭 ≈ 1.45초)
+let wipeN=0;
+function wipe(els,dur){
+  const svg=stage.querySelector('svg.ink');if(!svg||!els.length)return;
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  els.forEach(e=>{try{const b=e.getBBox();if(!b.width&&!b.height)return;x0=Math.min(x0,b.x);y0=Math.min(y0,b.y);x1=Math.max(x1,b.x+b.width);y1=Math.max(y1,b.y+b.height)}catch(_){}});
+  if(x1<x0)return;
+  const d=DATA[p],pad=12*d.w/2700;x0-=pad;y0-=pad;x1+=pad;y1+=pad;const W=x1-x0;
+  const id='wp'+(++wipeN),cp=document.createElementNS(NS,'clipPath');cp.id=id;cp.setAttribute('class','wp');cp.setAttribute('clipPathUnits','userSpaceOnUse');
+  const r=document.createElementNS(NS,'rect');r.setAttribute('x',x0);r.setAttribute('y',y0);r.setAttribute('height',y1-y0);r.setAttribute('width',W);cp.appendChild(r);svg.appendChild(cp);
+  els.forEach(e=>e.setAttribute('clip-path',`url(#${id})`));
+  const D=dur||Math.min(WIPE_MAX_MS,WIPE_MIN_MS+1100*W/d.w);
+  const a=r.animate([{width:'0px'},{width:W+'px'}],{duration:D,easing:'linear',fill:'both'});
+  a.onfinish=()=>{els.forEach(e=>{if(e.getAttribute('clip-path')===`url(#${id})`)e.removeAttribute('clip-path')});cp.remove()};
+  running.push(a);
+}
 function drawInk(animate){
   stopAnim(true);if(!paths.length)return;
-  const i=s-1,d=DATA[p],cur=paths.filter(x=>x.t.s===i&&!hidCov(x.t));
-  const pxPerMs=2.2*WRITE_SPEED*(d.w/2700),total=cur.reduce((a,x)=>a+x.t.l,0);
-  const k=Math.max(1,total/pxPerMs/STEP_MAX_MS);let t0=0;const shown=new Set();
-  covEls.forEach(({c,g,k:ck})=>{const on=c.s===i&&!rev.has(ck);g.style.visibility=on?'visible':'hidden';g.style.opacity=on?1:0});
+  const i=s-1;
+  stage.querySelectorAll('svg.ink clipPath.wp').forEach(c=>c.remove());
+  covEls.forEach(({c,g,k:ck})=>{const on=c.s===i&&!rev.has(ck);g.removeAttribute('clip-path');g.style.visibility=on?'visible':'hidden';g.style.opacity=on?1:0});
   paths.forEach(({t,el,op,fade})=>{
-    if(hidCov(t)){el.style.visibility='hidden';if(!fade)el.style.strokeDashoffset=1000;
-      if(animate&&!shown.has(t.k)){shown.add(t.k);running.push(covEls[t.k].g.animate([{opacity:0},{opacity:1}],{duration:260,delay:t0,fill:'both'}));t0+=220}
-      return}
-    if(t.s<i||(t.s===i&&!animate)){el.style.visibility='visible';if(!fade)el.style.strokeDashoffset=0;return}
-    if(t.s>i){el.style.visibility='hidden';if(!fade)el.style.strokeDashoffset=1000;return}
-    el.style.visibility='visible';
-    if(fade){running.push(el.animate([{opacity:0},{opacity:op}],{duration:260,delay:t0,fill:'both'}));t0+=200;return}
-    el.style.strokeDashoffset=0;const dur=Math.max(40,t.l/pxPerMs/k);
-    running.push(el.animate([{strokeDashoffset:1000,opacity:0,offset:0},{strokeDashoffset:999,opacity:op,offset:0.01},{strokeDashoffset:0,opacity:op,offset:1}],
-      {duration:dur,delay:t0,easing:'ease-in-out',fill:'both'}));
-    t0+=dur+(dur>120?50:15);
+    el.removeAttribute('clip-path');if(!fade)el.style.strokeDashoffset=0;
+    el.style.visibility=(t.s<=i&&!hidCov(t))?'visible':'hidden';
   });
+  if(!animate)return;
+  wipe(paths.filter(x=>x.t.s===i&&!hidCov(x.t)).map(x=>x.el).concat(covEls.filter(o=>o.c.s===i&&!rev.has(o.k)).map(o=>o.g)));
 }
 function reveal(k){
-  if(rev.has(k))return;rev.add(k);const o=covEls[k],d=DATA[p],pxPerMs=2.2*WRITE_SPEED*(d.w/2700);
+  if(rev.has(k))return;rev.add(k);const o=covEls[k];
   o.g.style.opacity=0;o.g.style.visibility='hidden';
   running.push(o.g.animate([{opacity:1,visibility:'visible'},{opacity:0,visibility:'visible'}],{duration:220}));
-  let t0=120;
-  paths.filter(x=>x.t.k===k).forEach(({t,el,op,fade})=>{
-    el.style.visibility='visible';
-    if(fade){running.push(el.animate([{opacity:0},{opacity:op}],{duration:260,delay:t0,fill:'both'}));t0+=200;return}
-    el.style.strokeDashoffset=0;const dur=Math.max(40,t.l/pxPerMs);
-    running.push(el.animate([{strokeDashoffset:1000,opacity:0,offset:0},{strokeDashoffset:999,opacity:op,offset:0.01},{strokeDashoffset:0,opacity:op,offset:1}],
-      {duration:dur,delay:t0,easing:'ease-in-out',fill:'both'}));
-    t0+=dur+(dur>120?50:15);
-  });
+  const els=paths.filter(x=>x.t.k===k).map(({el})=>{el.style.visibility='visible';el.style.strokeDashoffset=0;return el});
+  wipe(els,450);                                  // 네모 속 답도 왼쪽 → 오른쪽으로
   nextLabel();
   if(!pending()&&s<DATA[p].n){                   // 이 단계 가리개를 모두 열면 다 쓴 뒤 잠깐 쉬고 다음 단계로
     const tok=++autoTok,pp=p,ss=s;
