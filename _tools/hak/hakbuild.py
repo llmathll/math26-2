@@ -30,7 +30,9 @@ for _pg, _rs in getattr(C, 'CLEAN_FROM_MARK', {}).items():
     _W = MARK[_pg].shape[1] / 2000.0
     for _r in _rs:
         _x0, _y0, _x1, _y1 = [int(round(v * _W)) for v in _r]
-        CLEAN[_pg][_y0:_y1, _x0:_x1] = MARK[_pg][_y0:_y1, _x0:_x1]
+        _cp = MARK[_pg][_y0:_y1, _x0:_x1].copy()
+        _cp[cv2.cvtColor(_cp, cv2.COLOR_BGR2HSV)[:, :, 1] > 60] = 255   # 표 위에 걸친 색 손글씨(보라 테두리 등)는 지움
+        CLEAN[_pg][_y0:_y1, _x0:_x1] = _cp
 VECTOR = getattr(C, 'VECTOR', True)        # 손풀이를 PDF 펜 획(벡터)으로 그려 쓰는 순서대로 보여줌
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from pdfstrokes import extract as extract_paths
@@ -193,7 +195,7 @@ for idx, it in enumerate(C.ITEMS):
                 if P is None: continue
                 q = [(x + P['to'][0] * S, y + P['to'][1] * S) for (x, y) in q]
             b = [min(x for x, _ in q), min(y for _, y in q), max(x for x, _ in q), max(y for _, y in q)]
-            if b[2] < rx0 or b[0] > rx1 or b[3] < ry0 or b[1] > ry1: continue
+            if not (rx0 <= (b[0] + b[2]) / 2 <= rx1 and ry0 <= (b[1] + b[3]) / 2 <= ry1): continue   # (20) 가운데가 칸 밖인 네모는 옆 문항 것
             g2 = 3 * S                                # 한 네모를 여러 획으로 그렸으면 합침
             for o in boxes:
                 if b[0] <= o[2] + g2 and o[0] <= b[2] + g2 and b[1] <= o[3] + g2 and o[1] <= b[3] + g2:
@@ -202,6 +204,7 @@ for idx, it in enumerate(C.ITEMS):
         boxS = [[] for _ in boxes]
         # join: [(사각형, (x, y))] 그 사각형 안의 획(초록 9² 등)을 점 (x, y)가 든 가리개에 묶음 → 가리개를 열 때 함께 쓰임
         joins = []
+        drops = [sc(mv(r)) for r in it.get('drop', [])]   # drop: [사각형] 점의 절반 이상이 이 안에 든 획은 이 문항에서 뺌(옆 문항 음영 테두리 등)
         for (jr, jp) in it.get('join', []):
             jr = sc(mv(jr)); q = mv([jp[0], jp[1], jp[0], jp[1]]); px_, py_ = q[0] * S, q[1] * S
             bi = next((i for i, b in enumerate(boxes) if b[0] - 2 * S <= px_ <= b[2] + 2 * S and b[1] - 2 * S <= py_ <= b[3] + 2 * S), None)
@@ -229,15 +232,45 @@ for idx, it in enumerate(C.ITEMS):
                 pts = [(x + ox, y + oy) for (x, y) in pts]
             xs = [q[0] for q in pts]; ys = [q[1] for q in pts]
             if max(xs) < rx0 or min(xs) > rx1 or max(ys) < ry0 or min(ys) > ry1: continue
-            samp = pts[::max(1, len(pts) // 25)] + [pts[-1]]; votes = {}
+            dens = []; lp_ = None                     # 직선 몇 점짜리 획도 고르게 보도록 획 위를 촘촘히 나눔(곡선은 곡선 위 점)
+            for sg in segs:
+                if sg[0] == 'Z' or sg[0] == 'M':
+                    if sg[0] == 'M': lp_ = sg[1]; dens.append(lp_)
+                    continue
+                if lp_ is None: lp_ = sg[-1]; dens.append(lp_); continue
+                k_ = int(np.hypot(sg[-1][0] - lp_[0], sg[-1][1] - lp_[1]) // (10 * S)) + 1
+                for j in range(1, k_ + 1):
+                    t = j / k_
+                    if sg[0] == 'C':
+                        (p1, p2, p3) = sg[1:4]; u = 1 - t
+                        dens.append((u**3 * lp_[0] + 3 * u * u * t * p1[0] + 3 * u * t * t * p2[0] + t**3 * p3[0],
+                                     u**3 * lp_[1] + 3 * u * u * t * p1[1] + 3 * u * t * t * p2[1] + t**3 * p3[1]))
+                    else: dens.append((lp_[0] + (sg[-1][0] - lp_[0]) * t, lp_[1] + (sg[-1][1] - lp_[1]) * t))
+                lp_ = sg[-1]
+            if not dens: dens = list(pts)
+            samp = dens[::max(1, len(dens) // 25)] + [dens[-1]]; votes = {}
+            # (20) 점의 절반 이상이 이 문항 칸(crop) 밖인 획은 옆 문항 것(예: 옆 칸 하늘색 음영 테두리) → 뺌
+            mg_ = 6 * S                               # 칸 경계에 걸친 테두리 선(음영 아래 변 등)을 위해 조금 여유
+            if sum(1 for (x, y) in samp if rx0 - mg_ <= x <= rx1 + mg_ and ry0 - mg_ <= y <= ry1 + mg_) < 0.5 * len(samp): continue
+            if any(sum(1 for (x, y) in samp if dr[0] <= x <= dr[2] and dr[1] <= y <= dr[3]) >= 0.5 * len(samp) for dr in drops): continue   # drop: 옆 문항 획
             for (x, y) in samp:
                 X, Y = int(x), int(y)
                 if not (rr <= X < Ww - rr and rr <= Y < Hh - rr): continue
                 win = claim[Y - rr:Y + rr + 1, X - rr:X + rr + 1]; win = win[win >= 0]
                 if win.size: v = int(np.bincount(win).argmax()); votes[v] = votes.get(v, 0) + 1
-            if not votes: continue
-            st_, hits = max(votes.items(), key=lambda kv: kv[1])
-            if hits < max(1, 0.3 * len(samp)): continue
+            ok_ = bool(votes)
+            if ok_:
+                st_, hits = max(votes.items(), key=lambda kv: kv[1]); ok_ = hits >= max(1, 0.3 * len(samp))
+            if not ok_:                               # (20) 가는 빨간 글씨처럼 그림 판정에 잘 안 잡히는 획 → 단계 사각형 안에 든 점으로 정함
+                rv = {}
+                for i_, st2 in enumerate(it['steps']):
+                    for r in st2.get('rects', []):
+                        a0, b0, a1, b1 = sc(r)
+                        c_ = sum(1 for (x, y) in samp if a0 <= x <= a1 and b0 <= y <= b1)
+                        if c_: rv[i_] = rv.get(i_, 0) + c_
+                if not rv: continue
+                st_, hits = max(rv.items(), key=lambda kv: (kv[1], -it['steps'][kv[0]].get('prio', kv[0])))
+                if hits < 0.6 * len(samp): continue
             vstrokes.append(dict(s=st_, segs=segs, c='#%02x%02x%02x' % (r_, g_, b_), w=round(pth['w'] * kp, 2),
                 f=bool(pth['fill'] and not pth['stroke']), dash=[round(x * kp, 2) for x in pth['dash']] if pth['dash'] else None,
                 a=round(pth['CA'] if pth['stroke'] else pth['ca'], 2), mb=pth['bm'] == 'Multiply'))
