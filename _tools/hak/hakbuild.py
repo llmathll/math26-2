@@ -84,18 +84,29 @@ for idx, it in enumerate(C.ITEMS):
             for r in P['src']:
                 if r[0] <= x <= r[2] and r[1] <= y <= r[3]: return P
         return None
+    def tf(P, x, y):                                  # 조각 변환(2000 기준): zoom이면 첫 사각형 왼쪽 위를 기준으로 줄이고, to만큼 옮김
+        z = P.get('zoom', 1); ax, ay = P['src'][0][0], P['src'][0][1]
+        return (ax + (x - ax) * z + P['to'][0], ay + (y - ay) * z + P['to'][1])
     def mv(r):                                        # 원래 좌표 사각형 -> 옮긴 좌표 (중심이 든 조각 기준)
         P = piece_of((r[0] + r[2]) / 2, (r[1] + r[3]) / 2) if PIECES else None
         if not P: return r
-        dx, dy = P['to']; return [r[0] + dx, r[1] + dy, r[2] + dx, r[3] + dy]
+        a = tf(P, r[0], r[1]); b = tf(P, r[2], r[3]); return [a[0], a[1], b[0], b[1]]
+    def tfp(P, x, y):                                 # 같은 변환, 픽셀 좌표
+        q = tf(P, x / S, y / S); return (q[0] * S, q[1] * S)
     if PIECES:                                        # pieces: 문항 조각을 옮겨 새로 배치한 가상 페이지
         vim = np.full_like(im, 255); vcl = np.full_like(cl, 255)
         for P in PIECES:
-            dx, dy = sc([P['to'][0], P['to'][1]])
+            z = P.get('zoom', 1)
             for r in P['src']:
                 x0, y0, x1, y1 = sc(r)
-                vim[y0 + dy:y1 + dy, x0 + dx:x1 + dx] = im[y0:y1, x0:x1]
-                if P.get('base', True): vcl[y0 + dy:y1 + dy, x0 + dx:x1 + dx] = cl[y0:y1, x0:x1]
+                if z == 1:
+                    dx, dy = sc([P['to'][0], P['to'][1]])
+                    vim[y0 + dy:y1 + dy, x0 + dx:x1 + dx] = im[y0:y1, x0:x1]
+                    if P.get('base', True): vcl[y0 + dy:y1 + dy, x0 + dx:x1 + dx] = cl[y0:y1, x0:x1]
+                    continue
+                X0, Y0 = [int(round(v)) for v in tfp(P, x0, y0)]; w_, h_ = int(round((x1 - x0) * z)), int(round((y1 - y0) * z))
+                vim[Y0:Y0 + h_, X0:X0 + w_] = cv2.resize(im[y0:y1, x0:x1], (w_, h_), interpolation=cv2.INTER_AREA)
+                if P.get('base', True): vcl[Y0:Y0 + h_, X0:X0 + w_] = cv2.resize(cl[y0:y1, x0:x1], (w_, h_), interpolation=cv2.INTER_AREA)
         im, cl = vim, vcl
         M = colors(im, cl)
         it = dict(it); it['steps'] = [dict(st, **{k: [mv(r) for r in st[k]] for k in ('rects', 'blue', 'g') if k in st}) for st in it['steps']]
@@ -193,12 +204,17 @@ for idx, it in enumerate(C.ITEMS):
             if PIECES:
                 P = piece_of(q[0][0] / S, q[0][1] / S)
                 if P is None: continue
-                q = [(x + P['to'][0] * S, y + P['to'][1] * S) for (x, y) in q]
+                q = [tfp(P, x, y) for (x, y) in q]
             b = [min(x for x, _ in q), min(y for _, y in q), max(x for x, _ in q), max(y for _, y in q)]
             if not (rx0 <= (b[0] + b[2]) / 2 <= rx1 and ry0 <= (b[1] + b[3]) / 2 <= ry1): continue   # (20) 가운데가 칸 밖인 네모는 옆 문항 것
             g2 = 3 * S                                # 한 네모를 여러 획으로 그렸으면 합침
             for o in boxes:
                 if b[0] <= o[2] + g2 and o[0] <= b[2] + g2 and b[1] <= o[3] + g2 and o[1] <= b[3] + g2:
+                    # (20) 맞닿은 두 네모(위아래 줄)는 따로: 한쪽이 가는 선 조각이거나 서로 많이 겹칠 때만 합침
+                    iw = min(o[2], b[2]) - max(o[0], b[0]) + 2 * g2; ih = min(o[3], b[3]) - max(o[1], b[1]) + 2 * g2
+                    amin = min((o[2] - o[0]) * (o[3] - o[1]), (b[2] - b[0]) * (b[3] - b[1]))
+                    thin = min(o[2] - o[0], o[3] - o[1], b[2] - b[0], b[3] - b[1]) < 6 * S
+                    if not (thin or (iw > 0 and ih > 0 and iw * ih >= 0.25 * amin)): continue
                     o[:] = [min(o[0], b[0]), min(o[1], b[1]), max(o[2], b[2]), max(o[3], b[3])]; break
             else: boxes.append(b)
         boxS = [[] for _ in boxes]
@@ -227,9 +243,9 @@ for idx, it in enumerate(C.ITEMS):
                     P = piece_of(x / S, y / S)
                     if P is not None: cnt_[id(P)] = cnt_.get(id(P), 0) + 1
                 if not cnt_: continue
-                P = next(Q for Q in PIECES if id(Q) == max(cnt_, key=cnt_.get)); ox, oy = P['to'][0] * S, P['to'][1] * S
-                segs = [sg if sg[0] == 'Z' else (sg[0], *[(x + ox, y + oy) for (x, y) in sg[1:]]) for sg in segs]
-                pts = [(x + ox, y + oy) for (x, y) in pts]
+                P = next(Q for Q in PIECES if id(Q) == max(cnt_, key=cnt_.get))
+                segs = [sg if sg[0] == 'Z' else (sg[0], *[tfp(P, x, y) for (x, y) in sg[1:]]) for sg in segs]
+                pts = [tfp(P, x, y) for (x, y) in pts]
             xs = [q[0] for q in pts]; ys = [q[1] for q in pts]
             if max(xs) < rx0 or min(xs) > rx1 or max(ys) < ry0 or min(ys) > ry1: continue
             dens = []; lp_ = None                     # 직선 몇 점짜리 획도 고르게 보도록 획 위를 촘촘히 나눔(곡선은 곡선 위 점)
