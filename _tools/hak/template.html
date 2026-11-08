@@ -154,7 +154,7 @@ function build(){
       g.innerHTML=`<rect x="${c.x-hp}" y="${c.y-hp}" width="${c.w+2*hp}" height="${c.h+2*hp}" fill="transparent"/>`+
         `<rect class="face" x="${c.x-pd}" y="${c.y-pd}" width="${c.w+2*pd}" height="${c.h+2*pd}" rx="${10*sc}" stroke-width="${5*sc}"/>`;
       g.style.visibility='hidden';
-      g.addEventListener('click',e=>{e.stopPropagation();if(dragged)return;if(parseFloat(getComputedStyle(g).opacity)<.5||g.style.visibility==='hidden')return;reveal(k)});
+      g.addEventListener('click',e=>{e.stopPropagation();if(dragged)return;if(parseFloat(getComputedStyle(g).opacity)<.5||g.style.visibility==='hidden')return;if(c.o!=null&&c.o===s){next();return}reveal(k)});   // 차례 가리개: 다음 차례 네모를 누르면 「다음」과 같음
       svg.appendChild(g);covEls.push({c,g,k});
     });
     stage.appendChild(svg);
@@ -220,8 +220,11 @@ function render(animate){
 // 펜 획: 지난 단계는 그대로, 방금 단계는 쓴 순서대로 그리기
 function stopAnim(cancel){running.forEach(a=>{try{cancel?a.cancel():a.finish()}catch(e){}});running=[]}
 const writing=()=>running.some(a=>a.playState==='running'||a.playState==='pending');
-const hidCov=t=>t.k!=null&&DATA[p].covers[t.k].s===s-1&&!rev.has(t.k);   // 지금 단계의 아직 안 연 가리개 속 획
-const pending=()=>covEls.some(o=>o.c.s===s-1&&!rev.has(o.k));
+// 가리개가 켜져 있나: 보통은 그 단계(c.s)에서만. 차례 가리개(c.o, 개념 정리 등)는 처음부터 보이고 「다음」마다 o 순서대로 하나씩 열림
+const covOn=(c,k)=>!rev.has(k)&&(c.o!=null?(c.s<=s-1&&s-1<c.o):c.s===s-1);
+const seqCov=()=>(DATA[p].covers||[]).some(c=>c.o!=null);
+const hidCov=t=>t.k!=null&&covOn(DATA[p].covers[t.k],t.k);   // 아직 안 연 가리개 속 획
+const pending=()=>covEls.some(o=>o.c.o==null&&covOn(o.c,o.k));
 // 단계 보이기: 그 단계 영역이 왼쪽 → 오른쪽으로 펼쳐짐(펜 순서 쓰기 대신, 19단원부터)
 const WIPE_MIN_MS=350, WIPE_MAX_MS=1300;   // 한 단계 펼치는 시간(영역 폭에 비례, 문항 전체 폭 ≈ 1.45초)
 let wipeN=0;
@@ -243,13 +246,16 @@ function drawInk(animate){
   stopAnim(true);if(!paths.length)return;
   const i=s-1;
   stage.querySelectorAll('svg.ink clipPath.wp').forEach(c=>c.remove());
-  covEls.forEach(({c,g,k:ck})=>{const on=c.s===i&&!rev.has(ck);g.removeAttribute('clip-path');g.style.visibility=on?'visible':'hidden';g.style.opacity=on?1:0});
+  covEls.forEach(({c,g,k:ck})=>{const on=covOn(c,ck);g.removeAttribute('clip-path');g.style.visibility=on?'visible':'hidden';g.style.opacity=on?1:0});
   paths.forEach(({t,el,op,fade})=>{
     el.removeAttribute('clip-path');if(!fade)el.style.strokeDashoffset=0;
     el.style.visibility=(t.s<=i&&!hidCov(t))?'visible':'hidden';
   });
   if(!animate)return;
-  wipe(paths.filter(x=>x.t.s===i&&!hidCov(x.t)).map(x=>x.el).concat(covEls.filter(o=>o.c.s===i&&!rev.has(o.k)).map(o=>o.g)));
+  wipe(paths.filter(x=>x.t.s===i&&!hidCov(x.t)).map(x=>x.el).concat(covEls.filter(o=>o.c.o==null&&o.c.s===i&&!rev.has(o.k)).map(o=>o.g)));
+  covEls.filter(o=>o.c.o===i&&!rev.has(o.k)).forEach(o=>{  // 차례 가리개: 이번 차례 네모를 열고 그 속 답을 왼쪽 → 오른쪽으로
+    running.push(o.g.animate([{opacity:1,visibility:'visible'},{opacity:0,visibility:'visible'}],{duration:220}));
+    wipe(paths.filter(x=>x.t.k===o.k).map(x=>x.el),450)});
 }
 function reveal(k){
   if(rev.has(k))return;rev.add(k);const o=covEls[k];
@@ -258,16 +264,18 @@ function reveal(k){
   const els=paths.filter(x=>x.t.k===k).map(({el})=>{el.style.visibility='visible';el.style.strokeDashoffset=0;return el});
   wipe(els,450);                                  // 네모 속 답도 왼쪽 → 오른쪽으로
   nextLabel();
-  if(!pending()&&s<DATA[p].n){                   // 이 단계 가리개를 모두 열면 다 쓴 뒤 잠깐 쉬고 다음 단계로
+  if(o.c.o==null&&!pending()&&s<DATA[p].n){                   // 이 단계 가리개를 모두 열면 다 쓴 뒤 잠깐 쉬고 다음 단계로
     const tok=++autoTok,pp=p,ss=s;
     Promise.all(running.map(a=>a.finished.catch(()=>{}))).then(()=>setTimeout(()=>{if(tok===autoTok&&p===pp&&s===ss)go(p,s+1,true)},800));
   }
 }
-function go(np,ns,animate,all){manual=null;autoTok++;if(np!==p){p=np;build()}s=ns;rev=new Set(all?covEls.map(o=>o.k):[]);render(!!animate)}
+function go(np,ns,animate,all){manual=null;autoTok++;const keep=np===p&&ns>s&&seqCov();if(np!==p){p=np;build()}s=ns;
+  rev=new Set(all?covEls.map(o=>o.k):keep?[...rev]:[]);render(!!animate)}   // 차례 가리개는 앞으로 갈 때 직접 눌러 연 네모를 그대로 둠
 function next(){if(writing()){stopAnim(false);return}   // 쓰는 중이면 먼저 그 단계를 완성
   const n=DATA[p].n;
   if(s===n&&pending()){covEls.filter(o=>o.c.s===s-1&&!rev.has(o.k)).forEach(o=>reveal(o.k));return}   // 마지막 단계 가리개: 다음 = 답 보이기, 한 번 더 = 다음 문제
-  if(s<n)go(p,s+1,true);else if(p<DATA.length-1)go(p+1,0)}
+  let ns=s+1;if(seqCov())while(ns<n&&covEls.every(o=>o.c.o!==ns-1||rev.has(o.k)))ns++;   // 차례 가리개: 이미 눌러 연 차례는 건너뜀
+  if(s<n)go(p,ns,true);else if(p<DATA.length-1)go(p+1,0)}
 function nextLabel(){const n=DATA[p].n;$('nextTxt').textContent=(s===n&&p<DATA.length-1&&!pending())?'다음 문제':'다음';
   $('next').disabled=(p===DATA.length-1&&s===n&&!pending())}
 function prev(){if(s>0)go(p,s-1);else if(p>0)go(p-1,DATA[p-1].n,false,true)}
