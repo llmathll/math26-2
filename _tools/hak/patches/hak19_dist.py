@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""hak19에 '모평균(비율) 분포' 개념 페이지를 끼운다(교과서 외 4 다음).
+"""hak19에 '표본평균(비율) 분포' 개념 페이지를 끼운다(교과서 외 4 다음).
 내용: hak20 02·03의 ① 개념 정리 손글씨(하늘색 테두리 제외). PDF 없이 hak20.html의 펜 획·가리개를 옮겨 씀.
   왼쪽 '표본평균의 분포' — 02 오른쪽(모집단 그림·E,V,σ)을 위에, X~N(m,σ²)⇒X̄~N(…) 줄을 그 아래로
   오른쪽 '표본비율의 분포' — 03 개념 정리 그대로
@@ -20,8 +20,8 @@ def parts(f):
 
 _, title, D19, apps = parts(src19)
 D20 = parts(src20)[2]
-NUM = '모평균(비율) 분포'
-D19 = [d for d in D19 if d.get('num') != NUM]
+NUM = '표본평균(비율) 분포'
+D19 = [d for d in D19 if d.get('num') not in (NUM, '모평균(비율) 분포')]   # 예전 이름도 바꿔 끼움
 
 def nums(t): v = [float(x) for x in re.findall(r'-?\d+\.?\d*', t['d'])]; return v[0::2], v[1::2]
 def bb(t): xs, ys = nums(t); return min(xs), min(ys), max(xs), max(ys)
