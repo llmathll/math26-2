@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """hak19에 '모평균(비율) 분포' 개념 페이지를 끼운다(교과서 외 4 다음).
 내용: hak20 02·03의 ① 개념 정리 손글씨(하늘색 테두리 제외). PDF 없이 hak20.html의 펜 획·가리개를 옮겨 씀.
-  왼쪽 '모평균의 분포' — 02 오른쪽(모집단 그림·E,V,σ)을 위에, X~N(m,σ²)⇒X̄~N(…) 줄을 그 아래로
-  오른쪽 '모비율의 분포' — 03 개념 정리 그대로
+  왼쪽 '표본평균의 분포' — 02 오른쪽(모집단 그림·E,V,σ)을 위에, X~N(m,σ²)⇒X̄~N(…) 줄을 그 아래로
+  오른쪽 '표본비율의 분포' — 03 개념 정리 그대로
   분홍 가리개는 처음부터 보이고 「다음」마다 하나씩 열림(차례 가리개 c.o, template.html)
 사용: python3 hak19_dist.py <hak19 원본.html> <hak20.html> <출력폴더>
   hak19 원본에 이미 이 페이지가 있으면 바꿔 끼움. 출력: artifact.html, hak19.html
@@ -60,7 +60,7 @@ H = by + (BOTB[3] - BOTB[1]) + M
 
 img = Image.new('RGB', (W, H), 'white'); dr = ImageDraw.Draw(img)
 F = ImageFont.truetype('/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc', 74, index=1)   # KR
-for x, txt in [(M, '모평균의 분포'), (RX, '모비율의 분포')]:
+for x, txt in [(M, '표본평균의 분포'), (RX, '표본비율의 분포')]:
     dr.rounded_rectangle([x, 52, x + 14, 128], 4, fill=(47, 95, 170))
     dr.text((x + 36, 90), txt, font=F, fill=(29, 42, 68), anchor='lm')
 xm = M + LW + 65; dr.line([xm, 60, xm, H - 40], fill=(200, 205, 214), width=4)
