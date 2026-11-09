@@ -75,7 +75,7 @@ def b64(a):
 out = []; cache = {}
 for idx, it in enumerate(C.ITEMS):
     if it.get('kind') == 'app':
-        out.append(dict(kind='app', app=it['app'], sec=it['sec'], num=it['num'], toc=it.get('toc', it['num']), g=it.get('group', it['sec']), w=1600, h=900, n=0, steps=[]))
+        out.append(dict(kind='app', app=it['app'], sec=it['sec'], num=it['num'], label=it.get('label', it['num']), toc=it.get('toc', it['num']), g=it.get('group', it['sec']), w=1600, h=900, n=0, steps=[]))
         print(idx, 'APP', it['app']); continue
     pg = it['page']; im = MARK[pg]; cl = CLEAN[pg]
     PIECES = it.get('pieces')
@@ -328,6 +328,7 @@ for idx, it in enumerate(C.ITEMS):
                 y = y1
             else: y += 1
         rec['gaps'] = gaps
+    if it.get('label') or getattr(C, 'NUM_FMT', None): rec['label'] = it.get('label') or C.NUM_FMT.format(it['num'])   # (23) 아래 왼쪽 제목(예: '모의고사 13번')
     if it.get('scale'): rec['scale'] = it['scale']    # 공통 배율에 곱하는 값(예 0.9: 이 문항만 조금 작게)
     if it.get('solo'): rec['solo'] = 1                # 공통 배율 계산에서 뺌(이 문항만 필요하면 조금 더 축소)
     if it.get('link'): rec['link'] = it['link']; rec['linkName'] = it.get('linkName', '연결 자료')

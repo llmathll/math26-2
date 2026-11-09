@@ -204,7 +204,7 @@ function follow(instant){
 }
 function render(animate){
   const d=DATA[p],n=d.n;
-  $('num').textContent=d.num;
+  $('num').textContent=d.label||d.num;
   const pl=$('plink');pl.hidden=!d.link;if(d.link){pl.href=d.link;pl.title=(d.linkName||'연결 자료')+' 열기'}
   $('reset').disabled=$('all').disabled=d.kind==='app';
   stage.querySelectorAll('.layer').forEach(el=>{

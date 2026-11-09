@@ -1,0 +1,93 @@
+<script type="text/html" id="app-23timer"><style>
+:host{position:absolute;inset:0;display:block}
+*{box-sizing:border-box;margin:0;padding:0}
+.viewport{position:absolute;inset:0;overflow:hidden;background:#fff;color:#1c2231;user-select:none;-webkit-user-select:none;
+  font-family:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif}
+.stage{position:absolute;top:0;left:0;width:1600px;height:900px;transform-origin:0 0;display:flex;flex-direction:column;align-items:center;padding:34px 0 30px}
+h1{font-size:78px;font-weight:700;letter-spacing:.12em;color:#5d3b8f;line-height:1.1;text-wrap:balance}
+.sub{margin-top:10px;font-size:30px;color:#727a8c;font-weight:500}
+.clock{margin-top:6px;font-size:400px;line-height:1.08;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;
+  font-family:"IBM Plex Sans KR","Segoe UI","Apple SD Gothic Neo",system-ui,sans-serif;color:#1c2231;transition:color .4s}
+.stage.warn .clock{color:#d9480f}
+.stage.last .clock,.stage.done .clock{color:#d6453a}
+.track{width:1180px;height:16px;border-radius:8px;background:#e6e8ee;overflow:hidden}
+.fill{height:100%;width:100%;background:#5d3b8f;border-radius:8px;transform-origin:0 50%;transition:background .4s}
+.stage.warn .fill{background:#d9480f}.stage.last .fill,.stage.done .fill{background:#d6453a}
+.msg{margin-top:20px;height:46px;font-size:34px;font-weight:600;color:#4a5264}
+.stage.warn .msg{color:#d9480f}.stage.last .msg,.stage.done .msg{color:#d6453a}
+.btns{margin-top:auto;display:flex;gap:16px;align-items:center}
+button{font:inherit;font-size:30px;font-weight:600;cursor:pointer;border-radius:14px;padding:14px 30px;border:2px solid #cfd3dd;background:#fff;color:#1c2231;-webkit-tap-highlight-color:transparent}
+button.main{background:#1c2231;border-color:#1c2231;color:#fff;min-width:230px;padding:16px 44px;font-size:34px}
+button.sm{font-size:26px;padding:12px 20px;color:#4a5264}
+button:disabled{opacity:.35;cursor:default}
+button:focus-visible{outline:3px solid #5d3b8f;outline-offset:3px}
+.gap{width:28px}
+</style>
+<div class="viewport"><div class="stage" id="stage">
+  <h1>모의고사</h1>
+  <div class="sub">23 모의고사(익힘책) · 05 ~ 13번 · 제한 시간 <span id="lim">25</span>분</div>
+  <div class="clock" id="clock">25:00</div>
+  <div class="track"><div class="fill" id="fill"></div></div>
+  <div class="msg" id="msg">「시작」을 누르면 시험이 시작됩니다</div>
+  <div class="btns">
+    <button class="sm" id="minus" type="button">− 1분</button>
+    <button class="sm" id="plus" type="button">+ 1분</button>
+    <span class="gap"></span>
+    <button class="main" id="main" type="button">시작</button>
+    <button id="reset" type="button">처음으로</button>
+    <span class="gap"></span>
+    <button class="sm" id="snd" type="button">종료음 켬</button>
+  </div>
+</div></div></script>
+<script>
+window.__appInit=window.__appInit||{};
+window.__appInit["23timer"]=function(R){
+const STAGE_W=1600, STAGE_H=900, stage=R.getElementById('stage'), $=id=>R.getElementById(id);
+function fitStage(){ const w=R.host.clientWidth,h=R.host.clientHeight; if(!w||!h) return;
+  const s=Math.min(w/STAGE_W,h/STAGE_H);
+  stage.style.transform=`translate(${Math.round((w-STAGE_W*s)/2)}px,${Math.round((h-STAGE_H*s)/2)}px) scale(${s})`; }
+new ResizeObserver(fitStage).observe(R.host);
+const LIMIT=25*60;
+let total=LIMIT, left=LIMIT, endAt=0, on=false, done=false, sound=true, ac=null, timer=null;
+const fmt=t=>String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');
+function draw(){
+  $('clock').textContent=fmt(left);
+  $('fill').style.transform=`scaleX(${total?left/total:0})`;
+  const started=on||left<total;
+  stage.classList.toggle('warn',!done&&started&&left<=300&&left>60);
+  stage.classList.toggle('last',!done&&started&&left<=60);
+  stage.classList.toggle('done',done);
+  $('main').textContent=done?'종료':on?'일시정지':started?'계속':'시작';
+  $('main').disabled=done;
+  $('minus').disabled=done||left<=60;$('plus').disabled=done;
+  $('lim').textContent=Math.round(total/60);
+  $('msg').textContent=done?'시험 종료 — 펜을 내려놓으세요. 「다음」을 누르면 05번 풀이':
+    !started?'「시작」을 누르면 시험이 시작됩니다':
+    !on?'일시정지':left<=60?'1분 남았습니다':left<=300?'5분 남았습니다':'시험 중';
+  $('snd').textContent=sound?'종료음 켬':'종료음 끔';
+}
+function beep(){ if(!sound||!ac) return;
+  try{ [0,.45,.9].forEach((t,i)=>{ const o=ac.createOscillator(),g=ac.createGain(); o.type='sine'; o.frequency.value=i<2?880:1175;
+    const t0=ac.currentTime+t; g.gain.setValueAtTime(0,t0); g.gain.linearRampToValueAtTime(.35,t0+.03); g.gain.exponentialRampToValueAtTime(.001,t0+(i<2?.35:.9));
+    o.connect(g).connect(ac.destination); o.start(t0); o.stop(t0+1); }); }catch(e){} }
+function tick(){ if(!on) return;
+  left=Math.max(0,Math.ceil((endAt-Date.now())/1000));
+  if(left<=0){ on=false; done=true; clearInterval(timer); timer=null; beep(); }
+  draw(); }
+function start(){ if(done||on) return;
+  try{ ac=ac||new (window.AudioContext||window.webkitAudioContext)(); if(ac.state==='suspended') ac.resume(); }catch(e){}
+  on=true; endAt=Date.now()+left*1000; timer=setInterval(tick,200); draw(); }
+function pause(){ if(!on) return; tick(); on=false; clearInterval(timer); timer=null; draw(); }
+function adj(d){ if(done) return; if(on) tick();
+  if(left+d<60&&d<0) return;
+  left+=d; total=Math.max(total+d,left); if(on) endAt=Date.now()+left*1000; draw(); }
+$('main').onclick=()=>on?pause():start();
+$('reset').onclick=()=>{ on=false; done=false; clearInterval(timer); timer=null; total=left=LIMIT; draw(); };
+$('minus').onclick=()=>adj(-60); $('plus').onclick=()=>adj(60);
+$('snd').onclick=()=>{ sound=!sound; draw(); };
+document.addEventListener('keydown',e=>{ if(window.__appOn!=='23timer') return;
+  if(e.key===' '&&!(e.composedPath()[0].closest&&e.composedPath()[0].closest('button'))){ e.preventDefault(); on?pause():start(); } });
+window.__timer23={get left(){return left},set(n){left=n;if(on)endAt=Date.now()+n*1000;draw()}};   // 점검용
+draw();
+};
+</script>
