@@ -18,6 +18,7 @@
 | `cfg18.py` | 18단원 설정 — 확률표 붙이기(`paste`)·행 형광 강조(`hl`) 예시, 개념 상자와 문항이 겹친 자리 지우기 |
 | `cfg20.py` | 20단원 설정 — 번호만 다른 초록 단계(`cm` + 빈 단계), `drop`, 행 골라 붙이기(ROWPASTE), 표 테두리 메우기 |
 | `cfg19.py` | 19단원 설정 — 분홍 네모 답 가리개·`join`·`CLEAN_FROM_MARK`·표 일부 붙이기(PART1) 예시 |
+| `cfg22.py` | 22단원 설정 — 인쇄 문제만 줄여 재배치(`pieces`+`zoom`), 표 일부를 단계에 나타내기(ROWPASTE `step`), 문제 풀이 앱(15-etc1)을 흰 배경 앱 페이지로 끼움 |
 | `cfg21.py` | 21단원 설정 — 바꾼 쪽은 손풀이에서 펜 획을 지워 바탕으로, 번호 없는 개념 페이지(용어 정리), 인쇄 문제·표 축소 재배치 |
 | `patches/hak19_dist.py` | hak19에 '표본평균분포' 개념 페이지 끼우기 — hak20 02·03 ① 손글씨를 PDF 없이 hak20.html에서 옮겨 배치(차례 가리개 예시) |
 | `apps/` | 저장소 최상위에 따로 올리지 않는 개념 페이지 원본(예: `19binorm.html`) — `embedapp.py`로 끼움 |
@@ -45,7 +46,7 @@ cfg 기본 항목
 - 상단: MARKED, CLEAN, OUT_NAME(`hak{단원}.html`), TITLE, BANNER, RULES, IGNORE, ITEMS, VECTOR(기본 True).
 - ITEMS 순서 = 화면 순서. 문항 항목: page, sec(묶음 이름: 이항분포 복습/중단원 학습 점검/대단원 학습 평가/수학 익힘책/교과서 외 문제 등), num, crop(그 문항 칸 전체), steps[{rects, blue, g, prio}], blank, baseblank, cm, ghost, link, linkName.
 - 앱 항목: `dict(kind='app', app='17normal', sec='개념 탐구 · 교과서', num='정규분포', toc='정규분포', group='중단원 학습 점검')`
-- `embedapp.py`는 어두운 칠판색 → 흰 배경색으로 바꾼다. 앱마다 색이 다르면 COLOR_MAP 보강.
+- `embedapp.py`는 어두운 칠판색 → 흰 배경색으로 바꾼다. 앱마다 색이 다르면 COLOR_MAP 보강. (22) 문제 풀이 앱(math-lesson-app 형식)도 끼울 수 있음 — 스테이지 맞춤 끝이 `setTimeout(fitStage,t)`인 것도 인식.
 
 화면 규격(template.html에 구현됨)
 - 흰 배경(시험 기간 기준). 문항마다 내용 영역만 잘라 왼쪽 위에 붙이고, 문제 번호는 왼쪽 위, 좌우 여백 없음. 문제 바탕은 500dpi 그림, 손풀이는 펜 획(벡터).

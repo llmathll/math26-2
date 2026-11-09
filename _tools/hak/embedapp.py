@@ -18,7 +18,13 @@ COLOR_MAP = {'#0a1420': '#ffffff', '#0e1b2b': '#ffffff', '#16283e': '#f7f8fb', '
   '#49d1c0': '#0f8577', 'rgba(73,209,192,.12)': 'rgba(15,133,119,.10)',
   '#9d8cf5': '#5d3b8f', 'rgba(157,140,245,.12)': 'rgba(93,59,143,.08)', 'rgba(157,140,245,.14)': 'rgba(93,59,143,.10)',
   '#ff7d6a': '#d6453a',
-  'rgba(245,182,66,.24)': 'rgba(217,72,15,.16)', 'rgba(245,182,66,.2)': 'rgba(217,72,15,.12)', 'rgba(73,209,192,.14)': 'rgba(15,133,119,.12)'}
+  'rgba(245,182,66,.24)': 'rgba(217,72,15,.16)', 'rgba(245,182,66,.2)': 'rgba(217,72,15,.12)', 'rgba(73,209,192,.14)': 'rgba(15,133,119,.12)',
+  # (22) 문제 풀이 앱(math-lesson-app 형식, 예 15-etc1): 밝은 반투명 채움·호박색 칩 글자
+  '#141d26': '#ffffff', '#e09e28': '#b83c0c', 'rgba(214,229,245,.28)': 'rgba(28,34,49,.22)',
+  'rgba(234,241,248,.07)': 'rgba(28,34,49,.05)', 'rgba(234,241,248,.08)': 'rgba(28,34,49,.06)', 'rgba(234,241,248,.10)': 'rgba(28,34,49,.07)',
+  'rgba(255,255,255,.04)': 'rgba(28,34,49,.03)', 'rgba(255,255,255,.05)': 'rgba(28,34,49,.04)',
+  'rgba(157,140,245,.04)': 'rgba(93,59,143,.04)', 'rgba(157,140,245,.06)': 'rgba(93,59,143,.05)', 'rgba(157,140,245,.08)': 'rgba(93,59,143,.07)',
+  'rgba(245,182,66,.10)': 'rgba(217,72,15,.08)', 'rgba(73,209,192,.06)': 'rgba(15,133,119,.06)', 'rgba(73,209,192,.18)': 'rgba(15,133,119,.14)'}
 for a, b in KEEP_COLORS.items(): js = js.replace(a, b)
 for a, b in COLOR_MAP.items(): css = css.replace(a, b); js = js.replace(a, b)
 css = css.replace(':root{', ':host{position:absolute;inset:0;display:block;')
@@ -28,7 +34,7 @@ css = css.replace('.viewport{position:fixed;inset:0}', '.viewport{position:absol
 css += '\n#fsBtn{display:none}\n.viewport{color:var(--chalk);user-select:none;-webkit-user-select:none}\n'
 js = js.replace('document.getElementById(', 'R.getElementById(').replace('document.querySelectorAll(', 'R.querySelectorAll(').replace('document.querySelector(', 'R.querySelector(')
 js = js.replace('getComputedStyle(document.documentElement)', 'getComputedStyle(R.host)')
-m = re.search(r'const STAGE_W.*?fitSoon\(\);', js, re.S)
+m = re.search(r'const STAGE_W.*?fitSoon\(\);', js, re.S) or re.search(r'const STAGE_W.*?setTimeout\(fitStage,t\)\);', js, re.S)   # (22) 문제 풀이 앱은 끝이 setTimeout(fitStage)
 if m:
     js = js[:m.start()] + """const STAGE_W=1600, STAGE_H=900, stage=R.getElementById('stage');
 function fitStage(){ const w=R.host.clientWidth,h=R.host.clientHeight; if(!w||!h) return;
