@@ -217,6 +217,8 @@ for idx, it in enumerate(C.ITEMS):
                     if not (thin or (iw > 0 and ih > 0 and iw * ih >= 0.25 * amin)): continue
                     o[:] = [min(o[0], b[0]), min(o[1], b[1]), max(o[2], b[2]), max(o[3], b[3])]; break
             else: boxes.append(b)
+        for r in it.get('covers', []):                # (23) covers: [사각형] 분홍 네모가 없는 손풀이에 cfg로 직접 넣는 답 가리개(원래 좌표)
+            boxes.append([float(v) for v in sc(mv(r))])
         boxS = [[] for _ in boxes]
         # join: [(사각형, (x, y))] 그 사각형 안의 획(초록 9² 등)을 점 (x, y)가 든 가리개에 묶음 → 가리개를 열 때 함께 쓰임
         joins = []
