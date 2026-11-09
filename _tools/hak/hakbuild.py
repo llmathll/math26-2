@@ -116,7 +116,7 @@ for idx, it in enumerate(C.ITEMS):
         M = cache[pg]
     region = rectmask(im.shape, [it['crop']])
     blank = rectmask(im.shape, it.get('blank', []))
-    rule = rectmask(im.shape, getattr(C, 'RULES', {}).get(pg, []))
+    rule = rectmask(im.shape, [] if it.get('norule') else getattr(C, 'RULES', {}).get(pg, []))   # (23) norule: 조각을 구분선 자리로 옮긴 문항은 구분선 제외를 끔
     ign = rectmask(im.shape, getattr(C, 'IGNORE', {}).get(pg, []))
     zone = region & ~blank & ~ign
     ink = M['ink'] & zone & ~rule
