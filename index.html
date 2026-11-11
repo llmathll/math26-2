@@ -136,7 +136,7 @@ group(document.getElementById('tong'),FILES.filter(f=>f.kind==='tong'),'unit',k=
 const r=FILES.find(f=>f.file===recent);
 if(r){const a=document.getElementById('recent');a.href=href(r);a.textContent='최근: '+(r.kind==='hak'?r.unit+'단원 '+r.title:r.id);a.hidden=false}
 
-document.getElementById('foot').textContent='자료 '+FILES.length+'개 · 목차 갱신 '+'2026-11-10'+(local?' · 내 컴퓨터에서 연 목차(단원 수업 화면은 폴더 안 파일, 나머지는 인터넷)':'');
+document.getElementById('foot').textContent='자료 '+FILES.length+'개 · 목차 갱신 '+'2026-11-12'+(local?' · 내 컴퓨터에서 연 목차(단원 수업 화면은 폴더 안 파일, 나머지는 인터넷)':'');
 
 // 전체화면
 const fs=document.getElementById('fs');
