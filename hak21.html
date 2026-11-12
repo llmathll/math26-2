@@ -81,7 +81,9 @@ button:focus-visible{outline:2px solid var(--plum);outline-offset:2px}
 .nav button:disabled{opacity:.28;cursor:default}
 .nav svg{width:18px;height:18px}
 
-@media (max-width:1500px){.grp span{display:none}.nav button{min-width:104px}.bar{gap:16px}}
+/* 묶음 이름(중단원·대단원…)은 아래줄이 한 줄에 들어갈 때만 보인다 — labelFit()이 재서 nolabel을 붙임 */
+.toc.nolabel .grp span{display:none}
+@media (max-width:1500px){.nav button{min-width:104px}.bar{gap:16px}}
 @media (max-width:760px){
   .num{font-size:26px}
   .ctrl{width:100%;justify-content:space-between}
@@ -331,8 +333,25 @@ view.addEventListener('pointermove',e=>{if(dragY===null)return;const dy=e.client
   if(!dragged&&Math.abs(dy)>28&&Math.abs(dy)>Math.abs(e.clientX-dragX)*1.5)dragged=true;
   if(dragged){manual=drag0-dy;follow(true)}});
 ['pointerup','pointercancel'].forEach(t=>view.addEventListener(t,()=>{dragY=null;if(dragged)setTimeout(()=>{dragged=false},350)}));
+// 묶음 이름 보이기: 이름을 넣어도 아래줄이 한 줄이면 보이고, 두 줄로 넘어가면 숨긴다.
+//   문항마다 바뀌지 않게 가장 긴 문항 이름 + Link 버튼이 있는 상태로 잰다. 창 크기·글꼴이 바뀔 때 다시 잼.
+let wideNum=null,barW=-1;
+function labelFit(){
+  const toc=$('toc'),bar=toc.parentElement,num=$('num'),pl=$('plink');
+  if(!toc.children.length)return;
+  const t0=num.textContent,h0=pl.hidden;
+  if(wideNum===null){let m=-1;[...new Set(DATA.map(d=>d.label||d.num))].forEach(t=>{num.textContent=t;const w=num.offsetWidth;if(w>m){m=w;wideNum=t}})}
+  num.textContent=wideNum;if(DATA.some(d=>d.link))pl.hidden=false;
+  toc.classList.remove('nolabel');
+  const els=[...bar.children,...toc.children].filter(e=>e.offsetWidth>0&&e.offsetHeight>0);
+  let top=-1e9,bot=1e9;els.forEach(e=>{const r=e.getBoundingClientRect();top=Math.max(top,r.top);bot=Math.min(bot,r.bottom)});
+  if(top>=bot)toc.classList.add('nolabel');   // 한 줄이면 모든 요소가 같은 가로선에 걸친다
+  num.textContent=t0;pl.hidden=h0;
+}
+new ResizeObserver(()=>{const w=$('toc').parentElement.clientWidth;if(w!==barW){barW=w;labelFit()}}).observe($('toc').parentElement);
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{wideNum=null;labelFit()});
 new ResizeObserver(fit).observe(view);
-build();render();
+build();render();labelFit();
 </script>
 
 </body>
