@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """hak21 '용어 정리' 페이지 오른쪽 여백에 손글씨 두 묶음을 더 넣는다(사용자 요청, PDF 없이 펜 획을 옮김).
-  그림2  X̄ ~ N(m, σ²/n)  — hak22 익힘책 02의 ① 획(남색). 'σ 대신 S 사용 가능' 위. m·σ²/n은 답 가리개.
-          ①(첫 화면) 바로 다음 단계로 나타남.
-  그림1  p̂ ~ N(p, pq/n) … 신뢰구간, √ 안의 pq 대신 p̂q̂ — hak21 12번 ① 획. 오른쪽 넓은 여백.
-          '신뢰구간의 길이'(⑥)까지 나온 뒤 한 줄씩 단계로, 필요한 곳은 답 가리개.
+  X̄ ~ N(m, σ²/n)  — hak22 익힘책 02의 ① 획을 초록으로. 맨 위, p̂ ~ N(p, pq/n) 왼쪽(분수 가로줄 높이를 맞춤).
+          m·σ²/n은 답 가리개. 왼쪽 '신뢰구간의 길이'(⑥) 바로 다음 단계. (처음엔 'σ 대신 S' 위·① 다음이었으나 사용자 수정)
+  p̂ ~ N(p, pq/n) … 신뢰구간, √ 안의 pq 대신 p̂q̂ — hak21 12번 ① 획. 오른쪽 넓은 여백.
+          X̄ 줄 다음부터 한 줄씩 단계로, 필요한 곳은 답 가리개.
   맨 아래 2×1.96×√(p̂q̂/n) → 신뢰구간의 길이  — 손풀이에 없는 내용. 식은 초록, 화살표·용어는 청색(남색)
           (2×1.96× = 11번 ①, √(p̂q̂/n) = 13번 ②, 화살표·신뢰구간의 길이 = 용어 정리 ⑥ 획을 복사)
 사용: python3 hak21_terms.py <hak21.html> <hak22.html> <출력폴더>
@@ -43,16 +43,16 @@ GREEN, NAVY, SKY = '#007500', '#000347', '#88c8ff'
 if 'p21' in T:
     o = T.pop('p21')
     T['strokes'] = [t for t in T['strokes'] if not t.get('x')]
+    sh = o.get('shift', 1)                                       # 첫 판은 기존 단계를 하나씩 밀었음
     for t in T['strokes']:
-        if t['s'] >= 1: t['s'] -= 1
+        if t['s'] >= sh: t['s'] -= sh
     T['covers'] = T['covers'][:o['ncov']]
     T.update(w=o['w'], h=o['h'], n=o['n'], base=o['base'])
 orig = dict(w=T['w'], h=T['h'], n=T['n'], base=T['base'], ncov=len(T.get('covers', [])))
 
-# ---- 단계 번호: 원래 ②~⑥(0~4) → 1~5, 그림2 = 0, 그림1 = 6~ ----
-for t in T['strokes']:
-    if t['s'] >= 0: t['s'] += 1
-S2, S1 = 0, orig['n'] + 1
+# ---- 단계 번호: 원래 ②~⑥(0~4)은 그대로, X̄ 줄 = 5, p̂ 유도 = 6~ ----
+orig['shift'] = 0
+S2, S1 = orig['n'], orig['n'] + 1
 covers = T.setdefault('covers', [])
 PAD = 12
 def cover(ts, step):
@@ -62,21 +62,26 @@ def cover(ts, step):
     for t in ts: t['k'] = k
 add = []
 
-# ---- 그림2: X̄ ~ N(m, σ²/n) (hak22 02 ①) → 'σ 대신 S 사용 가능'(x 795~, y 658~) 위 ----
+# ---- X̄ ~ N(m, σ²/n) (hak22 02 ①, 초록으로) → 맨 위, p̂ ~ N(p, pq/n) 왼쪽 ----
+DX, DY = -30, 0                                                  # 12번 ① → 오른쪽 여백
+g1 = [t for t in Q12['strokes'] if t['s'] == 0 and t['c'] != SKY]
+def bar(ts):                                                     # 분수 가로줄(가장 납작하고 긴 획)의 높이
+    c = [bb(t) for t in ts]; c = [v for v in c if v[3] - v[1] < 14 and v[2] - v[0] > 40]
+    return sum((v[1] + v[3]) / 2 for v in c) / len(c)
 R2 = [860, 530, 1395, 690]
 src = [t for t in H22['strokes'] if t['s'] == 0 and inr(t, R2)]
-b = box(src); dx, dy = 800 - b[0], 462 - b[1]
+b = box(src)
+dx = 980 - b[0]
+dy = (bar([t for t in g1 if inr(t, [2080, 40, 2165, 170])]) + DY) - bar([t for t in src if t.get('k') is not None])
 for ci in sorted({t['k'] for t in src if t.get('k') is not None}):
-    grp = [shift(t, dx, dy, s=S2) for t in src if t.get('k') == ci]
+    grp = [shift(t, dx, dy, s=S2, c=GREEN) for t in src if t.get('k') == ci]
     c = H22['covers'][ci]; k = len(covers)                       # 가리개는 손풀이의 분홍 네모 그대로
     covers.append(dict(s=S2, x=round(c['x'] + dx, 1), y=round(c['y'] + dy, 1), w=c['w'], h=c['h']))
     for t in grp: t['k'] = k
     add += grp
-add += [shift(t, dx, dy, s=S2) for t in src if t.get('k') is None]
+add += [shift(t, dx, dy, s=S2, c=GREEN) for t in src if t.get('k') is None]
 
-# ---- 그림1: 12번 ① (하늘색 구분선 제외) → 오른쪽 여백 ----
-DX, DY = -30, 0
-g1 = [t for t in Q12['strokes'] if t['s'] == 0 and t['c'] != SKY]
+# ---- p̂ 유도: 12번 ① (하늘색 구분선 제외) → 오른쪽 여백 ----
 def line(t):
     x, y = ctr(t)
     if t['c'] == NAVY: return 5                                  # 물결 밑줄 + 신뢰구간(청색)
@@ -102,7 +107,7 @@ b1 = box([u for _, _, u in moved])
 
 # ---- 맨 아래(손풀이에 없는 내용): 2×1.96×√(p̂q̂/n) → 신뢰구간의 길이 ----
 S7 = S1 + 7
-old6 = [t for t in T['strokes'] if t['s'] == orig['n'] and not t.get('x')]   # 용어 정리 ⑥(지금 번호 5)
+old6 = [t for t in T['strokes'] if t['s'] == orig['n'] - 1 and not t.get('x')]   # 용어 정리 ⑥
 CY = sum(box([t for t in old6 if t['c'] == NAVY])[i] for i in (1, 3)) / 2     # 왼쪽 '신뢰구간의 길이'와 같은 높이
 def piece(ts, x, color=None):
     """ts를 왼쪽 끝 x, 세로 가운데 CY에 놓음 → (옮긴 획, 오른쪽 끝)"""
