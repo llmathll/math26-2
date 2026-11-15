@@ -4,6 +4,8 @@
 # 2쪽: 손풀이에서 문항 배치를 바꿈(대단원 16번을 오른쪽 위로, 교과서 외 2번 제외, 17번 0.284→0.28)
 #   → 문제만 PDF 2쪽은 쓰지 않고, 손풀이 2쪽에서 펜 획(분홍 네모 포함)만 지운 쪽을 바탕으로 씀(clean.pdf = 문제만 1쪽 + 지운 2쪽)
 # QR 아래 [수업진행] 글자는 무시(사용자)
+# 용어 정리 오른쪽 여백의 X̄~N(m,σ²/n)·표본비율 신뢰구간 유도·'2×1.96×√(p̂q̂/n) → 신뢰구간의 길이'는 이 cfg가 아니라
+#   patches/hak21_terms.py가 넣는다(PDF 없이 hak21·hak22의 펜 획을 옮김). 이 cfg로 다시 만들면 그 패치를 한 번 더 돌릴 것.
 MARKED = 'mark.pdf'      # = inkpaste.py cfg21.py mark0.pdf mark.pdf (mark0 = 손풀이, 2쪽 검정 인쇄 획 지운 사본)
 CLEAN  = 'clean.pdf'
 OUT_NAME = 'hak21.html'
