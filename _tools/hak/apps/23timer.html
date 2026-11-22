@@ -25,8 +25,8 @@ button:focus-visible{outline:3px solid #5d3b8f;outline-offset:3px}
 </style>
 <div class="viewport"><div class="stage" id="stage">
   <h1>모의고사</h1>
-  <div class="sub">23 모의고사(익힘책) · 05 ~ 13번 · 제한 시간 <span id="lim">25</span>분</div>
-  <div class="clock" id="clock">25:00</div>
+  <div class="sub">23 모의고사(익힘책) · 05 ~ 13번 · 제한 시간 <span id="lim">22</span>분</div>
+  <div class="clock" id="clock">22:00</div>
   <div class="track"><div class="fill" id="fill"></div></div>
   <div class="msg" id="msg">「시작」을 누르면 시험이 시작됩니다</div>
   <div class="btns">
@@ -47,7 +47,7 @@ function fitStage(){ const w=R.host.clientWidth,h=R.host.clientHeight; if(!w||!h
   const s=Math.min(w/STAGE_W,h/STAGE_H);
   stage.style.transform=`translate(${Math.round((w-STAGE_W*s)/2)}px,${Math.round((h-STAGE_H*s)/2)}px) scale(${s})`; }
 new ResizeObserver(fitStage).observe(R.host);
-const LIMIT=25*60;
+const LIMIT=22*60;
 let total=LIMIT, left=LIMIT, endAt=0, on=false, done=false, sound=true, ac=null, timer=null;
 const fmt=t=>String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');
 function draw(){

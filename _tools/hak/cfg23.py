@@ -66,7 +66,7 @@ def _p13():
 P13 = _p13()
 
 ITEMS = [
- # 시험용 타이머(25분) — apps/23timer.html(이미 모듈 형식이라 embedapp 없이 build/apps에 복사)
+ # 시험용 타이머(22분) — apps/23timer.html(이미 모듈 형식이라 embedapp 없이 build/apps에 복사)
  {'kind': 'app', 'app': '23timer', 'sec': '모의고사', 'num': '모의고사', 'toc': '타이머', 'group': '모의고사'},
  # ---------- 1쪽 ----------
  {'page': 1, 'sec': SEC, 'num': '05',
