@@ -23,11 +23,11 @@ button{font:inherit;color:inherit;cursor:pointer}
 .left{background:var(--card);border-radius:24px;padding:26px 26px;display:flex;flex-direction:column;align-items:center;box-shadow:0 2px 6px rgba(20,30,60,.08)}
 .left h1{font-size:40px;margin:0 0 4px;letter-spacing:-.5px}
 .left .sub{font-size:22px;color:var(--sub);margin-bottom:18px}
-#qr{width:330px;height:330px;display:flex;align-items:center;justify-content:center;border-radius:16px;background:#fff;border:3px solid var(--line);padding:12px}
+#qr{width:300px;height:300px;display:flex;align-items:center;justify-content:center;border-radius:16px;background:#fff;border:3px solid var(--line);padding:12px}
 #qr img,#qr canvas{width:100%!important;height:100%!important}
 #qr .noqr{font-size:22px;color:var(--sub);text-align:center;line-height:1.5}
-.cls{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap;justify-content:center}
-.cls button{min-width:86px;height:64px;border-radius:16px;border:3px solid var(--line);background:#fff;font-size:28px;font-weight:700}
+.cls{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:20px;width:100%}
+.cls button{height:60px;border-radius:16px;border:3px solid var(--line);background:#fff;font-size:28px;font-weight:700}
 .cls button.on{background:var(--acc);border-color:var(--acc);color:#fff}
 .count{margin-top:auto;text-align:center}
 .count .big{font-size:76px;font-weight:800;line-height:1}
@@ -43,7 +43,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .legend i{display:inline-block;width:20px;height:20px;border-radius:5px;margin-right:6px;vertical-align:-3px}
 .grid{display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:1fr;gap:10px;flex:1;min-height:0}
 .st{border:3px solid var(--line);border-radius:16px;padding:4px 6px;text-align:center;background:#fafbfd;transition:background .3s,border-color .3s;display:flex;flex-direction:column;justify-content:center}
-.st .n{font-size:40px;font-weight:700;line-height:1.15}
+.st .n{font-size:38px;font-weight:700;line-height:1.1}
 .st .d{display:flex;gap:6px;justify-content:center;margin-top:2px}
 .st .d i{width:30px;height:16px;border-radius:5px;background:#e3e7ef}
 .st .d i.f1{background:var(--q1)}.st .d i.f2{background:var(--q2)}.st .d i.f3{background:var(--q3)}
@@ -95,6 +95,19 @@ td .qn{display:inline-block;width:34px;height:34px;border-radius:9px;color:#fff;
 .olist div span{color:var(--ng);font-weight:800;margin-right:10px}
 .note3{margin-top:auto;font-size:30px;line-height:1.5;background:#f3f6fc;border-radius:16px;padding:14px 20px;min-height:110px}
 .note3 b{color:var(--ng)}
+
+/* 1번 풀이: 3×3 판 */
+.gwrap{position:relative}
+.cell{transition:fill .35s,stroke .35s}
+.shlist{display:flex;flex-direction:column;gap:12px}
+.shrow{display:flex;align-items:center;gap:20px;padding:8px 14px;border-radius:16px;border:3px solid transparent;opacity:.35;transition:opacity .3s}
+.shrow.on{opacity:1}
+.shrow.cur{border-color:var(--acc);background:#f3f6fd;opacity:1}
+.shrow .val{font-size:40px;min-width:90px}
+.shrow .chk{font-size:34px;color:var(--ok);font-weight:800;margin-left:auto}
+.eq{font-size:52px;text-align:center;min-height:76px;margin-top:18px;white-space:nowrap}
+.eq .sumv{color:var(--ng);font-weight:700}
+.gcap{font-size:30px;color:var(--sub);text-align:center;margin-top:8px;min-height:44px}
 </style>
 </head>
 <body>
@@ -127,18 +140,17 @@ td .qn{display:inline-block;width:34px;height:34px;border-radius:9px;color:#fff;
    API      : Apps Script 웹 앱 주소(…/exec). 비워 두면 가상 데이터로 미리보기
    QUIZ     : 퀴즈 앱의 QUIZ 값과 같아야 함
    QUIZ_URL : 학생용 퀴즈 주소(깃허브). QR로 만들어짐
-   N        : 한 반 학생 수
-   CLASSES  : 담당 반 번호
+   CLASSES  : 담당 반 번호와 반별 학생 수
    ====================================================================== */
 const API      = '';
 const QUIZ     = '퍼즐퀴즈';
 const QUIZ_URL = 'https://llmathll.github.io/math26-2/puzzle-quiz.html';
-const N        = 28;
-const CLASSES  = [1,2,3,4];
+const CLASSES  = {7:23, 8:23, 9:23, 10:24, 11:23, 12:30};   // 반: 인원
 const QNAMES   = ['도형 퍼즐','숫자 세기 수열','시곗바늘'];
 const QCOL     = ['var(--q1)','var(--q2)','var(--q3)'];
 
-let cls=CLASSES[0], closed=false, rows=[];
+const CLS=Object.keys(CLASSES).map(Number);
+let cls=CLS[0], N=CLASSES[cls], closed=false, rows=[];
 const $=id=>document.getElementById(id);
 
 /* 화면 맞춤 (16:9, 여백 없이) */
@@ -151,14 +163,14 @@ addEventListener('resize',fit); fit();
   const url=QUIZ_URL||(API?'':'https://example.com/퍼즐퀴즈.html');
   if(!url){box.innerHTML='<div class="noqr">QUIZ_URL을 넣으면<br>여기에 QR이 나와요</div>';return}
   if(typeof QRCode==='undefined'){box.innerHTML=`<div class="noqr">${url}</div>`;return}
-  new QRCode(box,{text:url,width:300,height:300,correctLevel:QRCode.CorrectLevel.M});
+  new QRCode(box,{text:url,width:270,height:270,correctLevel:QRCode.CorrectLevel.M});
 })();
 
 /* 반 버튼 */
 function drawCls(){
-  $('cls').innerHTML=CLASSES.map(c=>`<button class="${c===cls?'on':''}" data-c="${c}">${c}반</button>`).join('');
+  $('cls').innerHTML=CLS.map(c=>`<button class="${c===cls?'on':''}" data-c="${c}">${c}반</button>`).join('');
 }
-$('cls').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;cls=+b.dataset.c;closed=false;rows=[];drawCls();draw();load()});
+$('cls').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;cls=+b.dataset.c;N=CLASSES[cls];closed=false;rows=[];drawCls();draw();load()});
 $('closeBtn').addEventListener('click',()=>{closed=!closed;draw()});
 
 /* 데이터 정리: 번호·문항별 마지막 제출만 사용 */
@@ -183,6 +195,7 @@ function draw(){
     const s=sub[n], k=s.filter(Boolean).length; if(k===3) all++;
     g+=`<div class="st ${k===3?'all':k?'part':''}"><div class="n num">${n}</div><div class="d">${s.map((v,i)=>`<i class="${v?'f'+(i+1):''}"></i>`).join('')}</div></div>`;
   }
+  const cols=N>28?8:7;$('grid').style.gridTemplateColumns=`repeat(${cols},1fr)`;
   $('grid').innerHTML=g;
   $('cnt').innerHTML=`${all}<small> / ${N}</small>`;
   $('tb').innerHTML=st.map((s,i)=>{
@@ -230,15 +243,7 @@ function gridSVG(cells,showNum){
   return `<svg width="${3*u+6}" height="${3*u+6}">${s}</svg>`;
 }
 const SOL=[
- { /* 1번 도형 퍼즐 */
-   steps:[
-    {vis:()=>`<div style="display:flex;flex-wrap:wrap;gap:26px 40px;justify-content:center;align-items:center">${['L','T','S','W','X'].map((k,i)=>`<div style="display:flex;align-items:center;gap:12px">${shapeSVG(SH[k],38)}<span class="num" style="font-size:44px;${i===4?'color:var(--ng);font-weight:700':''}">= ${i===4?'?':sum(SH[k])}</span></div>`).join('')}</div>`,
-     txt:'도형은 모두 <b>5칸</b>이고, 모양마다 값이 달라요.'},
-    {vis:()=>gridSVG([],true), txt:'9칸짜리 판에 1부터 9까지 <b>세로 방향</b>으로 써요.'},
-    {vis:()=>gridSVG(SH.L,true), txt:`ㄴ자를 판에 올리면 <span class="num">1 + 2 + 3 + 6 + 9 = 21</span>`},
-    {vis:()=>gridSVG(SH.T,true), txt:`ㅜ자를 올리면 <span class="num">1 + 4 + 7 + 5 + 6 = 23</span>`},
-    {vis:()=>gridSVG(SH.X,true), txt:`십자를 올리면 <span class="num">4 + 2 + 5 + 8 + 6 = <b style="color:var(--ng)">25</b></span>`}
-   ]},
+ { grid:true },
  { /* 2번 숫자 세기 수열 */
    one:true, head:'1, 11, 12, 1121, 1321, 122131, <span style="color:var(--ng)">?</span>',
    steps:[
@@ -252,9 +257,66 @@ const SOL=[
    ]},
  { clock:true }
 ];
+
+/* ---------- 1번: 3×3 판 위에 도형을 올려 더하기 ---------- */
+const GSEQ=[{k:null,name:'판 만들기'},{k:'L',name:'ㄴ자'},{k:'T',name:'ㅜ자'},{k:'S',name:'ㄹ자'},{k:'W',name:'계단'},{k:'X',name:'십자'}];
+let G={timers:[]};
+function gClear(){G.timers.forEach(clearTimeout);G.timers=[]}
+function gLater(ms,f){G.timers.push(setTimeout(f,ms))}
+const numAt=(r,c)=>c*3+r+1;
+function gBoard(){
+  const u=150;let s='';
+  for(let r=0;r<3;r++)for(let c=0;c<3;c++){
+    s+=`<rect class="cell" id="gc${r}${c}" x="${c*u+4}" y="${r*u+4}" width="${u}" height="${u}" fill="#fff" stroke="#9aa4b8" stroke-width="3"/>`;
+    s+=`<text id="gt${r}${c}" x="${c*u+4+u/2}" y="${r*u+4+u/2+27}" text-anchor="middle" font-family="STIX Two Text,serif" font-size="80" fill="#1b2232" style="transition:opacity .3s">${numAt(r,c)}</text>`;
+  }
+  return `<svg width="${3*u+8}" height="${3*u+8}">${s}</svg>`;
+}
+function gDraw(){
+  gClear();
+  const st=solStep, cur=GSEQ[st];
+  const list=GSEQ.slice(1).map((g,i)=>{const idx=i+1;
+    return `<div class="shrow ${idx<st?'on':''} ${idx===st?'cur':''}">${shapeSVG(SH[g.k],26)}<span class="val num">= ${g.k==='X'?(idx<st?'25':'?'):sum(SH[g.k])}</span>${idx<st?'<span class="chk">✓</span>':''}</div>`}).join('');
+  const ctl=`<div class="ctl" style="margin-top:auto;justify-content:flex-end"><button data-ov="prev" ${st===0?'disabled':''}>◀ 이전</button><button data-ov="replay">다시 보기</button><button class="pri" data-ov="next" ${st===GSEQ.length-1?'disabled':''}>다음 ▶</button></div>`;
+  ov.innerHTML=ovHead(0)+`<div class="ovb"><div class="box vis"><div class="gwrap">${gBoard()}</div><div class="eq num" id="eq"></div><div class="gcap" id="gcap"></div></div>
+    <div class="box"><div class="shlist">${list}</div>${ctl}</div></div>`;
+  gPlay();
+}
+function gPlay(){
+  gClear();
+  const st=solStep, cur=GSEQ[st], eq=document.getElementById('eq'), cap=document.getElementById('gcap');
+  for(let r=0;r<3;r++)for(let c=0;c<3;c++){const rc=document.getElementById(`gc${r}${c}`);rc.setAttribute('fill','#fff');rc.setAttribute('stroke','#9aa4b8');rc.setAttribute('stroke-width','3')}
+  eq.innerHTML='';
+  if(st===0){
+    cap.innerHTML='1부터 9까지 <b>세로 방향</b>으로 써요';
+    const order=[];for(let c=0;c<3;c++)for(let r=0;r<3;r++)order.push([r,c]);
+    order.forEach(([r,c])=>document.getElementById(`gt${r}${c}`).style.opacity=0);
+    order.forEach(([r,c],i)=>gLater(250+i*330,()=>{document.getElementById(`gt${r}${c}`).style.opacity=1}));
+    return;
+  }
+  const cells=SH[cur.k], total=sum(cells);
+  cap.innerHTML=`${cur.name} 도형을 판 위에 올려요`;
+  /* 1) 도형 모양 전체를 연하게 먼저 보여 주기 */
+  gLater(200,()=>cells.forEach(([r,c])=>{const e=document.getElementById(`gc${r}${c}`);e.setAttribute('fill','#fde7b4');e.setAttribute('stroke','#a8730f');e.setAttribute('stroke-width','5')}));
+  /* 2) 작은 수부터 한 칸씩 더하기 */
+  const ord=cells.slice().sort((a,b)=>numAt(...a)-numAt(...b));
+  let run=0, parts=[];
+  ord.forEach(([r,c],i)=>gLater(1000+i*750,()=>{
+    const e=document.getElementById(`gc${r}${c}`); e.setAttribute('fill','#f4bd52'); e.setAttribute('stroke','#cc3d3d');
+    gLater(350,()=>e.setAttribute('stroke','#a8730f'));
+    run+=numAt(r,c); parts.push(numAt(r,c)); eq.innerHTML=parts.join(' + ');
+  }));
+  gLater(1000+ord.length*750+150,()=>{
+    eq.innerHTML=`${parts.join(' + ')} = <span class="sumv">${total}</span>`;
+    cap.innerHTML=cur.k==='X'?'그래서 물음표는 <b style="color:var(--ng)">25</b>':`문제의 값 ${total}과 같아요`;
+    const row=document.querySelector('.shrow.cur');
+    if(row){const v=row.querySelector('.val'); if(cur.k==='X') v.innerHTML='= <span style="color:var(--ng);font-weight:700">25</span>';
+      if(!row.querySelector('.chk')) row.insertAdjacentHTML('beforeend','<span class="chk">✓</span>');}
+  });
+}
 let solQ=-1, solStep=0;
-function openSol(q){solQ=q;solStep=0;ov.classList.add('show');if(SOL[q].clock)clockInit();else drawSol()}
-function closeSol(){ov.classList.remove('show');solQ=-1;clockStop()}
+function openSol(q){solQ=q;solStep=0;ov.classList.add('show');if(SOL[q].clock)clockInit();else if(SOL[q].grid)gDraw();else drawSol()}
+function closeSol(){ov.classList.remove('show');solQ=-1;clockStop();gClear()}
 function ovHead(q){return `<div class="ovh"><div class="qn" style="background:${QCOL[q]}">${q+1}</div><h2>${QNAMES[q]} 풀이</h2><div class="sp"></div><div class="ctl"><button class="dark" data-ov="close">닫기 ✕</button></div></div>`}
 function drawSol(){
   const q=solQ, d=SOL[q], n=d.steps.length, st=d.steps[solStep];
@@ -326,6 +388,12 @@ function clockStop(){C.play=false;if(C.raf)cancelAnimationFrame(C.raf)}
 ov.addEventListener('click',e=>{
   const b=e.target.closest('[data-ov]'); if(!b) return; const a=b.dataset.ov;
   if(a==='close') return closeSol();
+  if(SOL[solQ]&&SOL[solQ].grid){
+    if(a==='prev'&&solStep>0){solStep--;gDraw()}
+    if(a==='next'&&solStep<GSEQ.length-1){solStep++;gDraw()}
+    if(a==='replay') gPlay();
+    return;
+  }
   if(a==='prev'&&solStep>0){solStep--;drawSol()}
   if(a==='next'&&solStep<SOL[solQ].steps.length-1){solStep++;drawSol()}
   if(a==='play'){
