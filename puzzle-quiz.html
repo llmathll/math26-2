@@ -129,7 +129,13 @@ details.solt summary{margin-top:10px}
 .shp svg{display:block}
 .shp .v{font-family:"STIX Two Text","Times New Roman",serif;font-size:1.35em;white-space:nowrap}
 .shp .v.q{color:var(--ng);font-weight:700}
-.seq{font-family:"STIX Two Text","Times New Roman",serif;font-size:1.3em;text-align:center;margin:12px 0 4px;letter-spacing:.02em;word-break:break-all}
+.seq{font-family:"STIX Two Text","Times New Roman",serif;font-size:1.3em;text-align:center;margin:12px 0 4px;letter-spacing:.02em;line-height:1.5}
+.qtabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0 2px}
+.qtab{min-height:52px;border:2px solid var(--line);background:#fff;border-radius:14px;font-size:.92em;font-weight:700;color:var(--sub);cursor:pointer;padding:4px 6px;line-height:1.25}
+.qtab small{display:block;font-weight:500;font-size:.78em}
+.qtab.on{border-color:var(--acc);color:var(--acc);background:var(--accbg)}
+.qtab.ok{color:var(--ok)}.qtab.ng{color:var(--hint)}
+.qtab.on.ok,.qtab.on.ng{background:var(--accbg)}
 .solfig{display:flex;justify-content:center;margin:6px 0}
 .sending{font-size:.78em;color:var(--sub);text-align:right;margin-top:4px}
 @media (min-width:700px){
@@ -176,39 +182,42 @@ function gridSVG(cells){
   for(let r=0;r<3;r++)for(let c=0;c<3;c++){
     const on=cs.has(r+','+c);
     s+=`<rect x="${c*u+2}" y="${r*u+2}" width="${u}" height="${u}" fill="${on?'#f4bd52':'#fff'}" stroke="${on?'#a8730f':'#9aa4b8'}" stroke-width="${on?2:1.2}"/>`;
-    s+=`<text x="${c*u+2+u/2}" y="${r*u+2+u/2+8}" text-anchor="middle" font-family="STIX Two Text,Times New Roman,serif" font-size="24" fill="#1d2433">${c*3+r+1}</text>`;
+    s+=`<text x="${c*u+2+u/2}" y="${r*u+2+u/2+8}" text-anchor="middle" font-family="STIX Two Text,Times New Roman,serif" font-size="24" fill="#1d2433">${r*3+c+1}</text>`;
   }
   return `<svg width="${3*u+4}" height="${3*u+4}" viewBox="0 0 ${3*u+4} ${3*u+4}">${s}</svg>`;
 }
+/* 판의 수: 전화 키패드처럼 1 2 3 / 4 5 6 / 7 8 9 */
 const SH={
-  L:[[0,0],[1,0],[2,0],[2,1],[2,2]],
-  T:[[0,0],[0,1],[0,2],[1,1],[2,1]],
-  S:[[0,1],[0,2],[1,1],[2,0],[2,1]],
-  W:[[0,0],[0,1],[1,1],[1,2],[2,2]],
-  X:[[0,1],[1,0],[1,1],[1,2],[2,1]]
+  A:[[0,2],[1,2],[2,2],[1,0],[1,1]],   /* ㅓ자   3+6+9+4+5 = 27 */
+  B:[[0,2],[1,1],[1,2],[2,0],[2,1]],   /* 계단   3+5+6+7+8 = 29 */
+  C:[[0,2],[1,1],[1,2],[2,1],[2,2]],   /* P자    3+5+6+8+9 = 31 */
+  D:[[0,2],[1,2],[2,2],[2,0],[2,1]],   /* 꺾쇠   3+6+9+7+8 = 33 */
+  X:[[0,1],[1,0],[1,1],[1,2],[2,1]]    /* 십자   2+4+5+6+8 = 25 */
 };
+/* 수열을 쉼표 뒤에서만 줄바꿈 */
+const seqHTML=a=>a.map((t,i)=>`<span style="white-space:nowrap">${t}${i<a.length-1?',':''}</span>`).join(' ');
 
 /* ===================== 문제 ===================== */
 const QS=[
  { unit:'도형 퍼즐', ans:25,
    text:`규칙을 찾아 물음표에 들어갈 수를 구하시오.
      <div class="shapes">
-       <div class="shp">${shapeSVG(SH.L)}<span class="v">= 21</span></div>
-       <div class="shp">${shapeSVG(SH.T)}<span class="v">= 23</span></div>
-       <div class="shp">${shapeSVG(SH.S)}<span class="v">= 25</span></div>
-       <div class="shp">${shapeSVG(SH.W)}<span class="v">= 27</span></div>
+       <div class="shp">${shapeSVG(SH.A)}<span class="v">= 27</span></div>
+       <div class="shp">${shapeSVG(SH.B)}<span class="v">= 29</span></div>
+       <div class="shp">${shapeSVG(SH.C)}<span class="v">= 31</span></div>
+       <div class="shp">${shapeSVG(SH.D)}<span class="v">= 33</span></div>
        <div class="shp">${shapeSVG(SH.X)}<span class="v q">= ?</span></div>
      </div>`,
    pre:'? '+m('='),
-   diag:v=> v===29?'21, 23, 25, 27 다음이라 29일 것 같지만, 순서가 아니라 <b>도형의 모양</b>이 값을 정해요.':'',
-   hint:'모든 도형은 5칸짜리예요. 각 도형이 <b>9칸짜리 정사각형 판</b> 위에 놓여 있다고 생각해 보세요. 판의 칸마다 수가 적혀 있다면?',
+   diag:v=> v===35?'27, 29, 31, 33 다음이라 35일 것 같지만, 순서가 아니라 <b>도형의 모양과 위치</b>가 값을 정해요.':'',
+   hint:'모든 도형은 5칸짜리예요. 각 도형이 <b>9칸짜리 정사각형 판</b> 위에 놓여 있다고 생각해 보세요. 판의 칸마다 수가 적혀 있다면? (전화기 숫자판을 떠올려 보세요.)',
    sol:[
-     `1부터 9까지를 3×3 판에 <b>세로 방향</b>으로 쓰고, 도형이 덮은 칸의 수를 더한 값이에요.`,
-     `<div class="solfig">${gridSVG(SH.L)}</div>ㄴ자: ${m('1 + 2 + 3 + 6 + 9 = 21')}`,
-     `<div class="solfig">${gridSVG(SH.X)}</div>십자: ${m('4 + 2 + 5 + 8 + 6 = 25')}`
+     `1부터 9까지를 3×3 판에 <b>전화기 숫자판처럼 가로로</b> 쓰고, 도형이 덮은 칸의 수를 더한 값이에요.`,
+     `<div class="solfig">${gridSVG(SH.D)}</div>꺾쇠 모양: ${m('3 + 6 + 7 + 8 + 9 = 33')}`,
+     `<div class="solfig">${gridSVG(SH.X)}</div>십자: ${m('2 + 4 + 5 + 6 + 8 = 25')}`
    ]},
  { unit:'숫자 세기 수열', ans:132231,
-   text:`규칙을 찾아 물음표에 들어갈 수를 구하시오.<div class="seq">1, 11, 12, 1121, 1321, 122131, ?</div>`,
+   text:`규칙을 찾아 물음표에 들어갈 수를 구하시오.<div class="seq">${seqHTML(['1','11','12','1121','1321','122131','?'])}</div>`,
    pre:'? '+m('='),
    diag:v=> v===312213?'규칙은 거의 찾았어요! 읽는 순서를 확인해 보세요. <b>숫자를 먼저</b>, 개수를 나중에 써요.'
      : v===1122113111?'붙어 있는 것끼리 묶어 읽지 않아요. 수 전체에서 각 숫자가 <b>모두 몇 개</b>인지 세어 보세요.':'',
@@ -285,11 +294,19 @@ function solBox(q,open){
   const inner=`<div class="sol"><div class="t">풀이</div>${q.sol.map(l=>`<div class="ln">${l}</div>`).join('')}</div>`;
   return open?inner:`<details class="solt"><summary>풀이 보기</summary>${inner}</details>`;
 }
+function tabs(){
+  return `<div class="qtabs">${QS.map((q,i)=>{const r=S.res[i];
+    const st=!r.done?(r.attempts?'힌트 받음':'안 풂'):r.correct?'✓ 정답':'풀이 확인';
+    return `<button class="qtab ${i===S.qi?'on':''} ${r.done?(r.correct?'ok':'ng'):''}" data-qt="${i}">문제 ${i+1}<small>${st}</small></button>`}).join('')}</div>`;
+}
+const allDone=()=>S.res.every(r=>r.done);
+function nextUndone(){for(let k=1;k<=NQ;k++){const j=(S.qi+k)%NQ;if(!S.res[j].done)return j}return -1}
+function goQ(i){S.qi=i;S.active=S.res[i].done?null:'a'+i;save();render();window.scrollTo(0,0)}
 function renderQ(){
   const q=QS[S.qi], r=S.res[S.qi];
-  let h=header(`문제 ${S.qi+1} / ${NQ}`);
+  let h=header(`문제 ${S.qi+1} / ${NQ}`)+tabs();
   h+=`<div class="card"><span class="tag">문제 ${S.qi+1} · ${q.unit}</span><div class="ptext">${q.text}</div></div>`;
-  const inp=r.done?`<span class="locked${r.correct?'':' rvd'}">${r.final}</span>`:blank('a');
+  const inp=r.done?`<span class="locked${r.correct?'':' rvd'}">${r.final}</span>`:blank('a'+S.qi);
   h+=`<div class="step${r.done?' done':' cur'}" id="st">
     <div class="sh"><span class="no">답</span><span>답을 입력하세요</span>${statusTag(r)}</div>
     <div class="ansline">${q.pre} ${inp}</div>
@@ -297,7 +314,7 @@ function renderQ(){
     ${(!r.done&&r.attempts===1)?'<div class="tries">남은 기회 1번 · 한 번 더 틀리면 풀이가 나와요</div>':''}
     ${r.done?solBox(q,!r.correct):''}
   </div>`;
-  if(r.done) h+=`<button class="btn" data-act="next">${S.qi<NQ-1?'다음 문제 →':'결과 보기 →'}</button>`;
+  if(r.done) h+=`<button class="btn" data-act="next">${allDone()?'결과 보기 →':'다음 문제 →'}</button>`;
   return h;
 }
 function renderEnd(){
@@ -308,7 +325,8 @@ function renderEnd(){
    <table><tr><th class="l">문제</th><th>결과</th></tr>
    ${QS.map((q,i)=>{const [o,t]=lab(S.res[i]);return `<tr><td class="l">${i+1}. ${q.unit}</td><td><span class="${o}">${o}</span> ${t}</td></tr>`}).join('')}
    </table></div>
-   <div class="card" style="text-align:center">수고했어요! 칠판을 봐 주세요.</div>`;
+   <div class="card" style="text-align:center">수고했어요! 칠판을 봐 주세요.</div>
+   <button class="btn sec" data-act="back">문제 다시 보기</button>`;
   return h;
 }
 function inputOpen(){return S.screen==='start'||(S.screen==='q'&&!S.res[S.qi].done)}
@@ -322,19 +340,20 @@ function shake(id){const el=document.querySelector(`[data-id="${id}"]`);if(el){e
 
 /* ===================== 진행 ===================== */
 function startQuiz(){
-  S.res=QS.map(newRes); S.qi=0; S.vals={}; S.active='a'; S.screen='q';
-  try{const saved=JSON.parse(localStorage.getItem('pq_'+QUIZ+'_'+S.cls+'_'+S.num)||'null'); if(saved&&saved.res){S.res=saved.res;S.qi=saved.qi;if(S.res[S.qi].done)S.active=null}}catch(e){}
+  S.res=QS.map(newRes); S.qi=0; S.vals={}; S.screen='q';
+  try{const saved=JSON.parse(localStorage.getItem('pq2_'+QUIZ+'_'+S.cls+'_'+S.num)||'null'); if(saved&&saved.res){S.res=saved.res;S.qi=saved.qi}}catch(e){}
+  S.active=S.res[S.qi].done?null:'a'+S.qi;
   render(); window.scrollTo(0,0);
 }
-function save(){try{localStorage.setItem('pq_'+QUIZ+'_'+S.cls+'_'+S.num,JSON.stringify({res:S.res,qi:S.qi}))}catch(e){}}
+function save(){try{localStorage.setItem('pq2_'+QUIZ+'_'+S.cls+'_'+S.num,JSON.stringify({res:S.res,qi:S.qi}))}catch(e){}}
 function grade(){
   const q=QS[S.qi], r=S.res[S.qi]; if(r.done) return;
-  const raw=S.vals.a; if(!raw){shake('a');return}
+  const id='a'+S.qi, raw=S.vals[id]; if(!raw){S.active=id;render();shake(id);return}
   const v=parseInt(raw,10); r.attempts++;
   if(v===q.ans){
     r.done=true;r.correct=true;r.firstCorrect=r.attempts===1;r.final=m(v);r.mt='ok';r.msg='<b>정답!</b>';S.active=null;
   }else{
-    if(r.attempts===1)r.firstCorrect=false; r.wrong.push(v); S.vals.a='';
+    if(r.attempts===1)r.firstCorrect=false; r.wrong.push(v); S.vals[id]='';
     if(r.attempts>=2){
       r.done=true;r.correct=false;r.final=m(q.ans);r.mt='ng';r.msg=`<b>오답이에요.</b> 정답은 ${m(q.ans)} 이에요. 아래 풀이를 확인하세요.`;S.active=null;
     }else{
@@ -365,8 +384,10 @@ app.addEventListener('click',e=>{
   if(a==='check') checkStart();
   else if(a==='yes') startQuiz();
   else if(a==='no'){S.screen='start';S.vals={};S.active='cls';render()}
-  else if(a==='next'){ if(S.qi<NQ-1){S.qi++;S.vals={};S.active='a';save();render();window.scrollTo(0,0)} else {S.screen='end';S.active=null;render();window.scrollTo(0,0)} }
+  else if(a==='next'){ const j=nextUndone(); if(j>=0) goQ(j); else {S.screen='end';S.active=null;render();window.scrollTo(0,0)} }
+  else if(a==='back'){S.screen='q';goQ(S.qi)}
 });
+app.addEventListener('click',e=>{const t=e.target.closest('[data-qt]'); if(t) goQ(+t.dataset.qt)});
 kp.addEventListener('click',e=>{
   const b=e.target.closest('button'); if(!b||!S.active) return;
   const k=b.dataset.k, cur=S.vals[S.active]||'';

@@ -52,7 +52,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 
 table{width:100%;border-collapse:collapse;font-size:27px}
 th{font-size:22px;color:var(--sub);font-weight:600;text-align:center;padding:6px 8px;border-bottom:2px solid var(--line)}
-td{text-align:center;padding:9px 8px;border-bottom:1px solid #edf0f5}
+td{text-align:center;padding:9px 6px;border-bottom:1px solid #edf0f5}
 td.l,th.l{text-align:left}
 td .qn{display:inline-block;width:34px;height:34px;border-radius:9px;color:#fff;font-weight:800;text-align:center;line-height:34px;margin-right:10px;font-size:22px}
 .pct{font-weight:800}
@@ -62,8 +62,13 @@ td .qn{display:inline-block;width:34px;height:34px;border-radius:9px;color:#fff;
 .closeBtn.open{background:#fff;color:var(--ink);border:3px solid var(--ink)}
 .demo{position:absolute;right:30px;top:10px;font-size:18px;color:#a06a00;background:#fff3d4;border-radius:10px;padding:2px 12px}
 
-/* 풀이 버튼 · 풀이 화면 */
-.solBtn{height:48px;padding:0 18px;border-radius:12px;border:3px solid var(--acc);background:#fff;color:var(--acc);font-size:22px;font-weight:700;white-space:nowrap}
+/* 문제 · 풀이 버튼 */
+.btns{white-space:nowrap}
+.pbtn,.solBtn{height:48px;padding:0 16px;border-radius:12px;font-size:22px;font-weight:700;white-space:nowrap}
+.pbtn{border:3px solid var(--line);background:#fff;color:var(--ink);margin-right:6px}
+.solBtn{border:3px solid var(--acc);background:#fff;color:var(--acc)}
+
+/* 겹쳐 뜨는 화면 */
 #ov{position:absolute;inset:0;background:var(--bg);display:none;padding:22px;z-index:10}
 #ov.show{display:flex;flex-direction:column}
 .ovh{display:flex;align-items:center;gap:18px;margin-bottom:16px}
@@ -79,28 +84,20 @@ td .qn{display:inline-block;width:34px;height:34px;border-radius:9px;color:#fff;
 .ctl button.pri{background:var(--acc);border-color:var(--acc);color:#fff}
 .ctl button.dark{background:var(--ink);border-color:var(--ink);color:#fff}
 .ctl button:disabled{opacity:.35}
-.steps{font-size:31px;line-height:1.6}
-.steps .s{padding:10px 0;border-bottom:2px dashed #e1e6ef;opacity:.25;transition:opacity .3s}
-.steps .s.on{opacity:1}
-.steps .s.cur{color:var(--acc)}
-.steps .s:last-child{border-bottom:none}
-.seqbig{font-size:48px;text-align:center;margin:6px 0 18px;letter-spacing:.02em}
-.hl{background:#fff1c9;border-radius:8px;padding:0 6px}
-.cnt3{font-size:30px;color:var(--sub)}
-.cnt3 b{font-size:96px;color:var(--ng);display:block;line-height:1;margin:4px 0}
-.tm{font-size:60px;font-weight:700;margin-bottom:6px}
-.olist{display:grid;grid-template-columns:repeat(2,1fr);gap:4px 26px;font-size:27px;margin-top:10px}
-.olist div{opacity:.15}
-.olist div.on{opacity:1}
-.olist div span{color:var(--ng);font-weight:800;margin-right:10px}
-.note3{margin-top:auto;font-size:30px;line-height:1.5;background:#f3f6fc;border-radius:16px;padding:14px 20px;min-height:110px}
-.note3 b{color:var(--ng)}
+.pstrip{font-size:28px;background:#f3f6fc;border-radius:14px;padding:10px 18px;margin-bottom:14px;line-height:1.45}
+.pstrip b{color:var(--acc)}
+
+/* 문제 보기 화면 */
+.ptxt{font-size:44px;text-align:center;line-height:1.45;margin:10px 0 26px}
+.pshapes{display:flex;flex-wrap:wrap;justify-content:center;gap:34px 70px;max-width:1200px;margin:0 auto}
+.pshp{display:flex;align-items:center;gap:20px}
+.pshp .v{font-size:66px}
+.pshp .v.q{color:var(--ng);font-weight:700}
 
 /* 1번 풀이: 3×3 판 */
-.gwrap{position:relative}
 .cell{transition:fill .35s,stroke .35s}
-.shlist{display:flex;flex-direction:column;gap:12px}
-.shrow{display:flex;align-items:center;gap:20px;padding:8px 14px;border-radius:16px;border:3px solid transparent;opacity:.35;transition:opacity .3s}
+.shlist{display:flex;flex-direction:column;gap:8px}
+.shrow{display:flex;align-items:center;gap:20px;padding:6px 14px;border-radius:16px;border:3px solid transparent;opacity:.35;transition:opacity .3s}
 .shrow.on{opacity:1}
 .shrow.cur{border-color:var(--acc);background:#f3f6fd;opacity:1}
 .shrow .val{font-size:40px;min-width:90px}
@@ -108,6 +105,42 @@ td .qn{display:inline-block;width:34px;height:34px;border-radius:9px;color:#fff;
 .eq{font-size:52px;text-align:center;min-height:76px;margin-top:18px;white-space:nowrap}
 .eq .sumv{color:var(--ng);font-weight:700}
 .gcap{font-size:30px;color:var(--sub);text-align:center;margin-top:8px;min-height:44px}
+
+/* 2번 풀이: 숫자 세기 */
+.sqrow{display:flex;gap:14px;justify-content:center;align-items:center}
+.sqt{font-family:"STIX Two Text","Times New Roman",serif;font-size:46px;padding:4px 20px;border-radius:16px;border:3px solid var(--line);background:#fff;transition:all .35s;min-width:74px;text-align:center}
+.sqt.src{background:#fff4cc;border-color:#e8a21a}
+.sqt.dst{border-color:var(--acc);color:var(--acc);background:var(--accbg)}
+.sqt.fut{opacity:.35}
+.sqt.ans{color:var(--ng);border-color:var(--ng);font-weight:700;background:#fdeeee}
+.sqarr{font-size:30px;color:var(--sub)}
+.rule{font-size:32px;text-align:center;margin:22px 0 4px;color:var(--sub);min-height:46px}
+.rule b{color:var(--ink)}
+.dgrow{display:flex;gap:14px;justify-content:center;min-height:118px;align-items:center;margin:6px 0}
+.dg{width:86px;height:104px;border-radius:16px;color:#fff;font-family:"STIX Two Text","Times New Roman",serif;font-size:74px;display:flex;align-items:center;justify-content:center;transition:opacity .3s,transform .3s;opacity:0}
+.dg.in{opacity:1}
+.dg.dim{opacity:.16}
+.dg.pop{transform:translateY(-12px) scale(1.06);box-shadow:0 8px 16px rgba(0,0,0,.18)}
+.tlrow{display:flex;gap:26px;justify-content:center;min-height:118px;align-items:center}
+.tc{display:flex;align-items:center;gap:14px;border:3px solid var(--line);border-radius:18px;padding:10px 22px;font-size:32px;animation:fin .35s both;background:#fff}
+.tcd{width:58px;height:70px;border-radius:12px;color:#fff;font-family:"STIX Two Text","Times New Roman",serif;font-size:50px;display:flex;align-items:center;justify-content:center}
+.tcp{font-family:"STIX Two Text","Times New Roman",serif;font-size:52px;font-weight:700;margin-left:6px;padding-left:16px;border-left:3px dashed var(--line)}
+.resrow{font-size:84px;text-align:center;min-height:104px;letter-spacing:.03em;line-height:1.2}
+.resrow .pr{margin:0 10px;animation:fin .35s both}
+.resrow.fin{color:var(--acc);font-weight:700}
+.resrow.fin.red{color:var(--ng)}
+@keyframes fin{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+
+/* 3번 풀이: 시계 */
+.cnt3{font-size:28px;color:var(--sub)}
+.cnt3 b{font-size:90px;color:var(--ng);display:block;line-height:1;margin:4px 0}
+.tm{font-size:56px;font-weight:700;margin-bottom:4px}
+.olist{display:grid;grid-template-columns:repeat(2,1fr);gap:2px 26px;font-size:25px;margin-top:8px}
+.olist div{opacity:.15}
+.olist div.on{opacity:1}
+.olist div span{color:var(--ng);font-weight:800;margin-right:10px}
+.note3{margin-top:auto;font-size:28px;line-height:1.5;background:#f3f6fc;border-radius:16px;padding:12px 20px;min-height:100px}
+.note3 b{color:var(--ng)}
 </style>
 </head>
 <body>
@@ -117,7 +150,7 @@ td .qn{display:inline-block;width:34px;height:34px;border-radius:9px;color:#fff;
     <div class="sub">QR을 찍고 반·번호를 입력하세요</div>
     <div id="qr"></div>
     <div class="cls" id="cls"></div>
-    <div class="count"><div class="big num" id="cnt">0<small> / 28</small></div><div class="lab">3문제 모두 제출</div></div>
+    <div class="count"><div class="big num" id="cnt">0<small> / 23</small></div><div class="lab">3문제 모두 제출</div></div>
   </div>
   <div class="right">
     <div class="panel">
@@ -204,7 +237,8 @@ function draw(){
     const hid='<span class="hidden">마감 후 공개</span>';
     return `<tr><td class="l"><span class="qn" style="background:${QCOL[i]}">${i+1}</span>${QNAMES[i]}</td>
       <td class="num">${s.n}<small style="color:var(--sub);font-size:20px"> / ${N}</small></td>
-      <td>${closed?pct(s.first):hid}</td><td>${closed?pct(s.fin):hid}</td><td>${closed?top:hid}</td><td><button class="solBtn" data-sol="${i}">풀이 ▶</button></td></tr>`;
+      <td>${closed?pct(s.first):hid}</td><td>${closed?pct(s.fin):hid}</td><td>${closed?top:hid}</td>
+      <td class="btns"><button class="pbtn" data-prob="${i}">문제</button><button class="solBtn" data-sol="${i}">풀이 ▶</button></td></tr>`;
   }).join('');
   const b=$('closeBtn'); b.textContent=closed?'결과 다시 가리기':'마감하고 결과 보기'; b.classList.toggle('open',closed);
 }
@@ -220,50 +254,66 @@ async function load(){
 /* 미리보기용 가상 제출 */
 function demoTick(){
   $('demo').hidden=false;
-  const wr=[[29,27,24],[312213,1122113111,1322],[24,23,12]];
+  const wr=[[35,33,27],[312213,1122113111,1322],[24,23,12]];
   for(let t=0;t<3;t++){
     const n=1+Math.floor(Math.random()*N), have=rows.filter(r=>r.num===n).length; if(have>=3) continue;
-    const q=have+1, ok1=Math.random()<[.45,.6,.3][q-1], ok2=ok1||Math.random()<.5;
+    const q=1+Math.floor(Math.random()*3); if(rows.some(r=>r.num===n&&r.q===q)) continue;
+    const ok1=Math.random()<[.45,.6,.3][q-1], ok2=ok1||Math.random()<.5;
     const w=[]; if(!ok1)w.push(wr[q-1][Math.floor(Math.random()*3)]); if(!ok1&&!ok2)w.push(wr[q-1][Math.floor(Math.random()*3)]);
     rows.push({num:n,q,first:ok1?'O':'X',fin:ok2?'O':'X',wrong:w.join(' | ')});
   }
   draw();
 }
 
-/* ======================= 풀이 화면 ======================= */
+/* ======================= 공통: 겹쳐 뜨는 화면 ======================= */
 const ov=$('ov');
-const SH={L:[[0,0],[1,0],[2,0],[2,1],[2,2]],T:[[0,0],[0,1],[0,2],[1,1],[2,1]],S:[[0,1],[0,2],[1,1],[2,0],[2,1]],W:[[0,0],[0,1],[1,1],[1,2],[2,2]],X:[[0,1],[1,0],[1,1],[1,2],[2,1]]};
-const sum=c=>c.reduce((a,[r,k])=>a+k*3+r+1,0);
+/* 판의 수: 전화 키패드처럼 1 2 3 / 4 5 6 / 7 8 9 */
+const numAt=(r,c)=>r*3+c+1;
+const SH={
+  A:[[0,2],[1,2],[2,2],[1,0],[1,1]],   /* ㅓ자   27 */
+  B:[[0,2],[1,1],[1,2],[2,0],[2,1]],   /* 계단   29 */
+  C:[[0,2],[1,1],[1,2],[2,1],[2,2]],   /* P자    31 */
+  D:[[0,2],[1,2],[2,2],[2,0],[2,1]],   /* 꺾쇠   33 */
+  X:[[0,1],[1,0],[1,1],[1,2],[2,1]]    /* 십자   25 */
+};
+const sum=c=>c.reduce((a,[r,k])=>a+numAt(r,k),0);
 function shapeSVG(cells,u){let s='';cells.forEach(([r,c])=>{s+=`<rect x="${c*u+2}" y="${r*u+2}" width="${u}" height="${u}" fill="#f4bd52" stroke="#a8730f" stroke-width="2.5"/>`});return `<svg width="${3*u+4}" height="${3*u+4}">${s}</svg>`}
-function gridSVG(cells,showNum){
-  const u=130,cs=new Set((cells||[]).map(([r,c])=>r+','+c));let s='';
-  for(let r=0;r<3;r++)for(let c=0;c<3;c++){const on=cs.has(r+','+c);
-    s+=`<rect x="${c*u+3}" y="${r*u+3}" width="${u}" height="${u}" fill="${on?'#f4bd52':'#fff'}" stroke="${on?'#a8730f':'#9aa4b8'}" stroke-width="${on?4:2}"/>`;
-    if(showNum)s+=`<text x="${c*u+3+u/2}" y="${r*u+3+u/2+24}" text-anchor="middle" font-family="STIX Two Text,serif" font-size="70" fill="#1b2232">${c*3+r+1}</text>`;}
-  return `<svg width="${3*u+6}" height="${3*u+6}">${s}</svg>`;
-}
-const SOL=[
- { grid:true },
- { /* 2번 숫자 세기 수열 */
-   one:true, head:'1, 11, 12, 1121, 1321, 122131, <span style="color:var(--ng)">?</span>',
-   steps:[
-    {txt:'규칙: 앞의 수에 있는 숫자를 <b>작은 숫자부터</b> “숫자, 개수” 순서로 써요.'},
-    {txt:`<span class="num">1</span> → 1이 1개 → <span class="num hl">11</span>`},
-    {txt:`<span class="num">11</span> → 1이 2개 → <span class="num hl">12</span>`},
-    {txt:`<span class="num">12</span> → 1이 1개, 2가 1개 → <span class="num hl">1121</span>`},
-    {txt:`<span class="num">1121</span> → 1이 3개, 2가 1개 → <span class="num hl">1321</span>`},
-    {txt:`<span class="num">1321</span> → 1이 2개, 2가 1개, 3이 1개 → <span class="num hl">122131</span>`},
-    {txt:`<span class="num">122131</span> → 1이 3개, 2가 2개, 3이 1개 → <span class="num hl" style="color:var(--ng);font-weight:700">132231</span>`}
-   ]},
- { clock:true }
-];
+const SEQ=['1','11','12','1121','1321','122131','132231'];
+const DC={1:'#e8a21a',2:'#2f5fd0',3:'#1b8a4b'};
 
-/* ---------- 1번: 3×3 판 위에 도형을 올려 더하기 ---------- */
-const GSEQ=[{k:null,name:'판 만들기'},{k:'L',name:'ㄴ자'},{k:'T',name:'ㅜ자'},{k:'S',name:'ㄹ자'},{k:'W',name:'계단'},{k:'X',name:'십자'}];
+let OVM='', solQ=-1, solStep=0;
 let G={timers:[]};
 function gClear(){G.timers.forEach(clearTimeout);G.timers=[]}
 function gLater(ms,f){G.timers.push(setTimeout(f,ms))}
-const numAt=(r,c)=>c*3+r+1;
+function ovHead(q){
+  const sw=OVM==='prob'?`<button class="pri" data-ov="tosol">풀이 보기 ▶</button>`:`<button data-ov="toprob">문제 보기</button>`;
+  return `<div class="ovh"><div class="qn" style="background:${QCOL[q]}">${q+1}</div><h2>${QNAMES[q]} ${OVM==='prob'?'문제':'풀이'}</h2><div class="sp"></div><div class="ctl">${sw}<button class="dark" data-ov="close">닫기 ✕</button></div></div>`;
+}
+function closeOv(){ov.classList.remove('show');OVM='';solQ=-1;clockStop();gClear()}
+
+/* ---------- 문제만 보기 ---------- */
+const PTEXT=['규칙을 찾아 물음표에 들어갈 수를 구하시오.','규칙을 찾아 물음표에 들어갈 수를 구하시오.','하루 24시간 동안 시계의 시침과 분침이<br>정확히 겹치는 횟수를 구하시오.'];
+function openProb(q){
+  gClear();clockStop(); OVM='prob'; solQ=q; ov.classList.add('show');
+  let body='';
+  if(q===0){
+    const vals=[['A',27],['B',29],['C',31],['D',33],['X','?']];
+    body=`<div class="ptxt">${PTEXT[0]}</div><div class="pshapes">${vals.map(([k,v])=>`<div class="pshp">${shapeSVG(SH[k],62)}<span class="v num ${v==='?'?'q':''}">= ${v}</span></div>`).join('')}</div>`;
+  }else if(q===1){
+    body=`<div class="ptxt">${PTEXT[1]}</div><div class="sqrow" style="margin-top:40px">${SEQ.map((t,i)=>`<div class="sqt ${i===6?'ans':''}" style="font-size:66px;padding:8px 26px">${i===6?'?':t}</div>`).join('')}</div>`;
+  }else{
+    body=`<div style="display:flex;align-items:center;justify-content:center;gap:70px;height:100%">
+      <svg width="420" height="420" viewBox="-338 -338 676 676">${clockFace(0,0)}</svg>
+      <div><div class="ptxt" style="text-align:left;font-size:50px">${PTEXT[2]}</div><div style="font-size:32px;color:var(--sub)">(밤 12시 정각은 한 번만 셉니다.)</div></div></div>`;
+  }
+  ov.innerHTML=ovHead(q)+`<div class="ovb one"><div class="box" style="justify-content:center">${body}</div></div>`;
+}
+
+/* ---------- 풀이 열기 ---------- */
+function openSol(q){gClear();clockStop();OVM='sol';solQ=q;solStep=0;ov.classList.add('show');[gDraw,qDraw,clockInit][q]()}
+
+/* ---------- 1번: 3×3 판 위에 도형을 올려 더하기 ---------- */
+const GSEQ=[{k:null,name:'판 만들기'},{k:'A',name:'ㅓ자'},{k:'B',name:'계단'},{k:'C',name:'P자'},{k:'D',name:'꺾쇠'},{k:'X',name:'십자'}];
 function gBoard(){
   const u=150;let s='';
   for(let r=0;r<3;r++)for(let c=0;c<3;c++){
@@ -274,37 +324,37 @@ function gBoard(){
 }
 function gDraw(){
   gClear();
-  const st=solStep, cur=GSEQ[st];
+  const st=solStep;
   const list=GSEQ.slice(1).map((g,i)=>{const idx=i+1;
-    return `<div class="shrow ${idx<st?'on':''} ${idx===st?'cur':''}">${shapeSVG(SH[g.k],26)}<span class="val num">= ${g.k==='X'?(idx<st?'25':'?'):sum(SH[g.k])}</span>${idx<st?'<span class="chk">✓</span>':''}</div>`}).join('');
+    return `<div class="shrow ${idx<st?'on':''} ${idx===st?'cur':''}">${shapeSVG(SH[g.k],24)}<span class="val num">= ${g.k==='X'?(idx<st?'25':'?'):sum(SH[g.k])}</span>${idx<st?'<span class="chk">✓</span>':''}</div>`}).join('');
   const ctl=`<div class="ctl" style="margin-top:auto;justify-content:flex-end"><button data-ov="prev" ${st===0?'disabled':''}>◀ 이전</button><button data-ov="replay">다시 보기</button><button class="pri" data-ov="next" ${st===GSEQ.length-1?'disabled':''}>다음 ▶</button></div>`;
-  ov.innerHTML=ovHead(0)+`<div class="ovb"><div class="box vis"><div class="gwrap">${gBoard()}</div><div class="eq num" id="eq"></div><div class="gcap" id="gcap"></div></div>
-    <div class="box"><div class="shlist">${list}</div>${ctl}</div></div>`;
+  ov.innerHTML=ovHead(0)+`<div class="ovb"><div class="box vis"><div>${gBoard()}</div><div class="eq num" id="eq"></div><div class="gcap" id="gcap"></div></div>
+    <div class="box"><div class="pstrip"><b>문제</b> 규칙을 찾아 물음표에 들어갈 수를 구하시오.</div><div class="shlist">${list}</div>${ctl}</div></div>`;
   gPlay();
 }
 function gPlay(){
   gClear();
-  const st=solStep, cur=GSEQ[st], eq=document.getElementById('eq'), cap=document.getElementById('gcap');
-  for(let r=0;r<3;r++)for(let c=0;c<3;c++){const rc=document.getElementById(`gc${r}${c}`);rc.setAttribute('fill','#fff');rc.setAttribute('stroke','#9aa4b8');rc.setAttribute('stroke-width','3')}
+  const st=solStep, cur=GSEQ[st], eq=$('eq'), cap=$('gcap');
+  for(let r=0;r<3;r++)for(let c=0;c<3;c++){const rc=$(`gc${r}${c}`);rc.setAttribute('fill','#fff');rc.setAttribute('stroke','#9aa4b8');rc.setAttribute('stroke-width','3')}
   eq.innerHTML='';
   if(st===0){
-    cap.innerHTML='1부터 9까지 <b>세로 방향</b>으로 써요';
-    const order=[];for(let c=0;c<3;c++)for(let r=0;r<3;r++)order.push([r,c]);
-    order.forEach(([r,c])=>document.getElementById(`gt${r}${c}`).style.opacity=0);
-    order.forEach(([r,c],i)=>gLater(250+i*330,()=>{document.getElementById(`gt${r}${c}`).style.opacity=1}));
+    cap.innerHTML='1부터 9까지 <b>전화기 숫자판처럼 가로로</b> 써요';
+    const order=[];for(let r=0;r<3;r++)for(let c=0;c<3;c++)order.push([r,c]);
+    order.forEach(([r,c])=>$(`gt${r}${c}`).style.opacity=0);
+    order.forEach(([r,c],i)=>gLater(250+i*330,()=>{$(`gt${r}${c}`).style.opacity=1}));
     return;
   }
   const cells=SH[cur.k], total=sum(cells);
   cap.innerHTML=`${cur.name} 도형을 판 위에 올려요`;
   /* 1) 도형 모양 전체를 연하게 먼저 보여 주기 */
-  gLater(200,()=>cells.forEach(([r,c])=>{const e=document.getElementById(`gc${r}${c}`);e.setAttribute('fill','#fde7b4');e.setAttribute('stroke','#a8730f');e.setAttribute('stroke-width','5')}));
+  gLater(200,()=>cells.forEach(([r,c])=>{const e=$(`gc${r}${c}`);e.setAttribute('fill','#fde7b4');e.setAttribute('stroke','#a8730f');e.setAttribute('stroke-width','5')}));
   /* 2) 작은 수부터 한 칸씩 더하기 */
   const ord=cells.slice().sort((a,b)=>numAt(...a)-numAt(...b));
-  let run=0, parts=[];
+  const parts=[];
   ord.forEach(([r,c],i)=>gLater(1000+i*750,()=>{
-    const e=document.getElementById(`gc${r}${c}`); e.setAttribute('fill','#f4bd52'); e.setAttribute('stroke','#cc3d3d');
+    const e=$(`gc${r}${c}`); e.setAttribute('fill','#f4bd52'); e.setAttribute('stroke','#cc3d3d');
     gLater(350,()=>e.setAttribute('stroke','#a8730f'));
-    run+=numAt(r,c); parts.push(numAt(r,c)); eq.innerHTML=parts.join(' + ');
+    parts.push(numAt(r,c)); eq.innerHTML=parts.join(' + ');
   }));
   gLater(1000+ord.length*750+150,()=>{
     eq.innerHTML=`${parts.join(' + ')} = <span class="sumv">${total}</span>`;
@@ -314,19 +364,67 @@ function gPlay(){
       if(!row.querySelector('.chk')) row.insertAdjacentHTML('beforeend','<span class="chk">✓</span>');}
   });
 }
-let solQ=-1, solStep=0;
-function openSol(q){solQ=q;solStep=0;ov.classList.add('show');if(SOL[q].clock)clockInit();else if(SOL[q].grid)gDraw();else drawSol()}
-function closeSol(){ov.classList.remove('show');solQ=-1;clockStop();gClear()}
-function ovHead(q){return `<div class="ovh"><div class="qn" style="background:${QCOL[q]}">${q+1}</div><h2>${QNAMES[q]} 풀이</h2><div class="sp"></div><div class="ctl"><button class="dark" data-ov="close">닫기 ✕</button></div></div>`}
-function drawSol(){
-  const q=solQ, d=SOL[q], n=d.steps.length, st=d.steps[solStep];
-  const ctl=`<div class="ctl" style="margin-top:auto;justify-content:flex-end"><button data-ov="prev" ${solStep===0?'disabled':''}>◀ 이전</button><button class="pri" data-ov="next" ${solStep===n-1?'disabled':''}>다음 ▶</button></div>`;
-  const steps=`<div class="steps">${d.steps.map((x,i)=>`<div class="s ${i<=solStep?'on':''} ${i===solStep?'cur':''}">${x.txt}</div>`).join('')}</div>`;
-  if(d.one){
-    ov.innerHTML=ovHead(q)+`<div class="ovb one"><div class="box"><div class="seqbig num">${d.head}</div>${steps}${ctl}</div></div>`;
-  }else{
-    ov.innerHTML=ovHead(q)+`<div class="ovb"><div class="box vis">${st.vis()}</div><div class="box">${steps}${ctl}</div></div>`;
+
+/* ---------- 2번: 앞의 수를 세어 다음 수 만들기 ---------- */
+function qDraw(){
+  gClear();
+  const s=solStep;
+  const tiles=SEQ.map((t,i)=>{
+    let c='', v=(i===6)?'?':t;
+    if(s===0){ if(i===6)c='ans'; }
+    else if(i===s-1) c='src';
+    else if(i===s){ c=(i===6)?'ans':'dst'; v='?'; }
+    else if(i>s) c='fut';
+    if(i===6&&s!==6) v='?';
+    return `<div class="sqt ${c}" id="sq${i}">${v}</div>`;
+  }).join('');
+  const rule=s===0
+    ? '앞의 수에 들어 있는 숫자를 세어서, <b>작은 숫자부터</b> “<b>숫자, 개수</b>” 순서로 적어요'
+    : `<b class="num" style="font-size:40px">${SEQ[s-1]}</b> 에는 어떤 숫자가 몇 개 있을까요?`;
+  const ctl=`<div class="ctl" style="margin-top:auto;justify-content:flex-end"><button data-ov="prev" ${s===0?'disabled':''}>◀ 이전</button><button data-ov="replay" ${s===0?'disabled':''}>다시 보기</button><button class="pri" data-ov="next" ${s===6?'disabled':''}>다음 ▶</button></div>`;
+  ov.innerHTML=ovHead(1)+`<div class="ovb one"><div class="box">
+    <div class="pstrip" style="text-align:center"><b>문제</b> 규칙을 찾아 물음표에 들어갈 수를 구하시오.</div>
+    <div class="sqrow">${tiles}</div>
+    <div class="rule" id="rule">${rule}</div>
+    <div class="dgrow" id="dg"></div>
+    <div class="tlrow" id="tl"></div>
+    <div class="resrow num" id="rs"></div>
+    ${ctl}</div></div>`;
+  qPlay();
+}
+function qPlay(){
+  gClear();
+  const s=solStep, dg=$('dg'), tl=$('tl'), rs=$('rs');
+  dg.innerHTML=''; tl.innerHTML=''; rs.innerHTML=''; rs.className='resrow num';
+  if(s===0){
+    /* 규칙 예시: 1121 → 1이 3개, 2가 1개 → 1321 */
+    rs.innerHTML='<span style="font-size:40px;color:var(--sub)">예) </span>1121 → <span style="color:'+DC[1]+'">1</span>3 <span style="color:'+DC[2]+'">2</span>1 → 1321';
+    rs.style.fontSize='56px';
+    return;
   }
+  rs.style.fontSize='';
+  const src=SEQ[s-1], dst=SEQ[s];
+  /* 1) 앞의 수의 숫자를 하나씩 */
+  dg.innerHTML=[...src].map((d,i)=>`<div class="dg" id="d${i}" style="background:${DC[d]}">${d}</div>`).join('');
+  [...src].forEach((d,i)=>gLater(150+i*170,()=>$('d'+i).classList.add('in')));
+  /* 2) 작은 숫자부터 세기 */
+  const ds=[...new Set(src)].sort();
+  const t0=150+src.length*170+500, gap=1600;
+  ds.forEach((d,j)=>{
+    const n=[...src].filter(x=>x===d).length;
+    gLater(t0+j*gap,()=>{
+      [...src].forEach((x,i)=>{const e=$('d'+i);e.classList.toggle('dim',x!==d);e.classList.toggle('pop',x===d)});
+      tl.insertAdjacentHTML('beforeend',`<div class="tc"><div class="tcd" style="background:${DC[d]}">${d}</div><span>이 <b class="num" style="font-size:44px">${n}</b>개</span><div class="tcp"><span style="color:${DC[d]}">${d}</span>${n}</div></div>`);
+      rs.insertAdjacentHTML('beforeend',`<span class="pr"><span style="color:${DC[d]}">${d}</span>${n}</span>`);
+    });
+  });
+  /* 3) 붙여 쓰면 다음 수 */
+  gLater(t0+ds.length*gap,()=>{
+    [...src].forEach((x,i)=>{const e=$('d'+i);e.classList.remove('dim','pop')});
+    rs.className='resrow num fin'+(s===6?' red':''); rs.textContent=dst;
+    const tile=$('sq'+s); tile.textContent=dst;
+    $('rule').innerHTML=s===6?'그래서 물음표에 들어갈 수는 <b style="color:var(--ng)">132231</b>':`붙여 쓰면 다음 수 <b class="num" style="font-size:40px">${dst}</b>`;
+  });
 }
 
 /* ---------- 3번 시곗바늘 애니메이션 ---------- */
@@ -336,48 +434,50 @@ function hms(t){let sec=Math.round(t*3600);const h=Math.floor(sec/3600);sec-=h*3
 function clockInit(){
   clockStop(); C={t:0,play:false,speed:1,raf:0,last:0,hold:0,count:1,done:false};
   ov.innerHTML=ovHead(2)+`<div class="ovb"><div class="box vis"><svg id="clk" width="600" height="600" viewBox="-338 -338 676 676"></svg></div>
-   <div class="box"><div style="display:flex;gap:30px;align-items:flex-end">
+   <div class="box"><div class="pstrip"><b>문제</b> 하루 24시간 동안 시침과 분침이 정확히 겹치는 횟수는?</div>
+    <div style="display:flex;gap:30px;align-items:flex-end">
       <div><div class="cnt3">현재 시각</div><div class="tm num" id="tm">12:00:00</div></div>
       <div class="cnt3" style="margin-left:auto;text-align:right">겹친 횟수<b class="num" id="cn">1</b></div></div>
     <div class="olist" id="ol">${OV_T.map((t,k)=>`<div class="${k===0?'on':''}"><span class="num">${k+1}</span><span class="num" style="color:inherit;font-weight:400">${hms(t)}</span></div>`).join('')}</div>
     <div class="note3" id="nt">12시 정각에 두 바늘이 겹친 상태로 출발해요.</div>
-    <div class="ctl" style="margin-top:16px;justify-content:flex-end">
+    <div class="ctl" style="margin-top:14px;justify-content:flex-end">
       <button data-ov="reset">처음부터</button><button data-ov="speed" id="spd">속도 1배</button><button class="pri" data-ov="play" id="pl">▶ 재생</button></div></div></div>`;
   drawClock();
 }
-function drawClock(){
-  const svg=document.getElementById('clk'); if(!svg) return;
+function clockFace(t,count,flash,done){
   const R=270; let g=`<circle r="${R}" fill="#fff" stroke="#1b2232" stroke-width="8"/>`;
   for(let i=0;i<60;i++){const a=i*6*Math.PI/180,l=i%5?12:26,w=i%5?2:5;g+=`<line x1="${(R-8)*Math.sin(a)}" y1="${-(R-8)*Math.cos(a)}" x2="${(R-8-l)*Math.sin(a)}" y2="${-(R-8-l)*Math.cos(a)}" stroke="#1b2232" stroke-width="${w}"/>`}
   for(let h=1;h<=12;h++){const a=h*30*Math.PI/180;g+=`<text x="${205*Math.sin(a)}" y="${-205*Math.cos(a)+17}" text-anchor="middle" font-family="STIX Two Text,serif" font-size="48" fill="#1b2232">${h}</text>`}
-  /* 11시대 구간 표시 (끝까지 갔을 때) */
-  if(C.t>=OV_T[10]){const a1=OV_T[10]*30*Math.PI/180,a2=2*Math.PI-0.02,r=165;
+  if(t>=OV_T[10]&&count>=11){const a1=OV_T[10]*30*Math.PI/180,a2=2*Math.PI-0.02,r=165;
     g+=`<path d="M ${r*Math.sin(a1)} ${-r*Math.cos(a1)} A ${r} ${r} 0 0 1 ${r*Math.sin(a2)} ${-r*Math.cos(a2)}" fill="none" stroke="#9aa4b8" stroke-width="14" stroke-dasharray="4 10" stroke-linecap="round"/>`}
-  /* 겹친 자리 표시 */
-  OV_T.forEach((t,k)=>{if(k<C.count){const a=t*30*Math.PI/180;g+=`<circle cx="${(R+0)*Math.sin(a)}" cy="${-(R+0)*Math.cos(a)}" r="15" fill="var(--ng)" stroke="#fff" stroke-width="4"/><text x="${(R+44)*Math.sin(a)}" y="${-(R+44)*Math.cos(a)+11}" text-anchor="middle" font-size="30" font-weight="800" fill="var(--ng)" font-family="STIX Two Text,serif">${k+1}</text>`}});
-  const ma=(C.t%1)*360, ha=C.t*30, flash=C.hold>0;
-  g+=`<line x1="0" y1="0" x2="${150*Math.sin(ha*Math.PI/180)}" y2="${-150*Math.cos(ha*Math.PI/180)}" stroke="${flash?'var(--ng)':'#1b2232'}" stroke-width="16" stroke-linecap="round"/>`;
-  g+=`<line x1="0" y1="0" x2="${235*Math.sin(ma*Math.PI/180)}" y2="${-235*Math.cos(ma*Math.PI/180)}" stroke="${flash?'var(--ng)':'#2f5fd0'}" stroke-width="9" stroke-linecap="round"/>`;
+  OV_T.forEach((tt,k)=>{if(k<count){const a=tt*30*Math.PI/180;g+=`<circle cx="${R*Math.sin(a)}" cy="${-R*Math.cos(a)}" r="15" fill="#cc3d3d" stroke="#fff" stroke-width="4"/><text x="${(R+44)*Math.sin(a)}" y="${-(R+44)*Math.cos(a)+11}" text-anchor="middle" font-size="30" font-weight="800" fill="#cc3d3d" font-family="STIX Two Text,serif">${k+1}</text>`}});
+  const ma=(t%1)*360, ha=t*30;
+  g+=`<line x1="0" y1="0" x2="${150*Math.sin(ha*Math.PI/180)}" y2="${-150*Math.cos(ha*Math.PI/180)}" stroke="${flash?'#cc3d3d':'#1b2232'}" stroke-width="16" stroke-linecap="round"/>`;
+  g+=`<line x1="0" y1="0" x2="${235*Math.sin(ma*Math.PI/180)}" y2="${-235*Math.cos(ma*Math.PI/180)}" stroke="${flash?'#cc3d3d':'#2f5fd0'}" stroke-width="9" stroke-linecap="round"/>`;
   g+=`<circle r="14" fill="#1b2232"/>`;
-  svg.innerHTML=g;
-  const tm=document.getElementById('tm'); if(tm) tm.textContent=hms(Math.min(C.t,12)).replace(/^12:00:00$/,C.done?'12:00:00':'12:00:00');
-  const cn=document.getElementById('cn'); if(cn) cn.textContent=C.count;
+  return g;
+}
+function drawClock(){
+  const svg=$('clk'); if(!svg) return;
+  svg.innerHTML=clockFace(C.t,C.count,C.hold>0);
+  const tm=$('tm'); if(tm) tm.textContent=hms(Math.min(C.t,12));
+  const cn=$('cn'); if(cn) cn.textContent=C.count;
   document.querySelectorAll('#ol div').forEach((d,k)=>d.classList.toggle('on',k<C.count));
 }
-function note(h){const n=document.getElementById('nt');if(n)n.innerHTML=h}
+function note(h){const n=$('nt');if(n)n.innerHTML=h}
 function clockStep(ts){
   if(!C.play) return;
   const dt=C.last?Math.min((ts-C.last)/1000,.1):0; C.last=ts;
   if(C.hold>0){C.hold-=dt; drawClock(); C.raf=requestAnimationFrame(clockStep); return}
   const nt=C.t+dt*C.speed*0.45;                 // 1배속: 1시간 ≈ 2.2초
-  const nextK=C.count;                           // 다음에 겹칠 순번(0부터)
+  const nextK=C.count;
   if(nextK<11 && nt>=OV_T[nextK]){
     C.t=OV_T[nextK]; C.count++; C.hold=1.0;
     note(`<b>${C.count}번째</b> 겹침: ${hms(C.t)}. 분침이 시침을 한 바퀴 따라잡았어요.`);
   }else if(nt>=12){
     C.t=12; C.play=false; C.done=true; drawClock();
     note(`11시대에는 분침이 시침을 따라잡기 전에 12시가 돼요. 12시 정각은 출발 때와 같은 겹침이에요.<br>→ 12시간에 <b>11번</b>, 하루는 <b>11 × 2 = 22번</b>`);
-    document.getElementById('pl').textContent='▶ 재생'; return;
+    $('pl').textContent='▶ 재생'; return;
   }else{
     C.t=nt;
     if(C.t>OV_T[10]+.3&&C.t<12) note('마지막 겹침(10:54:33) 뒤에는 <b>12시까지 겹치지 않아요.</b>');
@@ -385,32 +485,42 @@ function clockStep(ts){
   drawClock(); C.raf=requestAnimationFrame(clockStep);
 }
 function clockStop(){C.play=false;if(C.raf)cancelAnimationFrame(C.raf)}
+
+/* ---------- 버튼 ---------- */
 ov.addEventListener('click',e=>{
-  const b=e.target.closest('[data-ov]'); if(!b) return; const a=b.dataset.ov;
-  if(a==='close') return closeSol();
-  if(SOL[solQ]&&SOL[solQ].grid){
+  const b=e.target.closest('[data-ov]'); if(!b) return; const a=b.dataset.ov, q=solQ;
+  if(a==='close') return closeOv();
+  if(a==='tosol') return openSol(q);
+  if(a==='toprob') return openProb(q);
+  if(q===0){
     if(a==='prev'&&solStep>0){solStep--;gDraw()}
     if(a==='next'&&solStep<GSEQ.length-1){solStep++;gDraw()}
     if(a==='replay') gPlay();
-    return;
+  }else if(q===1){
+    if(a==='prev'&&solStep>0){solStep--;qDraw()}
+    if(a==='next'&&solStep<SEQ.length-1){solStep++;qDraw()}
+    if(a==='replay') qPlay();
+  }else{
+    if(a==='play'){
+      if(C.done) clockInit();
+      C.play=!C.play; C.last=0; $('pl').textContent=C.play?'❚❚ 멈춤':'▶ 재생';
+      if(C.play){note('분침(파랑)이 시침(검정)을 따라잡을 때마다 멈춰요.');C.raf=requestAnimationFrame(clockStep)}
+    }
+    if(a==='reset') clockInit();
+    if(a==='speed'){C.speed=C.speed===1?2:C.speed===2?4:1;b.textContent=`속도 ${C.speed}배`}
   }
-  if(a==='prev'&&solStep>0){solStep--;drawSol()}
-  if(a==='next'&&solStep<SOL[solQ].steps.length-1){solStep++;drawSol()}
-  if(a==='play'){
-    if(C.done) clockInit();
-    C.play=!C.play; C.last=0; document.getElementById('pl').textContent=C.play?'❚❚ 멈춤':'▶ 재생';
-    if(C.play){note('분침(파랑)이 시침(검정)을 따라잡을 때마다 멈춰요.');C.raf=requestAnimationFrame(clockStep)}
-  }
-  if(a==='reset') clockInit();
-  if(a==='speed'){C.speed=C.speed===1?2:C.speed===2?4:1;b.textContent=`속도 ${C.speed}배`}
 });
 document.addEventListener('keydown',e=>{
-  if(solQ<0) return;
-  if(e.key==='Escape') closeSol();
-  if(!SOL[solQ].clock){ if(e.key==='ArrowRight'||e.key===' ') ov.querySelector('[data-ov="next"]')?.click(); if(e.key==='ArrowLeft') ov.querySelector('[data-ov="prev"]')?.click(); }
+  if(!OVM) return;
+  if(e.key==='Escape') return closeOv();
+  if(OVM!=='sol') return;
+  if(solQ<2){ if(e.key==='ArrowRight'||e.key===' ') ov.querySelector('[data-ov="next"]')?.click(); if(e.key==='ArrowLeft') ov.querySelector('[data-ov="prev"]')?.click(); }
   else if(e.key===' ') ov.querySelector('[data-ov="play"]')?.click();
 });
-$('tb').addEventListener('click',e=>{const b=e.target.closest('[data-sol]');if(b)openSol(+b.dataset.sol)});
+$('tb').addEventListener('click',e=>{
+  const p=e.target.closest('[data-prob]'); if(p) return openProb(+p.dataset.prob);
+  const s=e.target.closest('[data-sol]'); if(s) openSol(+s.dataset.sol);
+});
 
 drawCls(); draw(); load(); setInterval(load, API?4000:1500);
 }
