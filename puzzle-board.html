@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>퍼즐 퀴즈 칠판</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root{--ink:#1b2232;--sub:#5d6680;--line:#d5dbe7;--bg:#eef1f6;--card:#fff;--acc:#2f5fd0;--accbg:#e7eeff;
+  --q1:#e8a21a;--q2:#2f5fd0;--q3:#1b8a4b;--ok:#1b8a4b;--ng:#cc3d3d}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);
+  font-family:"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif}
+.num{font-family:"STIX Two Text","Times New Roman",serif}
+#stage{position:absolute;left:0;top:0;width:1600px;height:900px;transform-origin:0 0;display:grid;
+  grid-template-columns:430px 1fr;gap:20px;padding:22px}
+button{font:inherit;color:inherit;cursor:pointer}
+
+/* 왼쪽 */
+.left{background:var(--card);border-radius:24px;padding:26px 26px;display:flex;flex-direction:column;align-items:center;box-shadow:0 2px 6px rgba(20,30,60,.08)}
+.left h1{font-size:40px;margin:0 0 4px;letter-spacing:-.5px}
+.left .sub{font-size:22px;color:var(--sub);margin-bottom:18px}
+#qr{width:330px;height:330px;display:flex;align-items:center;justify-content:center;border-radius:16px;background:#fff;border:3px solid var(--line);padding:12px}
+#qr img,#qr canvas{width:100%!important;height:100%!important}
+#qr .noqr{font-size:22px;color:var(--sub);text-align:center;line-height:1.5}
+.cls{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap;justify-content:center}
+.cls button{min-width:86px;height:64px;border-radius:16px;border:3px solid var(--line);background:#fff;font-size:28px;font-weight:700}
+.cls button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.count{margin-top:auto;text-align:center}
+.count .big{font-size:76px;font-weight:800;line-height:1}
+.count .big small{font-size:40px;color:var(--sub);font-weight:700}
+.count .lab{font-size:24px;color:var(--sub);margin-top:4px}
+
+/* 오른쪽 */
+.right{display:grid;grid-template-rows:1fr auto;gap:20px;min-height:0}
+.panel{background:var(--card);border-radius:24px;padding:20px 24px;box-shadow:0 2px 6px rgba(20,30,60,.08);min-height:0;display:flex;flex-direction:column}
+.ph{display:flex;align-items:center;gap:18px;margin-bottom:12px}
+.ph h2{font-size:30px;margin:0}
+.legend{display:flex;gap:16px;font-size:22px;color:var(--sub);margin-left:auto;align-items:center}
+.legend i{display:inline-block;width:20px;height:20px;border-radius:5px;margin-right:6px;vertical-align:-3px}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:1fr;gap:10px;flex:1;min-height:0}
+.st{border:3px solid var(--line);border-radius:16px;padding:4px 6px;text-align:center;background:#fafbfd;transition:background .3s,border-color .3s;display:flex;flex-direction:column;justify-content:center}
+.st .n{font-size:40px;font-weight:700;line-height:1.15}
+.st .d{display:flex;gap:6px;justify-content:center;margin-top:2px}
+.st .d i{width:30px;height:16px;border-radius:5px;background:#e3e7ef}
+.st .d i.f1{background:var(--q1)}.st .d i.f2{background:var(--q2)}.st .d i.f3{background:var(--q3)}
+.st.all{background:#e9f7ef;border-color:#7cc79c}
+.st.part{border-color:#9fb6ea}
+
+table{width:100%;border-collapse:collapse;font-size:27px}
+th{font-size:22px;color:var(--sub);font-weight:600;text-align:center;padding:6px 8px;border-bottom:2px solid var(--line)}
+td{text-align:center;padding:9px 8px;border-bottom:1px solid #edf0f5}
+td.l,th.l{text-align:left}
+td .qn{display:inline-block;width:34px;height:34px;border-radius:9px;color:#fff;font-weight:800;text-align:center;line-height:34px;margin-right:10px;font-size:22px}
+.pct{font-weight:800}
+.pctn{font-weight:500;color:var(--sub);font-size:20px;margin-left:6px}
+.hidden{color:#aab2c4;font-size:22px}
+.closeBtn{margin-left:auto;height:52px;padding:0 26px;border-radius:14px;border:none;background:var(--ink);color:#fff;font-size:24px;font-weight:700}
+.closeBtn.open{background:#fff;color:var(--ink);border:3px solid var(--ink)}
+.demo{position:absolute;right:30px;top:10px;font-size:18px;color:#a06a00;background:#fff3d4;border-radius:10px;padding:2px 12px}
+
+/* 풀이 버튼 · 풀이 화면 */
+.solBtn{height:48px;padding:0 18px;border-radius:12px;border:3px solid var(--acc);background:#fff;color:var(--acc);font-size:22px;font-weight:700;white-space:nowrap}
+#ov{position:absolute;inset:0;background:var(--bg);display:none;padding:22px;z-index:10}
+#ov.show{display:flex;flex-direction:column}
+.ovh{display:flex;align-items:center;gap:18px;margin-bottom:16px}
+.ovh .qn{width:52px;height:52px;border-radius:14px;color:#fff;font-weight:800;font-size:32px;display:flex;align-items:center;justify-content:center}
+.ovh h2{font-size:40px;margin:0}
+.ovh .sp{flex:1}
+.ovb{flex:1;display:grid;grid-template-columns:640px 1fr;gap:22px;min-height:0}
+.ovb.one{grid-template-columns:1fr}
+.box{background:#fff;border-radius:24px;box-shadow:0 2px 6px rgba(20,30,60,.08);padding:26px 30px;min-height:0;display:flex;flex-direction:column}
+.vis{align-items:center;justify-content:center}
+.ctl{display:flex;gap:12px}
+.ctl button{height:62px;min-width:120px;padding:0 22px;border-radius:16px;border:3px solid var(--line);background:#fff;font-size:26px;font-weight:700}
+.ctl button.pri{background:var(--acc);border-color:var(--acc);color:#fff}
+.ctl button.dark{background:var(--ink);border-color:var(--ink);color:#fff}
+.ctl button:disabled{opacity:.35}
+.steps{font-size:31px;line-height:1.6}
+.steps .s{padding:10px 0;border-bottom:2px dashed #e1e6ef;opacity:.25;transition:opacity .3s}
+.steps .s.on{opacity:1}
+.steps .s.cur{color:var(--acc)}
+.steps .s:last-child{border-bottom:none}
+.seqbig{font-size:48px;text-align:center;margin:6px 0 18px;letter-spacing:.02em}
+.hl{background:#fff1c9;border-radius:8px;padding:0 6px}
+.cnt3{font-size:30px;color:var(--sub)}
+.cnt3 b{font-size:96px;color:var(--ng);display:block;line-height:1;margin:4px 0}
+.tm{font-size:60px;font-weight:700;margin-bottom:6px}
+.olist{display:grid;grid-template-columns:repeat(2,1fr);gap:4px 26px;font-size:27px;margin-top:10px}
+.olist div{opacity:.15}
+.olist div.on{opacity:1}
+.olist div span{color:var(--ng);font-weight:800;margin-right:10px}
+.note3{margin-top:auto;font-size:30px;line-height:1.5;background:#f3f6fc;border-radius:16px;padding:14px 20px;min-height:110px}
+.note3 b{color:var(--ng)}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="left">
+    <h1>수학 퍼즐 퀴즈</h1>
+    <div class="sub">QR을 찍고 반·번호를 입력하세요</div>
+    <div id="qr"></div>
+    <div class="cls" id="cls"></div>
+    <div class="count"><div class="big num" id="cnt">0<small> / 28</small></div><div class="lab">3문제 모두 제출</div></div>
+  </div>
+  <div class="right">
+    <div class="panel">
+      <div class="ph"><h2>번호별 제출 현황</h2>
+        <div class="legend"><span><i style="background:var(--q1)"></i>1번</span><span><i style="background:var(--q2)"></i>2번</span><span><i style="background:var(--q3)"></i>3번</span></div></div>
+      <div class="grid" id="grid"></div>
+    </div>
+    <div class="panel">
+      <div class="ph"><h2>문항별 결과</h2><button class="closeBtn" id="closeBtn">마감하고 결과 보기</button></div>
+      <table><thead><tr><th class="l">문항</th><th>제출</th><th>첫 시도 정답</th><th>최종 정답</th><th>가장 많은 오답</th><th></th></tr></thead><tbody id="tb"></tbody></table>
+    </div>
+  </div>
+  <div id="ov"></div>
+  <div class="demo" id="demo" hidden>미리보기 · 가상 데이터</div>
+</div>
+<script>
+{
+/* ======================================================================
+   설정 — 선생님이 바꾸는 곳
+   API      : Apps Script 웹 앱 주소(…/exec). 비워 두면 가상 데이터로 미리보기
+   QUIZ     : 퀴즈 앱의 QUIZ 값과 같아야 함
+   QUIZ_URL : 학생용 퀴즈 주소(깃허브). QR로 만들어짐
+   N        : 한 반 학생 수
+   CLASSES  : 담당 반 번호
+   ====================================================================== */
+const API      = '';
+const QUIZ     = '퍼즐퀴즈';
+const QUIZ_URL = 'https://llmathll.github.io/math26-2/puzzle-quiz.html';
+const N        = 28;
+const CLASSES  = [1,2,3,4];
+const QNAMES   = ['도형 퍼즐','숫자 세기 수열','시곗바늘'];
+const QCOL     = ['var(--q1)','var(--q2)','var(--q3)'];
+
+let cls=CLASSES[0], closed=false, rows=[];
+const $=id=>document.getElementById(id);
+
+/* 화면 맞춤 (16:9, 여백 없이) */
+function fit(){const s=Math.min(innerWidth/1600,innerHeight/900);$('stage').style.transform=`scale(${s})`}
+addEventListener('resize',fit); fit();
+
+/* QR */
+(function(){
+  const box=$('qr');
+  const url=QUIZ_URL||(API?'':'https://example.com/퍼즐퀴즈.html');
+  if(!url){box.innerHTML='<div class="noqr">QUIZ_URL을 넣으면<br>여기에 QR이 나와요</div>';return}
+  if(typeof QRCode==='undefined'){box.innerHTML=`<div class="noqr">${url}</div>`;return}
+  new QRCode(box,{text:url,width:300,height:300,correctLevel:QRCode.CorrectLevel.M});
+})();
+
+/* 반 버튼 */
+function drawCls(){
+  $('cls').innerHTML=CLASSES.map(c=>`<button class="${c===cls?'on':''}" data-c="${c}">${c}반</button>`).join('');
+}
+$('cls').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;cls=+b.dataset.c;closed=false;rows=[];drawCls();draw();load()});
+$('closeBtn').addEventListener('click',()=>{closed=!closed;draw()});
+
+/* 데이터 정리: 번호·문항별 마지막 제출만 사용 */
+function summarize(){
+  const last={};
+  rows.forEach(r=>{last[r.num+'_'+r.q]=r});
+  const sub={}; for(let n=1;n<=N;n++) sub[n]=[false,false,false];
+  const st=[0,1,2].map(()=>({n:0,first:0,fin:0,wrong:{}}));
+  Object.values(last).forEach(r=>{
+    const qi=+r.q-1; if(qi<0||qi>2) return;
+    if(sub[r.num]) sub[r.num][qi]=true;
+    const s=st[qi]; s.n++; if(r.first==='O')s.first++; if(r.fin==='O')s.fin++;
+    String(r.wrong||'').split('|').map(x=>x.trim()).filter(Boolean).filter((x,i,a)=>a.indexOf(x)===i)
+      .forEach(w=>{s.wrong[w]=(s.wrong[w]||0)+1});
+  });
+  return {sub,st};
+}
+function draw(){
+  const {sub,st}=summarize();
+  let all=0, g='';
+  for(let n=1;n<=N;n++){
+    const s=sub[n], k=s.filter(Boolean).length; if(k===3) all++;
+    g+=`<div class="st ${k===3?'all':k?'part':''}"><div class="n num">${n}</div><div class="d">${s.map((v,i)=>`<i class="${v?'f'+(i+1):''}"></i>`).join('')}</div></div>`;
+  }
+  $('grid').innerHTML=g;
+  $('cnt').innerHTML=`${all}<small> / ${N}</small>`;
+  $('tb').innerHTML=st.map((s,i)=>{
+    const pct=(a)=>s.n?`<span class="pct num">${Math.round(a/s.n*100)}%</span><span class="pctn">(${a}명)</span>`:'<span class="hidden">–</span>';
+    const top=Object.entries(s.wrong).sort((a,b)=>b[1]-a[1]).slice(0,2).map(([v,c])=>`<span class="num">${v}</span> <small style="color:var(--sub)">(${c}명)</small>`).join(', ')||'<span class="hidden">없음</span>';
+    const hid='<span class="hidden">마감 후 공개</span>';
+    return `<tr><td class="l"><span class="qn" style="background:${QCOL[i]}">${i+1}</span>${QNAMES[i]}</td>
+      <td class="num">${s.n}<small style="color:var(--sub);font-size:20px"> / ${N}</small></td>
+      <td>${closed?pct(s.first):hid}</td><td>${closed?pct(s.fin):hid}</td><td>${closed?top:hid}</td><td><button class="solBtn" data-sol="${i}">풀이 ▶</button></td></tr>`;
+  }).join('');
+  const b=$('closeBtn'); b.textContent=closed?'결과 다시 가리기':'마감하고 결과 보기'; b.classList.toggle('open',closed);
+}
+
+/* 불러오기 */
+async function load(){
+  if(!API){demoTick();return}
+  try{
+    const r=await fetch(`${API}?action=stats&quiz=${encodeURIComponent(QUIZ)}&cls=${cls}`);
+    const j=await r.json(); if(j&&j.rows){rows=j.rows;draw()}
+  }catch(e){}
+}
+/* 미리보기용 가상 제출 */
+function demoTick(){
+  $('demo').hidden=false;
+  const wr=[[29,27,24],[312213,1122113111,1322],[24,23,12]];
+  for(let t=0;t<3;t++){
+    const n=1+Math.floor(Math.random()*N), have=rows.filter(r=>r.num===n).length; if(have>=3) continue;
+    const q=have+1, ok1=Math.random()<[.45,.6,.3][q-1], ok2=ok1||Math.random()<.5;
+    const w=[]; if(!ok1)w.push(wr[q-1][Math.floor(Math.random()*3)]); if(!ok1&&!ok2)w.push(wr[q-1][Math.floor(Math.random()*3)]);
+    rows.push({num:n,q,first:ok1?'O':'X',fin:ok2?'O':'X',wrong:w.join(' | ')});
+  }
+  draw();
+}
+
+/* ======================= 풀이 화면 ======================= */
+const ov=$('ov');
+const SH={L:[[0,0],[1,0],[2,0],[2,1],[2,2]],T:[[0,0],[0,1],[0,2],[1,1],[2,1]],S:[[0,1],[0,2],[1,1],[2,0],[2,1]],W:[[0,0],[0,1],[1,1],[1,2],[2,2]],X:[[0,1],[1,0],[1,1],[1,2],[2,1]]};
+const sum=c=>c.reduce((a,[r,k])=>a+k*3+r+1,0);
+function shapeSVG(cells,u){let s='';cells.forEach(([r,c])=>{s+=`<rect x="${c*u+2}" y="${r*u+2}" width="${u}" height="${u}" fill="#f4bd52" stroke="#a8730f" stroke-width="2.5"/>`});return `<svg width="${3*u+4}" height="${3*u+4}">${s}</svg>`}
+function gridSVG(cells,showNum){
+  const u=130,cs=new Set((cells||[]).map(([r,c])=>r+','+c));let s='';
+  for(let r=0;r<3;r++)for(let c=0;c<3;c++){const on=cs.has(r+','+c);
+    s+=`<rect x="${c*u+3}" y="${r*u+3}" width="${u}" height="${u}" fill="${on?'#f4bd52':'#fff'}" stroke="${on?'#a8730f':'#9aa4b8'}" stroke-width="${on?4:2}"/>`;
+    if(showNum)s+=`<text x="${c*u+3+u/2}" y="${r*u+3+u/2+24}" text-anchor="middle" font-family="STIX Two Text,serif" font-size="70" fill="#1b2232">${c*3+r+1}</text>`;}
+  return `<svg width="${3*u+6}" height="${3*u+6}">${s}</svg>`;
+}
+const SOL=[
+ { /* 1번 도형 퍼즐 */
+   steps:[
+    {vis:()=>`<div style="display:flex;flex-wrap:wrap;gap:26px 40px;justify-content:center;align-items:center">${['L','T','S','W','X'].map((k,i)=>`<div style="display:flex;align-items:center;gap:12px">${shapeSVG(SH[k],38)}<span class="num" style="font-size:44px;${i===4?'color:var(--ng);font-weight:700':''}">= ${i===4?'?':sum(SH[k])}</span></div>`).join('')}</div>`,
+     txt:'도형은 모두 <b>5칸</b>이고, 모양마다 값이 달라요.'},
+    {vis:()=>gridSVG([],true), txt:'9칸짜리 판에 1부터 9까지 <b>세로 방향</b>으로 써요.'},
+    {vis:()=>gridSVG(SH.L,true), txt:`ㄴ자를 판에 올리면 <span class="num">1 + 2 + 3 + 6 + 9 = 21</span>`},
+    {vis:()=>gridSVG(SH.T,true), txt:`ㅜ자를 올리면 <span class="num">1 + 4 + 7 + 5 + 6 = 23</span>`},
+    {vis:()=>gridSVG(SH.X,true), txt:`십자를 올리면 <span class="num">4 + 2 + 5 + 8 + 6 = <b style="color:var(--ng)">25</b></span>`}
+   ]},
+ { /* 2번 숫자 세기 수열 */
+   one:true, head:'1, 11, 12, 1121, 1321, 122131, <span style="color:var(--ng)">?</span>',
+   steps:[
+    {txt:'규칙: 앞의 수에 있는 숫자를 <b>작은 숫자부터</b> “숫자, 개수” 순서로 써요.'},
+    {txt:`<span class="num">1</span> → 1이 1개 → <span class="num hl">11</span>`},
+    {txt:`<span class="num">11</span> → 1이 2개 → <span class="num hl">12</span>`},
+    {txt:`<span class="num">12</span> → 1이 1개, 2가 1개 → <span class="num hl">1121</span>`},
+    {txt:`<span class="num">1121</span> → 1이 3개, 2가 1개 → <span class="num hl">1321</span>`},
+    {txt:`<span class="num">1321</span> → 1이 2개, 2가 1개, 3이 1개 → <span class="num hl">122131</span>`},
+    {txt:`<span class="num">122131</span> → 1이 3개, 2가 2개, 3이 1개 → <span class="num hl" style="color:var(--ng);font-weight:700">132231</span>`}
+   ]},
+ { clock:true }
+];
+let solQ=-1, solStep=0;
+function openSol(q){solQ=q;solStep=0;ov.classList.add('show');if(SOL[q].clock)clockInit();else drawSol()}
+function closeSol(){ov.classList.remove('show');solQ=-1;clockStop()}
+function ovHead(q){return `<div class="ovh"><div class="qn" style="background:${QCOL[q]}">${q+1}</div><h2>${QNAMES[q]} 풀이</h2><div class="sp"></div><div class="ctl"><button class="dark" data-ov="close">닫기 ✕</button></div></div>`}
+function drawSol(){
+  const q=solQ, d=SOL[q], n=d.steps.length, st=d.steps[solStep];
+  const ctl=`<div class="ctl" style="margin-top:auto;justify-content:flex-end"><button data-ov="prev" ${solStep===0?'disabled':''}>◀ 이전</button><button class="pri" data-ov="next" ${solStep===n-1?'disabled':''}>다음 ▶</button></div>`;
+  const steps=`<div class="steps">${d.steps.map((x,i)=>`<div class="s ${i<=solStep?'on':''} ${i===solStep?'cur':''}">${x.txt}</div>`).join('')}</div>`;
+  if(d.one){
+    ov.innerHTML=ovHead(q)+`<div class="ovb one"><div class="box"><div class="seqbig num">${d.head}</div>${steps}${ctl}</div></div>`;
+  }else{
+    ov.innerHTML=ovHead(q)+`<div class="ovb"><div class="box vis">${st.vis()}</div><div class="box">${steps}${ctl}</div></div>`;
+  }
+}
+
+/* ---------- 3번 시곗바늘 애니메이션 ---------- */
+const OV_T=[...Array(11)].map((_,k)=>k*12/11);         // 겹치는 시각(시간 단위)
+let C={t:0,play:false,speed:1,raf:0,last:0,hold:0,count:0,done:false};
+function hms(t){let sec=Math.round(t*3600);const h=Math.floor(sec/3600);sec-=h*3600;const m=Math.floor(sec/60),s=sec-m*60;return `${h===0?12:h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`}
+function clockInit(){
+  clockStop(); C={t:0,play:false,speed:1,raf:0,last:0,hold:0,count:1,done:false};
+  ov.innerHTML=ovHead(2)+`<div class="ovb"><div class="box vis"><svg id="clk" width="600" height="600" viewBox="-338 -338 676 676"></svg></div>
+   <div class="box"><div style="display:flex;gap:30px;align-items:flex-end">
+      <div><div class="cnt3">현재 시각</div><div class="tm num" id="tm">12:00:00</div></div>
+      <div class="cnt3" style="margin-left:auto;text-align:right">겹친 횟수<b class="num" id="cn">1</b></div></div>
+    <div class="olist" id="ol">${OV_T.map((t,k)=>`<div class="${k===0?'on':''}"><span class="num">${k+1}</span><span class="num" style="color:inherit;font-weight:400">${hms(t)}</span></div>`).join('')}</div>
+    <div class="note3" id="nt">12시 정각에 두 바늘이 겹친 상태로 출발해요.</div>
+    <div class="ctl" style="margin-top:16px;justify-content:flex-end">
+      <button data-ov="reset">처음부터</button><button data-ov="speed" id="spd">속도 1배</button><button class="pri" data-ov="play" id="pl">▶ 재생</button></div></div></div>`;
+  drawClock();
+}
+function drawClock(){
+  const svg=document.getElementById('clk'); if(!svg) return;
+  const R=270; let g=`<circle r="${R}" fill="#fff" stroke="#1b2232" stroke-width="8"/>`;
+  for(let i=0;i<60;i++){const a=i*6*Math.PI/180,l=i%5?12:26,w=i%5?2:5;g+=`<line x1="${(R-8)*Math.sin(a)}" y1="${-(R-8)*Math.cos(a)}" x2="${(R-8-l)*Math.sin(a)}" y2="${-(R-8-l)*Math.cos(a)}" stroke="#1b2232" stroke-width="${w}"/>`}
+  for(let h=1;h<=12;h++){const a=h*30*Math.PI/180;g+=`<text x="${205*Math.sin(a)}" y="${-205*Math.cos(a)+17}" text-anchor="middle" font-family="STIX Two Text,serif" font-size="48" fill="#1b2232">${h}</text>`}
+  /* 11시대 구간 표시 (끝까지 갔을 때) */
+  if(C.t>=OV_T[10]){const a1=OV_T[10]*30*Math.PI/180,a2=2*Math.PI-0.02,r=165;
+    g+=`<path d="M ${r*Math.sin(a1)} ${-r*Math.cos(a1)} A ${r} ${r} 0 0 1 ${r*Math.sin(a2)} ${-r*Math.cos(a2)}" fill="none" stroke="#9aa4b8" stroke-width="14" stroke-dasharray="4 10" stroke-linecap="round"/>`}
+  /* 겹친 자리 표시 */
+  OV_T.forEach((t,k)=>{if(k<C.count){const a=t*30*Math.PI/180;g+=`<circle cx="${(R+0)*Math.sin(a)}" cy="${-(R+0)*Math.cos(a)}" r="15" fill="var(--ng)" stroke="#fff" stroke-width="4"/><text x="${(R+44)*Math.sin(a)}" y="${-(R+44)*Math.cos(a)+11}" text-anchor="middle" font-size="30" font-weight="800" fill="var(--ng)" font-family="STIX Two Text,serif">${k+1}</text>`}});
+  const ma=(C.t%1)*360, ha=C.t*30, flash=C.hold>0;
+  g+=`<line x1="0" y1="0" x2="${150*Math.sin(ha*Math.PI/180)}" y2="${-150*Math.cos(ha*Math.PI/180)}" stroke="${flash?'var(--ng)':'#1b2232'}" stroke-width="16" stroke-linecap="round"/>`;
+  g+=`<line x1="0" y1="0" x2="${235*Math.sin(ma*Math.PI/180)}" y2="${-235*Math.cos(ma*Math.PI/180)}" stroke="${flash?'var(--ng)':'#2f5fd0'}" stroke-width="9" stroke-linecap="round"/>`;
+  g+=`<circle r="14" fill="#1b2232"/>`;
+  svg.innerHTML=g;
+  const tm=document.getElementById('tm'); if(tm) tm.textContent=hms(Math.min(C.t,12)).replace(/^12:00:00$/,C.done?'12:00:00':'12:00:00');
+  const cn=document.getElementById('cn'); if(cn) cn.textContent=C.count;
+  document.querySelectorAll('#ol div').forEach((d,k)=>d.classList.toggle('on',k<C.count));
+}
+function note(h){const n=document.getElementById('nt');if(n)n.innerHTML=h}
+function clockStep(ts){
+  if(!C.play) return;
+  const dt=C.last?Math.min((ts-C.last)/1000,.1):0; C.last=ts;
+  if(C.hold>0){C.hold-=dt; drawClock(); C.raf=requestAnimationFrame(clockStep); return}
+  const nt=C.t+dt*C.speed*0.45;                 // 1배속: 1시간 ≈ 2.2초
+  const nextK=C.count;                           // 다음에 겹칠 순번(0부터)
+  if(nextK<11 && nt>=OV_T[nextK]){
+    C.t=OV_T[nextK]; C.count++; C.hold=1.0;
+    note(`<b>${C.count}번째</b> 겹침: ${hms(C.t)}. 분침이 시침을 한 바퀴 따라잡았어요.`);
+  }else if(nt>=12){
+    C.t=12; C.play=false; C.done=true; drawClock();
+    note(`11시대에는 분침이 시침을 따라잡기 전에 12시가 돼요. 12시 정각은 출발 때와 같은 겹침이에요.<br>→ 12시간에 <b>11번</b>, 하루는 <b>11 × 2 = 22번</b>`);
+    document.getElementById('pl').textContent='▶ 재생'; return;
+  }else{
+    C.t=nt;
+    if(C.t>OV_T[10]+.3&&C.t<12) note('마지막 겹침(10:54:33) 뒤에는 <b>12시까지 겹치지 않아요.</b>');
+  }
+  drawClock(); C.raf=requestAnimationFrame(clockStep);
+}
+function clockStop(){C.play=false;if(C.raf)cancelAnimationFrame(C.raf)}
+ov.addEventListener('click',e=>{
+  const b=e.target.closest('[data-ov]'); if(!b) return; const a=b.dataset.ov;
+  if(a==='close') return closeSol();
+  if(a==='prev'&&solStep>0){solStep--;drawSol()}
+  if(a==='next'&&solStep<SOL[solQ].steps.length-1){solStep++;drawSol()}
+  if(a==='play'){
+    if(C.done) clockInit();
+    C.play=!C.play; C.last=0; document.getElementById('pl').textContent=C.play?'❚❚ 멈춤':'▶ 재생';
+    if(C.play){note('분침(파랑)이 시침(검정)을 따라잡을 때마다 멈춰요.');C.raf=requestAnimationFrame(clockStep)}
+  }
+  if(a==='reset') clockInit();
+  if(a==='speed'){C.speed=C.speed===1?2:C.speed===2?4:1;b.textContent=`속도 ${C.speed}배`}
+});
+document.addEventListener('keydown',e=>{
+  if(solQ<0) return;
+  if(e.key==='Escape') closeSol();
+  if(!SOL[solQ].clock){ if(e.key==='ArrowRight'||e.key===' ') ov.querySelector('[data-ov="next"]')?.click(); if(e.key==='ArrowLeft') ov.querySelector('[data-ov="prev"]')?.click(); }
+  else if(e.key===' ') ov.querySelector('[data-ov="play"]')?.click();
+});
+$('tb').addEventListener('click',e=>{const b=e.target.closest('[data-sol]');if(b)openSol(+b.dataset.sol)});
+
+drawCls(); draw(); load(); setInterval(load, API?4000:1500);
+}
+</script>
+</body>
+</html>

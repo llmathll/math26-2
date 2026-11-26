@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>수학 퍼즐 퀴즈</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+
+
+:root{
+  --ink:#1d2433; --sub:#5b6478; --line:#d6dce7; --bg:#f3f5f9; --card:#fff;
+  --acc:#2f5fd0; --accbg:#eaf0ff;
+  --ok:#1b8a4b; --okbg:#e5f5ec; --ng:#cc3d3d; --ngbg:#fdeceb;
+  --hint:#7a5200; --hintbg:#fff3d4;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;
+  font-size:18px;line-height:1.6;-webkit-text-size-adjust:100%}
+#app{max-width:520px;margin:0 auto;padding:0 14px 40px}
+#app.kpon{padding-bottom:140px}
+button{font:inherit;color:inherit}
+
+/* 수식 */
+.m{font-family:"STIX Two Text","Times New Roman",serif;font-size:1.14em;white-space:nowrap;letter-spacing:.01em}
+.m i{font-style:italic}
+.m sub,.m sup{font-size:.66em;line-height:0}
+.m sub{vertical-align:-.28em}
+.m sup{vertical-align:.55em}
+.frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;margin:0 .15em;line-height:1.15}
+.frac>span{padding:0 .2em;display:block;text-align:center}
+.frac>span:first-child{border-bottom:1.5px solid currentColor}
+
+/* 상단 */
+.top{position:sticky;top:0;z-index:5;background:var(--bg);padding:12px 0 10px}
+.top .row{display:flex;justify-content:space-between;align-items:center;font-size:.92em;color:var(--sub)}
+.top .row b{color:var(--ink)}
+.bar{height:8px;background:#dde3ee;border-radius:8px;margin-top:8px;overflow:hidden}
+.bar>div{height:100%;background:var(--acc);border-radius:8px;transition:width .35s}
+
+/* 카드 */
+.card{background:var(--card);border-radius:18px;padding:18px 18px;margin:12px 0;box-shadow:0 1px 3px rgba(20,30,60,.08)}
+.tag{display:inline-block;font-size:.8em;font-weight:700;color:var(--acc);background:var(--accbg);padding:2px 10px;border-radius:20px;margin-bottom:8px}
+.ptext{font-size:1.04em}
+h1{font-size:1.5em;margin:28px 0 6px}
+.lead{color:var(--sub);margin:0 0 8px}
+
+/* 단계 */
+.step{background:var(--card);border-radius:16px;padding:16px;margin:10px 0;border:2px solid transparent;box-shadow:0 1px 3px rgba(20,30,60,.06)}
+.step.cur{border-color:var(--acc)}
+.step.done{opacity:.97}
+.sh{display:flex;align-items:flex-start;gap:8px;font-weight:700;margin-bottom:10px}
+.sh .no{flex:none;color:var(--acc)}
+.sh .st{margin-left:auto;flex:none;font-size:.82em;font-weight:700;padding:1px 9px;border-radius:12px}
+.st.o{color:var(--ok);background:var(--okbg)}
+.st.r{color:var(--hint);background:var(--hintbg)}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.opts.txt{grid-template-columns:1fr}
+.opt{min-height:58px;border:2px solid var(--line);background:#fff;border-radius:14px;padding:8px 12px;font-size:1.08em;cursor:pointer;text-align:center}
+.opts.txt .opt{text-align:left;padding-left:16px}
+.opt:active{transform:scale(.98)}
+.opt.x{border-color:#efc2c2;background:var(--ngbg);color:#a08a8a;text-decoration:line-through;cursor:default}
+.opt.y{border-color:var(--ok);background:var(--okbg);color:var(--ok);font-weight:700}
+.ansline{font-size:1.15em;display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+.blank{display:inline-flex;align-items:center;justify-content:center;min-width:2.8em;height:1.9em;padding:0 .35em;
+  border:2px solid var(--line);border-radius:10px;background:#fff;font-family:"STIX Two Text","Times New Roman",serif;
+  font-size:1.15em;cursor:pointer}
+.frac .blank{margin:3px 0;height:1.7em}
+.frac.in>span:first-child{border-bottom:none}
+.frac.in .fbar{height:2px;background:var(--ink);width:100%;margin:1px 0;border:none;padding:0}
+.blank.on{border-color:var(--acc);box-shadow:0 0 0 4px rgba(47,95,208,.18)}
+.blank.empty::after{content:"";}
+.locked{font-family:"STIX Two Text","Times New Roman",serif;font-weight:600;color:var(--ok)}
+.locked.rvd{color:var(--sub)}
+.msg{margin-top:12px;padding:10px 14px;border-radius:12px;font-size:.95em}
+.msg.ok{background:var(--okbg);color:#14663a}
+.msg.ng{background:var(--ngbg);color:#9b2c2c}
+.msg.hint{background:var(--hintbg);color:var(--hint)}
+.msg.rv{background:#eef0f5;color:var(--ink)}
+.msg b{font-weight:700}
+.tries{font-size:.82em;color:var(--sub);margin-top:6px}
+
+.btn{display:block;width:100%;min-height:58px;border:none;border-radius:16px;background:var(--acc);color:#fff;font-size:1.12em;font-weight:700;margin:16px 0;cursor:pointer}
+.btn.sec{background:#fff;color:var(--acc);border:2px solid var(--acc)}
+.btn:disabled{background:#b9c3d8}
+
+/* 결과 */
+.score{font-size:2.4em;font-weight:800;color:var(--acc);text-align:center;margin:6px 0 0}
+.scap{text-align:center;color:var(--sub);margin-bottom:6px}
+table{width:100%;border-collapse:collapse;font-size:.95em}
+td,th{padding:8px 6px;border-bottom:1px solid #edf0f5;text-align:center}
+th{color:var(--sub);font-weight:600;font-size:.88em}
+td.l,th.l{text-align:left}
+.O{color:var(--ok);font-weight:800}.X{color:var(--ng);font-weight:800}
+details{margin-top:6px}
+summary{cursor:pointer;color:var(--sub);font-size:.92em}
+pre{background:#1f2533;color:#d6e2ff;padding:12px;border-radius:12px;font-size:.72em;line-height:1.45;overflow:auto;white-space:pre-wrap;word-break:break-all}
+
+/* 키패드 */
+#kp{position:fixed;left:0;right:0;bottom:0;z-index:20;background:#e4e9f2;border-top:1px solid #cfd6e3;
+  padding:6px 8px calc(8px + env(safe-area-inset-bottom));transform:translateY(105%);transition:transform .22s}
+#kp:not(.show){visibility:hidden;transition:transform .22s,visibility 0s .22s}
+#kp.show{transform:none}
+#kp .g{max-width:520px;margin:0 auto;display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
+#kp button{height:44px;border:none;border-radius:10px;background:#fff;font-size:1.25em;font-family:"STIX Two Text","Times New Roman",serif;box-shadow:0 1px 0 #c3cbda;cursor:pointer}
+#kp button:active{background:#dfe6f5}
+#kp button.k-ok{background:var(--acc);color:#fff;font-family:inherit;font-size:.95em;font-weight:700}
+#kp button.k-del{font-family:inherit;font-size:1.2em}
+#kp .kh{max-width:520px;margin:0 auto 8px;font-size:.85em;color:var(--sub);text-align:center}
+.shake{animation:sh .35s}
+@keyframes sh{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+
+
+.sol{margin-top:12px;padding:12px 14px;border-radius:12px;background:#eef1f7;font-size:.97em}
+.sol .t{font-weight:700;color:var(--sub);font-size:.88em;margin-bottom:4px}
+.sol .ln{padding:5px 0;border-bottom:1px dashed #d3d9e5;line-height:1.85}
+.sol .ln:last-child{border-bottom:none}
+.conf{font-size:1.25em;text-align:center;margin:8px 0 4px}
+.conf b{font-size:1.25em}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.two .btn{margin:10px 0 0}
+.note{font-size:.8em;color:var(--sub);text-align:center;margin-top:8px}
+details.solt summary{margin-top:10px}
+.shapes{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 18px;margin:12px 0 4px}
+.shp{display:flex;align-items:center;gap:6px}
+.shp svg{display:block}
+.shp .v{font-family:"STIX Two Text","Times New Roman",serif;font-size:1.35em;white-space:nowrap}
+.shp .v.q{color:var(--ng);font-weight:700}
+.seq{font-family:"STIX Two Text","Times New Roman",serif;font-size:1.3em;text-align:center;margin:12px 0 4px;letter-spacing:.02em;word-break:break-all}
+.solfig{display:flex;justify-content:center;margin:6px 0}
+.sending{font-size:.78em;color:var(--sub);text-align:right;margin-top:4px}
+@media (min-width:700px){
+  html,body{font-size:22px}
+  #app{max-width:760px;padding:0 28px 40px}
+  #app.kpon{padding-bottom:170px}
+  #kp .g{max-width:760px;gap:8px}
+  #kp button{height:58px;font-size:1.3em}
+  .shp svg{width:92px;height:92px}
+  .solfig svg{width:180px;height:180px}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="kp">
+  <div class="g">
+    <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button><button data-k="4">4</button><button data-k="5">5</button><button data-k="del" class="k-del">⌫</button>
+    <button data-k="6">6</button><button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button><button data-k="0">0</button><button data-k="ok" class="k-ok">확인</button>
+  </div>
+</div>
+<script>
+{
+/* ======================================================================
+   설정 — 선생님이 바꾸는 곳
+   API  : Apps Script 웹 앱 주소(…/exec). 비워 두면 결과를 저장하지 않고 퀴즈만 진행
+   QUIZ : 이 퀴즈의 이름(시트와 칠판 화면에서 구분용)
+   ====================================================================== */
+const API  = '';
+const QUIZ = '퍼즐퀴즈';
+
+/* ===================== 도구 ===================== */
+const m=s=>`<span class="m">${s}</span>`;
+const frac=(p,q)=>`<span class="m frac"><span>${p}</span><span>${q}</span></span>`;
+
+/* 도형 그리기: cells = [[행,열],…] */
+function shapeSVG(cells,u){
+  u=u||20;let s='';
+  cells.forEach(([r,c])=>{s+=`<rect x="${c*u+1}" y="${r*u+1}" width="${u}" height="${u}" fill="#f4bd52" stroke="#a8730f" stroke-width="1.6"/>`});
+  return `<svg width="${3*u+2}" height="${3*u+2}" viewBox="0 0 ${3*u+2} ${3*u+2}" aria-hidden="true">${s}</svg>`;
+}
+function gridSVG(cells){
+  const u=44,cs=new Set(cells.map(([r,c])=>r+','+c));let s='';
+  for(let r=0;r<3;r++)for(let c=0;c<3;c++){
+    const on=cs.has(r+','+c);
+    s+=`<rect x="${c*u+2}" y="${r*u+2}" width="${u}" height="${u}" fill="${on?'#f4bd52':'#fff'}" stroke="${on?'#a8730f':'#9aa4b8'}" stroke-width="${on?2:1.2}"/>`;
+    s+=`<text x="${c*u+2+u/2}" y="${r*u+2+u/2+8}" text-anchor="middle" font-family="STIX Two Text,Times New Roman,serif" font-size="24" fill="#1d2433">${c*3+r+1}</text>`;
+  }
+  return `<svg width="${3*u+4}" height="${3*u+4}" viewBox="0 0 ${3*u+4} ${3*u+4}">${s}</svg>`;
+}
+const SH={
+  L:[[0,0],[1,0],[2,0],[2,1],[2,2]],
+  T:[[0,0],[0,1],[0,2],[1,1],[2,1]],
+  S:[[0,1],[0,2],[1,1],[2,0],[2,1]],
+  W:[[0,0],[0,1],[1,1],[1,2],[2,2]],
+  X:[[0,1],[1,0],[1,1],[1,2],[2,1]]
+};
+
+/* ===================== 문제 ===================== */
+const QS=[
+ { unit:'도형 퍼즐', ans:25,
+   text:`규칙을 찾아 물음표에 들어갈 수를 구하시오.
+     <div class="shapes">
+       <div class="shp">${shapeSVG(SH.L)}<span class="v">= 21</span></div>
+       <div class="shp">${shapeSVG(SH.T)}<span class="v">= 23</span></div>
+       <div class="shp">${shapeSVG(SH.S)}<span class="v">= 25</span></div>
+       <div class="shp">${shapeSVG(SH.W)}<span class="v">= 27</span></div>
+       <div class="shp">${shapeSVG(SH.X)}<span class="v q">= ?</span></div>
+     </div>`,
+   pre:'? '+m('='),
+   diag:v=> v===29?'21, 23, 25, 27 다음이라 29일 것 같지만, 순서가 아니라 <b>도형의 모양</b>이 값을 정해요.':'',
+   hint:'모든 도형은 5칸짜리예요. 각 도형이 <b>9칸짜리 정사각형 판</b> 위에 놓여 있다고 생각해 보세요. 판의 칸마다 수가 적혀 있다면?',
+   sol:[
+     `1부터 9까지를 3×3 판에 <b>세로 방향</b>으로 쓰고, 도형이 덮은 칸의 수를 더한 값이에요.`,
+     `<div class="solfig">${gridSVG(SH.L)}</div>ㄴ자: ${m('1 + 2 + 3 + 6 + 9 = 21')}`,
+     `<div class="solfig">${gridSVG(SH.X)}</div>십자: ${m('4 + 2 + 5 + 8 + 6 = 25')}`
+   ]},
+ { unit:'숫자 세기 수열', ans:132231,
+   text:`규칙을 찾아 물음표에 들어갈 수를 구하시오.<div class="seq">1, 11, 12, 1121, 1321, 122131, ?</div>`,
+   pre:'? '+m('='),
+   diag:v=> v===312213?'규칙은 거의 찾았어요! 읽는 순서를 확인해 보세요. <b>숫자를 먼저</b>, 개수를 나중에 써요.'
+     : v===1122113111?'붙어 있는 것끼리 묶어 읽지 않아요. 수 전체에서 각 숫자가 <b>모두 몇 개</b>인지 세어 보세요.':'',
+   hint:'앞의 수에 들어 있는 숫자가 각각 <b>몇 개</b>인지 세어 보세요. 11은 앞의 수 1을 “1이 1개”, 12는 11을 “1이 2개”라고 쓴 거예요.',
+   sol:[
+     `앞의 수에 있는 숫자를 <b>작은 숫자부터</b> “숫자, 개수” 순서로 써요.`,
+     `${m('1')} → 1이 1개 → ${m('11')}<br>${m('11')} → 1이 2개 → ${m('12')}<br>${m('12')} → 1이 1개, 2가 1개 → ${m('1121')}`,
+     `${m('1121')} → 1이 3개, 2가 1개 → ${m('1321')}<br>${m('1321')} → 1이 2개, 2가 1개, 3이 1개 → ${m('122131')}`,
+     `${m('122131')} → 1이 <b>3</b>개, 2가 <b>2</b>개, 3이 <b>1</b>개 → ${m('132231')}`
+   ]},
+ { unit:'시곗바늘', ans:22,
+   text:`하루 24시간 동안 시계의 시침과 분침이 정확히 겹치는 횟수를 구하시오.<br><span style="font-size:.85em;color:var(--sub)">(밤 12시 정각은 한 번만 셉니다.)</span>`,
+   pre:'횟수 '+m('='),
+   diag:v=> v===24?'매시간 한 번씩 겹칠 것 같지만, <b>11시와 1시 사이</b>를 잘 살펴보세요.'
+     : (v===12||v===11)?'12시간 동안의 횟수를 구한 것 같아요. 하루는 <b>24시간</b>이에요.'
+     : v===23?'0시와 24시를 따로 셌는지 확인해 보세요.':'',
+   hint:'먼저 12시간 동안 몇 번 겹치는지 세어 보세요. 11시대에는 겹치는 순간이 있을까요?',
+   sol:[
+     `분침은 1시간에 ${m('360°')}, 시침은 1시간에 ${m('30°')} 돌아요. 분침이 시침을 따라잡는 속도는 1시간에 ${m('330°')}예요.`,
+     `한 번 겹친 뒤 다시 겹치려면 ${m('360°')}를 따라잡아야 하므로 ${frac(m('360'),m('330'))} ${m('=')} ${frac(m('12'),m('11'))}시간마다 겹쳐요.`,
+     `${m('24 ÷')} ${frac(m('12'),m('11'))} ${m('= 22')}번 (12시간에 11번 × 2)`
+   ]}
+];
+const NQ=QS.length;
+
+/* ===================== 서버 통신 ===================== */
+async function getName(cls,num){
+  if(!API) return '';
+  try{
+    const r=await fetch(`${API}?action=name&cls=${cls}&num=${num}`);
+    const j=await r.json(); return (j&&j.name)||'';
+  }catch(e){return ''}
+}
+function send(d,tries){
+  if(!API) return;
+  tries=tries||0;
+  fetch(API,{method:'POST',body:JSON.stringify(d)})
+    .catch(()=>{ if(tries<3) setTimeout(()=>send(d,tries+1),1500*(tries+1)); });
+}
+
+/* ===================== 상태 ===================== */
+const S={screen:'start',vals:{},active:'cls',cls:0,num:0,name:'',qi:0,res:[]};
+window.__S=S;
+const app=document.getElementById('app'), kp=document.getElementById('kp');
+const newRes=()=>({attempts:0,wrong:[],firstCorrect:null,done:false,correct:false,msg:'',mt:'',final:''});
+
+/* ===================== 그리기 ===================== */
+const blank=id=>{const v=S.vals[id]||'';return `<span class="blank${S.active===id?' on':''}" data-id="${id}">${v||'&nbsp;'}</span>`};
+function header(title){
+  const done=S.res.filter(r=>r.done).length;
+  return `<div class="top"><div class="row"><span><b>${title}</b></span><span>${S.cls}반 ${S.num}번</span></div>
+    <div class="bar"><div style="width:${done/NQ*100}%"></div></div></div>`;
+}
+function renderStart(){
+  return `<h1>수학 퍼즐 퀴즈</h1>
+  <p class="lead">반과 번호를 입력하세요.</p>
+  <div class="card">
+    <div class="ansline" style="gap:14px"><span>반</span>${blank('cls')}<span style="margin-left:10px">번호</span>${blank('num')}</div>
+    <div class="tries">칸을 누르고 아래 숫자판으로 입력 → 확인</div>
+  </div>
+  <button class="btn" data-act="check">다음</button>`;
+}
+function renderConfirm(){
+  return `<h1>본인 확인</h1>
+  <div class="card"><div class="conf">${S.cls}반 ${S.num}번<br><b>${S.name}</b> 학생이 맞나요?</div>
+  <div class="two"><button class="btn sec" data-act="no">아니요</button><button class="btn" data-act="yes">네, 맞아요</button></div></div>`;
+}
+function statusTag(r){
+  if(!r.done) return '';
+  if(!r.correct) return '<span class="st r">풀이 확인</span>';
+  return r.firstCorrect?'<span class="st o">한 번에 ✓</span>':'<span class="st o">✓</span>';
+}
+function solBox(q,open){
+  const inner=`<div class="sol"><div class="t">풀이</div>${q.sol.map(l=>`<div class="ln">${l}</div>`).join('')}</div>`;
+  return open?inner:`<details class="solt"><summary>풀이 보기</summary>${inner}</details>`;
+}
+function renderQ(){
+  const q=QS[S.qi], r=S.res[S.qi];
+  let h=header(`문제 ${S.qi+1} / ${NQ}`);
+  h+=`<div class="card"><span class="tag">문제 ${S.qi+1} · ${q.unit}</span><div class="ptext">${q.text}</div></div>`;
+  const inp=r.done?`<span class="locked${r.correct?'':' rvd'}">${r.final}</span>`:blank('a');
+  h+=`<div class="step${r.done?' done':' cur'}" id="st">
+    <div class="sh"><span class="no">답</span><span>답을 입력하세요</span>${statusTag(r)}</div>
+    <div class="ansline">${q.pre} ${inp}</div>
+    ${r.msg?`<div class="msg ${r.mt}">${r.msg}</div>`:''}
+    ${(!r.done&&r.attempts===1)?'<div class="tries">남은 기회 1번 · 한 번 더 틀리면 풀이가 나와요</div>':''}
+    ${r.done?solBox(q,!r.correct):''}
+  </div>`;
+  if(r.done) h+=`<button class="btn" data-act="next">${S.qi<NQ-1?'다음 문제 →':'결과 보기 →'}</button>`;
+  return h;
+}
+function renderEnd(){
+  const fin=S.res.filter(r=>r.correct).length, first=S.res.filter(r=>r.firstCorrect).length;
+  const lab=r=>r.firstCorrect?['O','한 번에 정답']:r.correct?['O','힌트 후 정답']:['X','풀이 확인'];
+  let h=header('결과');
+  h+=`<div class="card"><div class="score">${fin} / ${NQ}</div><div class="scap">맞힌 문제 (그중 한 번에 맞힌 문제 ${first}개)</div>
+   <table><tr><th class="l">문제</th><th>결과</th></tr>
+   ${QS.map((q,i)=>{const [o,t]=lab(S.res[i]);return `<tr><td class="l">${i+1}. ${q.unit}</td><td><span class="${o}">${o}</span> ${t}</td></tr>`}).join('')}
+   </table></div>
+   <div class="card" style="text-align:center">수고했어요! 칠판을 봐 주세요.</div>`;
+  return h;
+}
+function inputOpen(){return S.screen==='start'||(S.screen==='q'&&!S.res[S.qi].done)}
+function render(){
+  app.innerHTML = S.screen==='start'?renderStart(): S.screen==='confirm'?renderConfirm(): S.screen==='q'?renderQ(): renderEnd();
+  const show=inputOpen()&&!!S.active;
+  kp.classList.toggle('show',show); app.classList.toggle('kpon',show);
+}
+function scrollToSt(){setTimeout(()=>{const el=document.getElementById('st');if(el)el.scrollIntoView({block:'center',behavior:'smooth'})},60)}
+function shake(id){const el=document.querySelector(`[data-id="${id}"]`);if(el){el.classList.remove('shake');void el.offsetWidth;el.classList.add('shake')}}
+
+/* ===================== 진행 ===================== */
+function startQuiz(){
+  S.res=QS.map(newRes); S.qi=0; S.vals={}; S.active='a'; S.screen='q';
+  try{const saved=JSON.parse(localStorage.getItem('pq_'+QUIZ+'_'+S.cls+'_'+S.num)||'null'); if(saved&&saved.res){S.res=saved.res;S.qi=saved.qi;if(S.res[S.qi].done)S.active=null}}catch(e){}
+  render(); window.scrollTo(0,0);
+}
+function save(){try{localStorage.setItem('pq_'+QUIZ+'_'+S.cls+'_'+S.num,JSON.stringify({res:S.res,qi:S.qi}))}catch(e){}}
+function grade(){
+  const q=QS[S.qi], r=S.res[S.qi]; if(r.done) return;
+  const raw=S.vals.a; if(!raw){shake('a');return}
+  const v=parseInt(raw,10); r.attempts++;
+  if(v===q.ans){
+    r.done=true;r.correct=true;r.firstCorrect=r.attempts===1;r.final=m(v);r.mt='ok';r.msg='<b>정답!</b>';S.active=null;
+  }else{
+    if(r.attempts===1)r.firstCorrect=false; r.wrong.push(v); S.vals.a='';
+    if(r.attempts>=2){
+      r.done=true;r.correct=false;r.final=m(q.ans);r.mt='ng';r.msg=`<b>오답이에요.</b> 정답은 ${m(q.ans)} 이에요. 아래 풀이를 확인하세요.`;S.active=null;
+    }else{
+      const d=q.diag(v); r.mt='hint'; r.msg=`<b>오답이에요. 힌트</b><br>${d||q.hint}`;
+    }
+  }
+  if(r.done) send({quiz:QUIZ,cls:S.cls,num:S.num,q:S.qi+1,first:r.firstCorrect?'O':'X',fin:r.correct?'O':'X',attempts:r.attempts,wrong:r.wrong});
+  save(); render(); scrollToSt();
+}
+async function checkStart(){
+  const c=parseInt(S.vals.cls||'0',10), n=parseInt(S.vals.num||'0',10);
+  if(!(c>=1&&c<=20)){S.active='cls';render();shake('cls');return}
+  if(!(n>=1&&n<=45)){S.active='num';render();shake('num');return}
+  S.cls=c;S.num=n;S.active=null;render();
+  S.name=await getName(c,n);
+  if(S.name){S.screen='confirm';render()} else startQuiz();
+}
+function pressOK(){
+  if(S.screen==='start'){ if(S.active==='cls'&&S.vals.cls){S.active='num';render();return} return checkStart(); }
+  if(S.screen==='q') grade();
+}
+
+/* ===================== 입력 ===================== */
+app.addEventListener('click',e=>{
+  const bl=e.target.closest('.blank'); if(bl){S.active=bl.dataset.id;render();return}
+  const ac=e.target.closest('[data-act]'); if(!ac) return;
+  const a=ac.dataset.act;
+  if(a==='check') checkStart();
+  else if(a==='yes') startQuiz();
+  else if(a==='no'){S.screen='start';S.vals={};S.active='cls';render()}
+  else if(a==='next'){ if(S.qi<NQ-1){S.qi++;S.vals={};S.active='a';save();render();window.scrollTo(0,0)} else {S.screen='end';S.active=null;render();window.scrollTo(0,0)} }
+});
+kp.addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b||!S.active) return;
+  const k=b.dataset.k, cur=S.vals[S.active]||'';
+  if(k==='ok'){pressOK();return}
+  if(k==='del') S.vals[S.active]=cur.slice(0,-1);
+  else{const lim=(S.active==='cls'||S.active==='num')?2:10; if(cur.length<lim) S.vals[S.active]=(cur==='0'?'':cur)+k}
+  render();
+});
+document.addEventListener('keydown',e=>{
+  if(!S.active) return;
+  if(/^[0-9]$/.test(e.key)) kp.querySelector(`[data-k="${e.key}"]`).click();
+  else if(e.key==='Backspace') kp.querySelector('[data-k="del"]').click();
+  else if(e.key==='Enter') pressOK();
+});
+render();
+}
+</script>
+</body>
+</html>
