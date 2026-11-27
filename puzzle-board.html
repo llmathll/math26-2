@@ -33,9 +33,10 @@ button{font:inherit;color:inherit;cursor:pointer}
 .count .big{font-size:76px;font-weight:800;line-height:1}
 .count .big small{font-size:40px;color:var(--sub);font-weight:700}
 .count .lab{font-size:24px;color:var(--sub);margin-top:4px}
+.fsBtn{margin-top:18px;height:52px;padding:0 22px;border-radius:14px;border:3px solid var(--line);background:#fff;font-size:22px;font-weight:700;color:var(--sub)}
 
 /* 오른쪽 */
-.right{display:grid;grid-template-rows:1fr auto;gap:20px;min-height:0}
+.right{display:grid;grid-template-rows:auto 1fr;gap:20px;min-height:0}
 .panel{background:var(--card);border-radius:24px;padding:20px 24px;box-shadow:0 2px 6px rgba(20,30,60,.08);min-height:0;display:flex;flex-direction:column}
 .ph{display:flex;align-items:center;gap:18px;margin-bottom:12px}
 .ph h2{font-size:30px;margin:0}
@@ -150,17 +151,17 @@ td .qn{display:inline-block;width:34px;height:34px;border-radius:9px;color:#fff;
     <div class="sub">QR을 찍고 반·번호를 입력하세요</div>
     <div id="qr"></div>
     <div class="cls" id="cls"></div>
-    <div class="count"><div class="big num" id="cnt">0<small> / 23</small></div><div class="lab">3문제 모두 제출</div></div>
+    <div class="count"><div class="big num" id="cnt">0<small> / 23</small></div><div class="lab">3문제 모두 제출</div><button class="fsBtn" id="fsBtn">⛶ 전체화면</button></div>
   </div>
   <div class="right">
+    <div class="panel">
+      <div class="ph"><h2>문항별 결과</h2><button class="closeBtn" id="closeBtn">마감하고 결과 보기</button></div>
+      <table><thead><tr><th class="l">문항</th><th>제출</th><th>첫 시도 정답</th><th>최종 정답</th><th>가장 많은 오답</th><th></th></tr></thead><tbody id="tb"></tbody></table>
+    </div>
     <div class="panel">
       <div class="ph"><h2>번호별 제출 현황</h2>
         <div class="legend"><span><i style="background:var(--q1)"></i>1번</span><span><i style="background:var(--q2)"></i>2번</span><span><i style="background:var(--q3)"></i>3번</span></div></div>
       <div class="grid" id="grid"></div>
-    </div>
-    <div class="panel">
-      <div class="ph"><h2>문항별 결과</h2><button class="closeBtn" id="closeBtn">마감하고 결과 보기</button></div>
-      <table><thead><tr><th class="l">문항</th><th>제출</th><th>첫 시도 정답</th><th>최종 정답</th><th>가장 많은 오답</th><th></th></tr></thead><tbody id="tb"></tbody></table>
     </div>
   </div>
   <div id="ov"></div>
@@ -184,11 +185,15 @@ const QCOL     = ['var(--q1)','var(--q2)','var(--q3)'];
 
 const CLS=Object.keys(CLASSES).map(Number);
 let cls=CLS[0], N=CLASSES[cls], closed=false, rows=[];
+const CACHE={};   // 반별 마지막 데이터
 const $=id=>document.getElementById(id);
 
 /* 화면 맞춤 (16:9, 여백 없이) */
 function fit(){const s=Math.min(innerWidth/1600,innerHeight/900);$('stage').style.transform=`scale(${s})`}
 addEventListener('resize',fit); fit();
+function fsSync(){$('fsBtn').textContent=document.fullscreenElement?'⛶ 전체화면 끝내기':'⛶ 전체화면';setTimeout(fit,50)}
+$('fsBtn').addEventListener('click',()=>{try{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}catch(e){}});
+document.addEventListener('fullscreenchange',fsSync);
 
 /* QR */
 (function(){
@@ -203,7 +208,7 @@ addEventListener('resize',fit); fit();
 function drawCls(){
   $('cls').innerHTML=CLS.map(c=>`<button class="${c===cls?'on':''}" data-c="${c}">${c}반</button>`).join('');
 }
-$('cls').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;cls=+b.dataset.c;N=CLASSES[cls];closed=false;rows=[];drawCls();draw();load()});
+$('cls').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;cls=+b.dataset.c;N=CLASSES[cls];closed=false;rows=CACHE[cls]||[];drawCls();draw();load()});
 $('closeBtn').addEventListener('click',()=>{closed=!closed;draw()});
 
 /* 데이터 정리: 번호·문항별 마지막 제출만 사용 */
@@ -247,8 +252,10 @@ function draw(){
 async function load(){
   if(!API){demoTick();return}
   try{
-    const r=await fetch(`${API}?action=stats&quiz=${encodeURIComponent(QUIZ)}&cls=${cls}`);
-    const j=await r.json(); if(j&&j.rows){rows=j.rows;draw()}
+    const want=cls;
+    const r=await fetch(`${API}?action=stats&quiz=${encodeURIComponent(QUIZ)}&cls=${want}`);
+    const j=await r.json();
+    if(j&&j.rows){CACHE[want]=j.rows; if(want===cls){rows=j.rows;draw()}}
   }catch(e){}
 }
 /* 미리보기용 가상 제출 */
@@ -262,7 +269,7 @@ function demoTick(){
     const w=[]; if(!ok1)w.push(wr[q-1][Math.floor(Math.random()*3)]); if(!ok1&&!ok2)w.push(wr[q-1][Math.floor(Math.random()*3)]);
     rows.push({num:n,q,first:ok1?'O':'X',fin:ok2?'O':'X',wrong:w.join(' | ')});
   }
-  draw();
+  CACHE[cls]=rows; draw();
 }
 
 /* ======================= 공통: 겹쳐 뜨는 화면 ======================= */
@@ -469,7 +476,7 @@ function clockStep(ts){
   if(!C.play) return;
   const dt=C.last?Math.min((ts-C.last)/1000,.1):0; C.last=ts;
   if(C.hold>0){C.hold-=dt; drawClock(); C.raf=requestAnimationFrame(clockStep); return}
-  const nt=C.t+dt*C.speed*0.45;                 // 1배속: 1시간 ≈ 2.2초
+  const nt=C.t+dt*C.speed*1.35;                 // 1배속: 1시간 ≈ 0.74초
   const nextK=C.count;
   if(nextK<11 && nt>=OV_T[nextK]){
     C.t=OV_T[nextK]; C.count++; C.hold=1.0;
